@@ -36,10 +36,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=f"Dashboard port (default: {config.PORT})",
     )
     parser.add_argument(
-        "--host", default=config.HOST,
-        help=f"Dashboard bind address (default: {config.HOST})",
-    )
-    parser.add_argument(
         "--list-plugins", action="store_true",
         help="Show loaded plugins and exit",
     )
@@ -52,8 +48,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Listen on all interfaces (0.0.0.0) instead of localhost",
     )
     args = parser.parse_args(argv)
-    if args.listen_network:
-        args.host = "0.0.0.0"
+    args.host = "0.0.0.0" if args.listen_network else config.HOST
     return args
 
 

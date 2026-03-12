@@ -43,10 +43,10 @@ def test_parse_args_port():
     assert args.port == 9090
 
 
-def test_parse_args_host():
+def test_parse_args_default_host_is_localhost():
     from adwatch.main import parse_args
 
-    args = parse_args(["--host", "127.0.0.1"])
+    args = parse_args([])
     assert args.host == "127.0.0.1"
 
 

@@ -24,7 +24,6 @@ adwatch --no-dashboard               # Scanner only, log to stdout
 adwatch --adapter hci1               # Use specific BLE adapter
 adwatch --db ./my.db                 # Custom database path
 adwatch --port 9090                  # Custom dashboard port
-adwatch --host 127.0.0.1             # Bind to localhost only
 adwatch --list-plugins               # Show loaded plugins and exit
 adwatch --disable thermopro,matter   # Disable specific plugins
 adwatch --listen-network             # Listen on all interfaces (0.0.0.0)
@@ -97,7 +96,7 @@ The web dashboard at `http://<host>:<port>` provides:
 
 ## Security
 
-The dashboard has **no authentication**. By default it binds to `127.0.0.1` (localhost only). Use `--listen-network` or `--host 0.0.0.0` to expose on all interfaces — only do this on trusted networks.
+The dashboard has **no authentication**. By default it binds to `127.0.0.1` (localhost only). Use `--listen-network` to expose on all interfaces — only do this on trusted networks.
 
 The `adwatch.db` database contains real BLE advertisement data from your environment (MAC addresses, device names, signal patterns). It is git-ignored by default — do not commit it to a public repository.
 
