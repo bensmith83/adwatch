@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>adwatch</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a28;
+  --glass:rgba(255,255,255,.04);--glass-border:rgba(255,255,255,.08);
+  --text:#e0e0e8;--text2:#888;--text3:#555;
+  --cyan:#00e5ff;--purple:#b388ff;--green:#69f0ae;--red:#ff5252;--amber:#ffd740;
+  --radius:12px;--transition:.3s cubic-bezier(.4,0,.2,1);
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.5;min-height:100vh}
+a{color:var(--cyan);text-decoration:none}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--glass-border);background:var(--bg2)}
+.header h1{font-size:20px;font-weight:700;letter-spacing:-.5px}
+.header h1 span{color:var(--cyan)}
+.header .status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.header .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Nav bar */
+.nav-bar{display:flex;align-items:center;gap:8px;padding:8px 24px;background:var(--bg2);border-bottom:1px solid var(--glass-border);flex-wrap:wrap}
+.nav-btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:var(--transition);border:1px solid transparent;background:none;font-family:inherit}
+.nav-btn:hover{color:var(--text);background:var(--glass)}
+.nav-btn.active{color:var(--cyan);background:rgba(0,229,255,.08);border-color:rgba(0,229,255,.2)}
+.nav-select{padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:var(--transition);border:1px solid var(--glass-border);background:var(--bg3);font-family:inherit;appearance:none;-webkit-appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;min-width:160px}
+.nav-select:hover,.nav-select:focus{color:var(--text);border-color:rgba(0,229,255,.3);outline:none}
+.nav-select.active{color:var(--cyan);border-color:rgba(0,229,255,.3);background-color:rgba(0,229,255,.08)}
+.nav-select option{background:var(--bg2);color:var(--text)}
+
+/* Layout */
+.main{padding:24px;max-width:1400px;margin:0 auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+
+/* Summary Card */
+.card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;transition:var(--transition);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));opacity:.6}
+.card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+.card .value{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.card .label{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+
+/* Table */
+.feed-wrap{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;max-height:80vh}
+.feed-wrap h2{font-size:14px;font-weight:600;padding:16px 20px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.feed-wrap h2 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite}
+.table-scroll{overflow-y:auto;flex:1}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg3);position:sticky;top:0;z-index:1}
+th{padding:10px 16px;text-align:left;font-weight:500;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:10px 16px;border-top:1px solid var(--glass-border);font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px}
+tr{transition:var(--transition)}
+tr:hover td{background:var(--glass)}
+tr.new-row{animation:slideIn .4s ease-out}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.badge-phone{background:rgba(0,229,255,.12);color:var(--cyan)}
+.badge-sensor{background:rgba(105,240,174,.12);color:var(--green)}
+.badge-tracker{background:rgba(255,82,82,.12);color:var(--red)}
+.badge-beacon{background:rgba(255,215,64,.12);color:var(--amber)}
+.badge-accessory{background:rgba(179,136,255,.12);color:var(--purple)}
+.badge-media{background:rgba(255,215,64,.12);color:var(--amber)}
+.badge-default{background:var(--glass);color:var(--text2)}
+
+/* Plugin tab content */
+.plugin-tab{padding:8px 0}
+.widget-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.widget-card h3{font-size:14px;margin-bottom:12px;color:var(--text2)}
+
+/* Sensor card grid */
+.sensor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.sensor-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;transition:var(--transition);position:relative;overflow:hidden}
+.sensor-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--green));opacity:.6}
+.sensor-card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px)}
+.sensor-card.stale{opacity:.6;border-style:dashed}
+.sensor-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.sensor-nickname{font-size:15px;font-weight:600;cursor:pointer;border-bottom:1px dashed var(--text3);padding-bottom:2px;transition:var(--transition)}
+.sensor-nickname:hover{color:var(--cyan)}
+.sensor-nickname-input{font-size:15px;font-weight:600;background:var(--bg3);border:1px solid var(--cyan);border-radius:6px;color:var(--text);padding:2px 8px;outline:none;width:180px;font-family:inherit}
+.sensor-id{font-size:11px;color:var(--text2);font-family:'JetBrains Mono','Fira Code',monospace;margin-top:2px}
+.sensor-rssi{color:var(--text2);font-size:12px;font-family:'JetBrains Mono','Fira Code',monospace}
+.reading-main{display:flex;gap:24px;margin-bottom:12px;align-items:baseline}
+.temp-display{font-size:2rem;font-weight:700;font-family:'JetBrains Mono','Fira Code',monospace;letter-spacing:-1px;background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.temp-unit{font-size:14px;color:var(--text2);margin-left:2px;-webkit-text-fill-color:var(--text2)}
+.temp-secondary{font-size:12px;color:var(--text2);font-family:'JetBrains Mono','Fira Code',monospace}
+.humidity-display{font-size:1.2rem;font-weight:600;font-family:'JetBrains Mono','Fira Code',monospace;color:var(--cyan)}
+.sensor-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:11px}
+.meta-badge{padding:3px 10px;border-radius:6px;background:var(--bg3);color:var(--text2)}
+.meta-badge.room{color:var(--cyan);border:1px solid rgba(0,229,255,.2)}
+.sensor-last-seen{color:var(--text3);font-size:11px;margin-top:8px}
+
+/* Device card generic */
+.device-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.device-card-item{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px}
+.device-card-item .field-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--glass-border)}
+.device-card-item .field-row:last-child{border-bottom:none}
+.device-card-item .field-key{color:var(--text2);text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+.device-card-item .field-val{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px}
+
+/* Hex Viewer */
+.hex-grid{display:grid;grid-template-columns:auto repeat(16,1fr) auto;gap:1px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:13px;padding:12px}
+.hex-byte{padding:4px 6px;text-align:center;cursor:pointer;border-radius:3px;transition:background .15s}
+.hex-byte:hover{background:rgba(255,255,255,.1)}
+.hex-byte.selected{background:rgba(0,229,255,.3);color:var(--cyan)}
+.hex-offset{color:var(--text3);font-family:'JetBrains Mono','Fira Code',monospace;padding:4px 8px 4px 0;text-align:right;user-select:none}
+.hex-ascii{font-family:'JetBrains Mono','Fira Code',monospace;color:var(--text2);padding:4px 0 4px 8px;letter-spacing:1px;white-space:pre}
+.field-highlight-0{background:rgba(0,229,255,.25)}
+.field-highlight-1{background:rgba(179,136,255,.25)}
+.field-highlight-2{background:rgba(105,240,174,.25)}
+.field-highlight-3{background:rgba(255,215,64,.25)}
+.field-highlight-4{background:rgba(255,82,82,.25)}
+.field-highlight-5{background:rgba(255,145,0,.25)}
+.field-highlight-6{background:rgba(233,30,99,.25)}
+.field-highlight-7{background:rgba(0,188,212,.25)}
+
+/* TLV */
+.tlv-band{position:relative}
+.tlv-level-0{border-left:3px solid rgba(0,229,255,.4);background:rgba(0,229,255,.06)}
+.tlv-level-1{border-left:3px solid rgba(179,136,255,.4);background:rgba(179,136,255,.06)}
+.tlv-level-2{border-left:3px solid rgba(105,240,174,.4);background:rgba(105,240,174,.06)}
+.tlv-type-byte{border-top:2px solid rgba(255,215,64,.5)}
+.tlv-length-byte{border-top:2px solid rgba(255,82,82,.5)}
+.tlv-tree{padding:12px;border-top:1px solid var(--glass-border);font-size:12px;font-family:'JetBrains Mono','Fira Code',monospace}
+.tlv-tree-node{padding:4px 8px;border-radius:4px;cursor:pointer;transition:var(--transition)}
+.tlv-tree-node:hover{background:var(--glass)}
+
+/* Compare View */
+.compare-row{display:flex;gap:1px;margin-bottom:2px;align-items:center}
+.byte-constant{background:rgba(105,240,174,.2);color:var(--green)}
+.byte-variable{background:rgba(255,215,64,.2);color:var(--amber)}
+.byte-random{background:rgba(255,82,82,.2);color:var(--red)}
+
+/* Explorer */
+.explorer-filters{display:flex;flex-wrap:wrap;gap:8px;padding:16px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);margin-bottom:16px;align-items:flex-end}
+.explorer-filters label{font-size:11px;color:var(--text2);display:flex;flex-direction:column;gap:4px}
+.explorer-filters input,.explorer-filters select{padding:6px 10px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;outline:none}
+.explorer-filters input:focus,.explorer-filters select:focus{border-color:rgba(0,229,255,.3)}
+.hex-viewer-layout{display:grid;grid-template-columns:1fr 300px;gap:16px}
+.hex-panel{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden}
+.field-editor{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px}
+.field-editor h3{font-size:13px;color:var(--text2);margin-bottom:12px}
+
+/* Responsive */
+@media(max-width:768px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .main{padding:16px}
+  td,th{padding:8px 10px}
+}
+@media(max-width:480px){
+  .cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import{h,render,Component}from"https://esm.sh/preact@10.25.4";
+import{useState,useEffect,useRef,useCallback}from"https://esm.sh/preact@10.25.4/hooks";
+import htm from"https://esm.sh/htm@3.1.1";
+const html=htm.bind(h);
+
+// --- MAC type helpers ---
+function classifyMacType(addressType, mac) {
+  if (!addressType || !mac) return 'unknown';
+  if (addressType.toLowerCase() === 'public') return 'public';
+  const firstByte = parseInt(mac.split(':')[0], 16);
+  const top = (firstByte >> 6) & 0x03;
+  if (top === 3) return 'random_static';
+  if (top === 1) return 'resolvable_private';
+  if (top === 0) return 'non_resolvable_private';
+  return 'reserved';
+}
+const MAC_TYPE_LABELS = {
+  public: 'Public', random_static: 'Rnd Static',
+  resolvable_private: 'Resolvable', non_resolvable_private: 'Non-Resolv',
+  reserved: 'Reserved', unknown: 'Unknown'
+};
+const MAC_TYPE_COLORS = {
+  public: 'var(--green)', random_static: 'var(--cyan)',
+  resolvable_private: 'var(--purple)', non_resolvable_private: 'var(--amber)',
+  reserved: 'var(--text3)', unknown: 'var(--text3)'
+};
+
+// --- Badge ---
+function Badge({category}){
+  const cls='badge badge-'+(category||'default');
+  return html`<span class=${cls}>${category||'unknown'}</span>`;
+}
+
+// --- SummaryCard ---
+function SummaryCard({label,value,onClick}){
+  const[display,setDisplay]=useState(0);
+  const mounted=useRef(false);
+  useEffect(()=>{
+    if(value===0){setDisplay(0);return}
+    if(mounted.current){setDisplay(value);return}
+    mounted.current=true;
+    const step=Math.max(1,Math.floor(value/20));
+    let cur=0;
+    const id=setInterval(()=>{cur=Math.min(cur+step,value);setDisplay(cur);if(cur>=value)clearInterval(id)},30);
+    return()=>clearInterval(id);
+  },[value]);
+  const clickStyle=onClick?'cursor:pointer':'';
+  return html`<div class="card" style=${clickStyle} onClick=${onClick}><div class="value">${display.toLocaleString()}</div><div class="label">${label}</div></div>`;
+}
+
+// --- LiveFeed ---
+function LiveFeed({rows,paused,onTogglePause}){
+  const[filter,setFilter]=useState('');
+  const[macTypeFilter,setMacTypeFilter]=useState('');
+
+  // Compute mac_type for each row (use pre-computed if available, else derive)
+  const rowsWithType=rows.map(r=>({...r,_mac_type:r.mac_type||classifyMacType(r.address_type,r.mac_address)}));
+
+  // MAC type counts
+  const typeCounts={};
+  rowsWithType.forEach(r=>{const t=r._mac_type;typeCounts[t]=(typeCounts[t]||0)+1});
+
+  const filtered=rowsWithType.filter(r=>{
+    if(macTypeFilter&&r._mac_type!==macTypeFilter)return false;
+    if(!filter)return true;
+    const q=filter.toLowerCase();
+    return (r.mac_address||'').toLowerCase().includes(q)
+      ||(r.local_name||'').toLowerCase().includes(q)
+      ||(r.ad_type||'').toLowerCase().includes(q)
+      ||(r.ad_category||'').toLowerCase().includes(q)
+      ||(MAC_TYPE_LABELS[r._mac_type]||'').toLowerCase().includes(q);
+  });
+
+  return html`
+    <div class="feed-wrap">
+      <h2><span class="live-dot" style=${paused?'background:var(--text3);animation:none':''}></span> Live Feed ${paused?' (paused)':''}</h2>
+      <div style="padding:12px 20px;border-bottom:1px solid var(--glass-border);display:flex;flex-wrap:wrap;gap:12px;align-items:center;flex-shrink:0">
+        <input type="text" placeholder="Filter by MAC, name, type, category..."
+          value=${filter} onInput=${e=>setFilter(e.target.value)}
+          style="flex:1;min-width:200px;padding:8px 12px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:inherit"/>
+        <select value=${macTypeFilter} onChange=${e=>setMacTypeFilter(e.target.value)}
+          style="padding:8px 12px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;cursor:pointer">
+          <option value="">All MAC types</option>
+          <option value="public">Public</option>
+          <option value="random_static">Random Static</option>
+          <option value="resolvable_private">Resolvable Private</option>
+          <option value="non_resolvable_private">Non-Resolvable Private</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;user-select:none">
+          <input type="checkbox" checked=${paused} onChange=${onTogglePause}
+            style="accent-color:var(--cyan);width:14px;height:14px;cursor:pointer"/>
+          Pause
+        </label>
+      </div>
+      <div style="padding:8px 20px;border-bottom:1px solid var(--glass-border);display:flex;gap:12px;flex-wrap:wrap;font-size:11px;flex-shrink:0">
+        ${Object.entries(typeCounts).sort().map(([t,c])=>html`
+          <span style="display:flex;align-items:center;gap:4px;cursor:pointer;opacity:${macTypeFilter&&macTypeFilter!==t?'0.4':'1'}"
+            onClick=${()=>setMacTypeFilter(macTypeFilter===t?'':t)}>
+            <span style="width:8px;height:8px;border-radius:50%;background:${MAC_TYPE_COLORS[t]||'var(--text3)'}"></span>
+            <span style="color:var(--text2)">${MAC_TYPE_LABELS[t]||t}</span>
+            <span style="color:var(--text);font-weight:600">${c}</span>
+          </span>`)}
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Time</th><th>MAC</th><th>Addr Type</th><th>Type</th><th>Category</th><th>RSSI</th><th>Name</th></tr></thead>
+          <tbody>
+            ${filtered.map((r,i)=>html`
+              <tr key=${r.id||i} class=${i===0&&r._new?'new-row':''}>
+                <td>${r.timestamp?typeof r.timestamp==='number'?new Date(r.timestamp*1000).toLocaleTimeString():(r.timestamp||'').slice(11,19):'-'}</td>
+                <td>${r._mac_type==='public'?html`<span style="color:var(--green)">${r.mac_address} *</span>`:r.mac_address}</td>
+                <td><span style="color:${MAC_TYPE_COLORS[r._mac_type]||'var(--text3)'};font-size:11px">${MAC_TYPE_LABELS[r._mac_type]||r._mac_type}</span></td>
+                <td>${r.ad_type||'-'}</td>
+                <td><${Badge} category=${r.ad_category}/></td>
+                <td>${r.rssi!=null?r.rssi+'dBm':'-'}</td>
+                <td>${r.local_name||'-'}</td>
+              </tr>`)}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// --- NavBar ---
+function NavBar({pluginTabs,active,onSelect}){
+  const isPlugin=active.startsWith('plugin-');
+  return html`<div class="nav-bar">
+    <button class=${'nav-btn'+(active==='overview'?' active':'')} onClick=${()=>onSelect('overview')}>Overview</button>
+    <button class=${'nav-btn'+(active==='plugins'?' active':'')} onClick=${()=>onSelect('plugins')}>Plugins</button>
+    <button class=${'nav-btn'+(active==='explorer'?' active':'')} onClick=${()=>onSelect('explorer')}>Explorer</button>
+    ${pluginTabs.length>0?html`
+      <select class=${'nav-select'+(isPlugin?' active':'')}
+        value=${isPlugin?active:''}
+        onChange=${e=>{if(e.target.value)onSelect(e.target.value)}}>
+        <option value="" disabled selected=${!isPlugin}>Plugin Dashboard...</option>
+        ${pluginTabs.map(t=>html`<option value=${t.id}>${t.label}</option>`)}
+      </select>`:null}
+  </div>`;
+}
+
+// --- Helpers ---
+function cToF(c){return(c*9/5+32).toFixed(1)}
+function timeAgo(ts){
+  const msTs=typeof ts==='number'?(ts>1e12?ts:ts*1000):new Date(ts).getTime();
+  const diff=(Date.now()-msTs)/1000;
+  if(diff<60)return Math.floor(diff)+'s ago';
+  if(diff<3600)return Math.floor(diff/60)+'m ago';
+  return Math.floor(diff/3600)+'h ago';
+}
+
+// --- SensorCard ---
+function SensorCard({data:items,widget,onRefresh}){
+  const[editing,setEditing]=useState(null);
+  const inputRef=useRef(null);
+
+  useEffect(()=>{if(inputRef.current){inputRef.current.focus();inputRef.current.select()}},[editing]);
+
+  function startEdit(sensorId,current){setEditing({sensorId,value:current})}
+
+  async function saveNickname(){
+    if(!editing)return;
+    const val=editing.value.trim();
+    if(val){
+      try{
+        const base=widget.data_endpoint.replace(/\/active$/,'/nickname');
+        await fetch(base,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sensor_id:editing.sensorId,nickname:val})});
+        if(onRefresh)onRefresh();
+      }catch(e){}
+    }
+    setEditing(null);
+  }
+
+  function cancelEdit(){setEditing(null)}
+
+  if(!items||items.length===0)return html`<div class="widget-card"><h3>${widget.title}</h3><p style="color:var(--text2)">No sensors detected yet.</p></div>`;
+
+  return html`<div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${widget.title} - ${items.length} sensor${items.length!==1?'s':''}</div>
+    <div class="sensor-grid">${items.map(s=>{
+      const displayName=s.nickname||s.sensor_id;
+      const tempF=cToF(s.temperature_c);
+      const tempC=s.temperature_c.toFixed(1);
+      const stale=s._stale?' stale':'';
+      const isEditing=editing&&editing.sensorId===s.sensor_id;
+      return html`
+        <div class=${'sensor-card'+stale}>
+          <div class="sensor-card-header">
+            <div>
+              ${isEditing?html`<input ref=${inputRef} class="sensor-nickname-input" value=${editing.value}
+                onInput=${e=>setEditing({...editing,value:e.target.value})}
+                onBlur=${saveNickname}
+                onKeyDown=${e=>{if(e.key==='Enter'){e.preventDefault();saveNickname()}if(e.key==='Escape')cancelEdit()}}
+              />`
+              :html`<div class="sensor-nickname" onClick=${()=>startEdit(s.sensor_id,displayName)}>${displayName}</div>`}
+              <div class="sensor-id">${s.sensor_id}</div>
+            </div>
+            <div class="sensor-rssi">${s.rssi!=null?s.rssi+' dBm':''}</div>
+          </div>
+          <div class="reading-main">
+            <div>
+              <span class="temp-display">${tempF}</span><span class="temp-unit">\u00B0F</span>
+              <div class="temp-secondary">${tempC}\u00B0C</div>
+            </div>
+            <div class="humidity-display">${s.humidity}%</div>
+          </div>
+          <div class="sensor-meta">
+            <span class="meta-badge room">${s.room_speculation}</span>
+            <span class="meta-badge">${s.model_code}</span>
+          </div>
+          <div class="sensor-last-seen">Last seen: ${timeAgo(s.timestamp)}${s._stale?' (stale)':''}</div>
+        </div>`;
+    })}</div>
+  </div>`;
+}
+
+// --- DataTable ---
+function DataTable({data:items,widget}){
+  const cols=(widget.render_hints&&widget.render_hints.columns)||Object.keys((items&&items[0])||{});
+  if(!items||items.length===0)return html`<div class="widget-card"><h3>${widget.title}</h3><p style="color:var(--text2)">No data.</p></div>`;
+  return html`<div class="feed-wrap">
+    <h2>${widget.title}</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>${cols.map(c=>html`<th>${c}</th>`)}</tr></thead>
+        <tbody>${items.map(row=>html`<tr>${cols.map(c=>html`<td>${row[c]!=null?String(row[c]):'-'}</td>`)}</tr>`)}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// --- DeviceCard ---
+function DeviceCard({data:items,widget}){
+  const fields=(widget.render_hints&&widget.render_hints.fields)||Object.keys((items&&items[0])||{});
+  if(!items||items.length===0)return html`<div class="widget-card"><h3>${widget.title}</h3><p style="color:var(--text2)">No data.</p></div>`;
+  return html`<div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${widget.title}</div>
+    <div class="device-card-grid">${items.map(item=>html`
+      <div class="device-card-item">${fields.map(f=>html`
+        <div class="field-row"><span class="field-key">${f}</span><span class="field-val">${item[f]!=null?String(item[f]):'-'}</span></div>
+      `)}</div>
+    `)}</div>
+  </div>`;
+}
+
+// --- PluginTab ---
+function PluginTab({config,wsRef}){
+  const[data,setData]=useState({});
+  const[loaded,setLoaded]=useState(false);
+  const refreshInterval=useRef(null);
+
+  const fetchData=useCallback(()=>{
+    if(!config||!config.widgets)return;
+    Promise.all(config.widgets.map(async w=>{
+      try{const r=await fetch(w.data_endpoint);if(!r.ok)return;const j=await r.json();
+        setData(d=>({...d,[w.data_endpoint]:j}));
+      }catch(e){}
+    })).then(()=>setLoaded(true));
+  },[config]);
+
+  useEffect(()=>{
+    setData({});setLoaded(false);
+    fetchData();
+    const interval=(config&&config.refresh_interval)?config.refresh_interval*1000:0;
+    if(interval>0){refreshInterval.current=setInterval(fetchData,interval)}
+    return()=>{if(refreshInterval.current)clearInterval(refreshInterval.current)};
+  },[config,fetchData]);
+
+  // Listen for WebSocket events that match this plugin
+  useEffect(()=>{
+    if(!wsRef||!wsRef.current||!config)return;
+    const ws=wsRef.current;
+    function onMsg(ev){
+      try{
+        const msg=JSON.parse(ev.data);
+        if(config.widgets.some(w=>w.config&&w.config.event_type===msg.type))fetchData();
+        // Also refresh on thermopro_reading or generic plugin events
+        if(msg.type&&config.tab_name&&msg.type.toLowerCase().includes(config.tab_name.toLowerCase()))fetchData();
+      }catch(e){}
+    }
+    ws.addEventListener('message',onMsg);
+    return()=>ws.removeEventListener('message',onMsg);
+  },[wsRef,config,fetchData]);
+
+  if(!config)return null;
+
+  function renderWidget(w){
+    const items=data[w.data_endpoint];
+    if(!loaded&&items===undefined)return html`<div class="widget-card"><h3>${w.title}</h3><p style="color:var(--text2)">Loading...</p></div>`;
+    switch(w.widget_type){
+      case 'sensor_card':return html`<${SensorCard} data=${items} widget=${w} onRefresh=${fetchData}/>`;
+      case 'data_table':return html`<${DataTable} data=${items} widget=${w}/>`;
+      case 'device_card':return html`<${DeviceCard} data=${items} widget=${w}/>`;
+      case 'info_banner':return html`<div class="widget-card" style="border-left:3px solid var(--amber);padding:16px 20px"><h3 style="font-size:13px;font-weight:600;color:var(--amber);margin-bottom:8px">${w.title}</h3><p style="font-size:12px;color:var(--text2);line-height:1.6;margin:0">${w.config&&w.config.text||''}</p></div>`;
+      default:return html`<div class="widget-card"><h3>${w.title}</h3><pre>${JSON.stringify(items||{},null,2)}</pre></div>`;
+    }
+  }
+
+  return html`<div class="plugin-tab">${config.widgets.map(w=>renderWidget(w))}</div>`;
+}
+
+// --- PluginManager ---
+function PluginManager(){
+  const[plugins,setPlugins]=useState([]);
+  const[filter,setFilter]=useState('');
+  useEffect(()=>{fetch('/api/plugins').then(r=>r.json()).then(setPlugins).catch(()=>{})},[]);
+  async function toggle(name){
+    try{
+      const r=await fetch('/api/plugins/'+name+'/toggle',{method:'PUT'});
+      if(!r.ok)return;
+      const updated=await r.json();
+      setPlugins(ps=>ps.map(p=>p.name===updated.name?updated:p));
+    }catch(e){}
+  }
+  const filtered=filter?plugins.filter(p=>{
+    const q=filter.toLowerCase();
+    return p.name.toLowerCase().includes(q)||p.description.toLowerCase().includes(q);
+  }):plugins;
+  return html`<div class="plugin-tab">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Manage Parsers</div>
+    <div style="margin-bottom:16px">
+      <input type="text" placeholder="Filter parsers..."
+        value=${filter} onInput=${e=>setFilter(e.target.value)}
+        style="width:100%;max-width:400px;padding:8px 12px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:8px;color:var(--text);font-size:13px;outline:none;font-family:inherit"/>
+    </div>
+    <div class="sensor-grid">${filtered.map(p=>html`
+      <div class="sensor-card">
+        <div class="sensor-card-header">
+          <div>
+            <div style="font-size:15px;font-weight:600">${p.name}</div>
+            <div class="sensor-id">${p.description}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${p.core?html`<span class="badge badge-beacon">core</span>`:null}
+            <span style="font-size:11px;color:var(--text2)">${p.version}</span>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
+          <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer">
+            <input type="checkbox" checked=${p.enabled} onChange=${()=>toggle(p.name)}
+              style="opacity:0;width:0;height:0"/>
+            <span style=${'position:absolute;inset:0;border-radius:11px;transition:var(--transition);background:'+(p.enabled?'var(--cyan)':'var(--text3)')}></span>
+            <span style=${'position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:white;transition:var(--transition);left:'+(p.enabled?'21px':'3px')}></span>
+          </label>
+          <span style="font-size:12px;color:var(--text2)">${p.enabled?'Enabled':'Disabled'}</span>
+        </div>
+      </div>
+    `)}</div>
+  </div>`;
+}
+
+// --- Hex decode helper ---
+function decodeBytes(bytes, type, endian) {
+  if(!bytes||bytes.length===0)return '';
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const le = endian === 'LE';
+  switch(type) {
+    case 'uint8': return bytes[0];
+    case 'uint16': return bytes.length>=2?view.getUint16(0, le):'need 2 bytes';
+    case 'uint32': return bytes.length>=4?view.getUint32(0, le):'need 4 bytes';
+    case 'int8': return view.getInt8(0);
+    case 'int16': return bytes.length>=2?view.getInt16(0, le):'need 2 bytes';
+    case 'int32': return bytes.length>=4?view.getInt32(0, le):'need 4 bytes';
+    case 'float32': return bytes.length>=4?view.getFloat32(0, le).toFixed(4):'need 4 bytes';
+    case 'utf8': return new TextDecoder().decode(bytes);
+    case 'mac_addr': return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join(':');
+    case 'uuid': {
+      const hx=Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+      return hx.length>=32?`${hx.slice(0,8)}-${hx.slice(8,12)}-${hx.slice(12,16)}-${hx.slice(16,20)}-${hx.slice(20,32)}`:hx;
+    }
+    case 'bitfield': return bytes[0].toString(2).padStart(8,'0');
+    case 'raw_hex': return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+    default: return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  }
+}
+
+function hexToBytes(hex){
+  if(!hex)return new Uint8Array(0);
+  const clean=hex.replace(/\s/g,'');
+  const arr=new Uint8Array(clean.length/2);
+  for(let i=0;i<arr.length;i++)arr[i]=parseInt(clean.substr(i*2,2),16);
+  return arr;
+}
+
+// --- ExplorerFilters ---
+function ExplorerFilters({filters,facets,onFilterChange}){
+  const f=filters||{};
+  const fc=facets||{ad_types:[],company_ids:[],service_uuids:[],local_names:[]};
+  const set=(k,v)=>onFilterChange({...f,[k]:v});
+  return html`<div class="explorer-filters">
+    <label>MAC Prefix<input type="text" value=${f.mac_prefix||''} onInput=${e=>set('mac_prefix',e.target.value)} placeholder="AA:BB"/></label>
+    <label>Type<select value=${f.ad_type||''} onChange=${e=>{const v=e.target.value;set('ad_type',v);onFilterChange({...f,ad_type:v,parsed_by:v==='__null__'?'__null__':''})}}>
+      <option value="">All</option><option value="__null__">Unclassified</option>
+      ${fc.ad_types.map(a=>html`<option value=${a.value}>${a.value} (${a.count})</option>`)}
+    </select></label>
+    <label>Min Sightings<input type="number" value=${f.min_sightings||1} min="1" onInput=${e=>set('min_sightings',parseInt(e.target.value)||1)}/></label>
+    <label>Name<input type="text" value=${f.local_name||''} onInput=${e=>set('local_name',e.target.value)} placeholder="Filter..."/></label>
+    <label>Service UUID<input type="text" value=${f.service_uuid||''} onInput=${e=>set('service_uuid',e.target.value)} placeholder="e.g. fe9f"/></label>
+    <label>Group By<select value=${f.group_by||''} onChange=${e=>set('group_by',e.target.value)}>
+      <option value="">None</option><option value="company_id">Company ID</option><option value="ad_type">Ad Type</option>
+    </select></label>
+    <label style="flex-direction:row;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" checked=${f.watch||false} onChange=${e=>set('watch',e.target.checked)} style="accent-color:var(--cyan)"/> Watch
+    </label>
+  </div>`;
+}
+
+// --- ExplorerList ---
+function ExplorerList({ads,onSelectAd,onCompare,selectedIds}){
+  const[sortCol,setSortCol]=useState(null);
+  const[sortAsc,setSortAsc]=useState(true);
+  const sel=selectedIds||new Set();
+  const toggleSort=(col)=>{if(sortCol===col){setSortAsc(!sortAsc)}else{setSortCol(col);setSortAsc(true)}};
+  let sorted=ads||[];
+  if(sortCol){sorted=[...sorted].sort((a,b)=>{const va=a[sortCol],vb=b[sortCol];if(va==null)return 1;if(vb==null)return -1;const r=typeof va==='number'?va-vb:String(va).localeCompare(String(vb));return sortAsc?r:-r})}
+  const arrow=sortAsc?'\u25B2':'\u25BC';
+  const th=(col,label)=>html`<th style="cursor:pointer" onClick=${()=>toggleSort(col)}>${label} ${sortCol===col?arrow:''}</th>`;
+  return html`<div class="feed-wrap">
+    <h2>Results (${(ads||[]).length})${sel.size>0?html` <span style="margin-left:auto;display:flex;gap:6px">${sel.size>=2?html`<button class="nav-btn" style="font-size:11px;padding:4px 10px" onClick=${()=>onCompare([...sel])}>Compare Selected (${sel.size})</button>`:null}<button class="nav-btn" style="font-size:11px;padding:4px 10px" onClick=${()=>onCompare(null,new Set())}>Clear (${sel.size})</button></span>`:null}</h2>
+    <div class="table-scroll"><table>
+      <thead><tr>${th('mac_address','MAC')}${th('vendor_name','Vendor')}${th('ad_type','Type')}${th('sighting_count','Sightings')}<th>Payload</th>${th('payload_length','Len')}${th('rssi_min','RSSI')}${th('local_name','Name')}<th></th></tr></thead>
+      <tbody>${sorted.map(ad=>html`<tr style="cursor:pointer" onClick=${()=>onSelectAd(ad)}>
+        <td>${ad.mac_address||'-'}</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title=${ad.vendor_name||''}>${ad.vendor_name||'-'}</td><td>${ad.ad_type||'-'}</td>
+        <td>${ad.sighting_count||1}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${(ad.payload_hex||'').slice(0,32)}${(ad.payload_hex||'').length>32?'...':''}</td>
+        <td>${ad.payload_length||'-'}</td><td>${ad.rssi_min!=null?ad.rssi_min+'dBm':'-'}</td><td>${ad.local_name||'-'}</td>
+        <td onClick=${e=>{e.stopPropagation()}}><input type="checkbox" checked=${sel.has(ad.id)} onChange=${e=>{const s=new Set(sel);if(e.target.checked)s.add(ad.id);else s.delete(ad.id);onCompare(null,s)}} style="accent-color:var(--cyan)"/></td>
+      </tr>`)}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// --- HexViewer ---
+function HexViewer({ad,pendingSpec,onSpecLoaded}){
+  const[bytes,setBytes]=useState(new Uint8Array(0));
+  const[selStart,setSelStart]=useState(-1);
+  const[selEnd,setSelEnd]=useState(-1);
+  const[dragging,setDragging]=useState(false);
+  const[fields,setFields]=useState([]);
+  const[fieldName,setFieldName]=useState('');
+  const[fieldType,setFieldType]=useState('uint8');
+  const[endian,setEndian]=useState('LE');
+  const[dataSource,setDataSource]=useState('mfr');
+  const[tlvGroups,setTlvGroups]=useState([]);
+  const[pendingType,setPendingType]=useState(-1);
+  const[loadedSpec,setLoadedSpec]=useState(null);
+  const[unsavedChanges,setUnsavedChanges]=useState(false);
+  const[matchingSpecs,setMatchingSpecs]=useState([]);
+  const[allSpecs,setAllSpecs]=useState([]);
+  const[showLoadSpec,setShowLoadSpec]=useState(false);
+  const[specName,setSpecName]=useState('');
+
+  useEffect(()=>{
+    if(!ad)return;
+    if(ad.manufacturer_data_hex){setBytes(hexToBytes(ad.manufacturer_data_hex));setDataSource('mfr')}
+    else if(ad.service_data_json){
+      try{const sd=typeof ad.service_data_json==='string'?JSON.parse(ad.service_data_json):ad.service_data_json;
+        const first=Object.values(sd)[0]||'';setBytes(hexToBytes(first));setDataSource('svc')}catch(e){setBytes(new Uint8Array(0))}
+    } else setBytes(new Uint8Array(0));
+    if(ad._initialOffset!=null){setSelStart(ad._initialOffset);setSelEnd(ad._initialOffset)}
+    else{setSelStart(-1);setSelEnd(-1)}
+    setFields([]);setTlvGroups([]);setPendingType(-1);setLoadedSpec(null);setUnsavedChanges(false);setSpecName('');
+    if(ad&&ad.id){
+      fetch('/api/explorer/ad/'+ad.id+'/specs').then(r=>r.json()).then(specs=>{
+        setMatchingSpecs(specs);
+        if(specs.length>0){
+          fetch('/api/explorer/specs/'+specs[0].id).then(r=>r.json()).then(spec=>{
+            setLoadedSpec(spec);setSpecName(spec.name||'');
+            if(spec.fields&&spec.fields.length>0){
+              setFields(spec.fields.map((f,i)=>({name:f.name,offset:f.offset,length:f.length,type:f.field_type,endian:f.endian,color:i%8})));
+            }
+          }).catch(()=>{});
+        }
+      }).catch(()=>{});
+      fetch('/api/explorer/specs').then(r=>r.json()).then(setAllSpecs).catch(()=>{});
+    }
+  },[ad]);
+
+  useEffect(()=>{
+    if(!pendingSpec)return;
+    setLoadedSpec(pendingSpec);setSpecName(pendingSpec.name||'');setUnsavedChanges(false);
+    if(pendingSpec.fields&&pendingSpec.fields.length>0){
+      setFields(pendingSpec.fields.map((f,i)=>({name:f.name,offset:f.offset,length:f.length,type:f.field_type,endian:f.endian,color:i%8})));
+    }
+    if(onSpecLoaded)onSpecLoaded();
+  },[pendingSpec]);
+
+  const hasBoth=ad&&ad.manufacturer_data_hex&&ad.service_data_json;
+  const switchSource=(src)=>{
+    setDataSource(src);
+    if(src==='mfr')setBytes(hexToBytes(ad.manufacturer_data_hex));
+    else{try{const sd=typeof ad.service_data_json==='string'?JSON.parse(ad.service_data_json):ad.service_data_json;setBytes(hexToBytes(Object.values(sd)[0]||''))}catch(e){setBytes(new Uint8Array(0))}}
+    setSelStart(-1);setSelEnd(-1);setFields([]);setTlvGroups([]);setPendingType(-1);
+  };
+
+  const rows=[];
+  for(let i=0;i<bytes.length;i+=16){rows.push(i)}
+
+  const lo=Math.min(selStart,selEnd),hi=Math.max(selStart,selEnd);
+  const hasSelection=selStart>=0&&selEnd>=0;
+  const selectedBytes=hasSelection?bytes.slice(lo,hi+1):new Uint8Array(0);
+  const decoded=hasSelection?decodeBytes(new Uint8Array(selectedBytes),fieldType,endian):'';
+
+  function fieldColorAt(idx){
+    for(let i=0;i<fields.length;i++){const f=fields[i];if(idx>=f.offset&&idx<f.offset+f.length)return 'field-highlight-'+(i%8)}
+    return '';
+  }
+
+  function saveField(){
+    if(!hasSelection||!fieldName.trim())return;
+    setFields(fs=>[...fs,{name:fieldName.trim(),offset:lo,length:hi-lo+1,type:fieldType,endian,color:fs.length%8}]);
+    setFieldName('');setUnsavedChanges(true);
+  }
+
+  function removeField(idx){setFields(fs=>fs.filter((_,i)=>i!==idx));setUnsavedChanges(true)}
+
+  function saveSpec(){
+    if(fields.length===0)return;
+    const name=specName.trim()||(loadedSpec?loadedSpec.name:'spec_'+Date.now());
+    const specFields=fields.map(f=>({name:f.name,offset:f.offset,length:f.length,field_type:f.type,endian:f.endian}));
+    const body={name,company_id:ad.company_id_int||null,fields:specFields,data_source:dataSource==='svc'?'service':'mfr'};
+    const method=loadedSpec?'PUT':'POST';
+    const url=loadedSpec?'/api/explorer/specs/'+loadedSpec.id:'/api/explorer/specs';
+    fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.json()).then(s=>{setLoadedSpec(s);setSpecName(s.name||'');setUnsavedChanges(false);
+        fetch('/api/explorer/specs').then(r=>r.json()).then(setAllSpecs).catch(()=>{});
+      }).catch(()=>{});
+  }
+
+  function loadSpec(spec){
+    fetch('/api/explorer/specs/'+spec.id).then(r=>r.json()).then(s=>{
+      setLoadedSpec(s);setShowLoadSpec(false);setUnsavedChanges(false);setSpecName(s.name||'');
+      if(s.fields&&s.fields.length>0){
+        setFields(s.fields.map((f,i)=>({name:f.name,offset:f.offset,length:f.length,type:f.field_type,endian:f.endian,color:i%8})));
+      }
+    }).catch(()=>{});
+  }
+
+  function markAsType(){
+    if(!hasSelection)return;
+    setPendingType(lo);
+  }
+
+  function markAsLength(){
+    if(!hasSelection||pendingType<0)return;
+    const lenBytes=bytes.slice(lo,hi+1);
+    const lenSize=hi-lo+1;
+    let lengthVal;
+    if(lenSize===1)lengthVal=lenBytes[0];
+    else if(lenSize===2){const dv=new DataView(lenBytes.buffer,lenBytes.byteOffset,2);lengthVal=dv.getUint16(0,endian==='LE')}
+    else if(lenSize>=4){const dv=new DataView(lenBytes.buffer,lenBytes.byteOffset,4);lengthVal=dv.getUint32(0,endian==='LE')}
+    else lengthVal=lenBytes[0];
+    const valueStart=hi+1;
+    const valueLength=Math.min(lengthVal,bytes.length-valueStart);
+    let level=0;
+    function findLevel(groups){
+      for(const g of groups){
+        if(pendingType>=g.value_offset&&pendingType<g.value_offset+g.value_length){level=g.level+1}
+        if(g.children)findLevel(g.children);
+      }
+    }
+    findLevel(tlvGroups);
+    const newGroup={type_offset:pendingType,type_value:bytes[pendingType],length_offset:lo,length_size:lenSize,length_value:lengthVal,value_offset:valueStart,value_length:valueLength,level:level,children:[]};
+    function insertGroup(groups){
+      for(const g of groups){
+        if(pendingType>=g.value_offset&&pendingType<g.value_offset+g.value_length){
+          const inserted=insertGroup(g.children);
+          if(!inserted)g.children.push(newGroup);
+          return true;
+        }
+      }
+      return false;
+    }
+    function deepCopy(groups){return groups.map(g=>({...g,children:deepCopy(g.children)}))}
+    setTlvGroups(prev=>{
+      const next=deepCopy(prev);
+      if(!insertGroup(next))next.push(newGroup);
+      return next;
+    });
+    setPendingType(-1);
+  }
+
+  function removeTlvGroup(targetGroup){
+    function removeFrom(groups){
+      return groups.filter(g=>g.type_offset!==targetGroup.type_offset||g.length_offset!==targetGroup.length_offset).map(g=>({...g,children:removeFrom(g.children)}));
+    }
+    setTlvGroups(prev=>removeFrom(prev));
+  }
+
+  function tlvClassAt(idx){
+    let cls='';
+    function check(groups){
+      for(const g of groups){
+        if(idx>=g.type_offset&&idx<g.value_offset+g.value_length){
+          cls+=' tlv-band tlv-level-'+Math.min(g.level,2);
+          if(idx===g.type_offset)cls+=' tlv-type-byte';
+          if(idx>=g.length_offset&&idx<g.length_offset+(g.length_size||1))cls+=' tlv-length-byte';
+        }
+        if(g.children)check(g.children);
+      }
+    }
+    check(tlvGroups);
+    return cls;
+  }
+
+  function TlvTreeNode({group,depth}){
+    const indent=depth*16;
+    const valPreview=Array.from(bytes.slice(group.value_offset,Math.min(group.value_offset+group.value_length,group.value_offset+8)))
+      .map(b=>b.toString(16).padStart(2,'0')).join(' ');
+    const ellipsis=group.value_length>8?'...':'';
+    return html`<div>
+      <div class="tlv-tree-node tlv-level-${Math.min(group.level,2)}" style="margin-left:${indent}px;display:flex;align-items:center;gap:8px"
+        onClick=${()=>{setSelStart(group.type_offset);setSelEnd(group.value_offset+group.value_length-1)}}>
+        <span>T=0x${group.type_value.toString(16).padStart(2,'0')} L=${group.length_value} V=[${valPreview}${ellipsis}]</span>
+        <span style="cursor:pointer;color:var(--red);font-size:10px;margin-left:auto" onClick=${e=>{e.stopPropagation();removeTlvGroup(group)}}>\u2715</span>
+      </div>
+      ${group.children.map(c=>html`<${TlvTreeNode} group=${c} depth=${depth+1}/>`)}
+    </div>`;
+  }
+
+  return html`<div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px 24px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+      <span><b style="color:var(--text1)">MAC:</b> ${ad.mac_address||'-'} (${ad.address_type||'?'})</span>
+      ${ad.vendor_name?html`<span><b style="color:var(--text1)">Vendor:</b> <span style="color:var(--cyan)">${ad.vendor_name}</span></span>`:null}
+      ${ad.bt_company_name?html`<span><b style="color:var(--text1)">BT SIG:</b> ${ad.bt_company_name}${ad.company_id_int!=null?' (0x'+ad.company_id_int.toString(16).toUpperCase().padStart(4,'0')+')':''}</span>`:null}
+      ${ad.oui_vendor?html`<span><b style="color:var(--text1)">OUI:</b> ${ad.oui_vendor}</span>`:null}
+      ${ad.ad_type?html`<span><b style="color:var(--text1)">Type:</b> ${ad.ad_type}</span>`:null}
+      ${ad.parsed_by?html`<span><b style="color:var(--text1)">Parser:</b> ${ad.parsed_by}</span>`:null}
+      <span><b style="color:var(--text1)">Sightings:</b> ${ad.sighting_count||1}</span>
+      ${loadedSpec?html`<span class="spec-badge" style="background:rgba(0,229,255,.15);color:var(--cyan);padding:2px 8px;border-radius:4px;font-size:11px">${loadedSpec.name}</span>`:null}
+      ${unsavedChanges?html`<span class="unsaved" style="color:var(--amber);font-size:11px">unsaved</span>`:null}
+    </div>
+    ${hasBoth?html`<div style="margin-bottom:8px;display:flex;gap:8px">
+      <button class=${'nav-btn'+(dataSource==='mfr'?' active':'')} onClick=${()=>switchSource('mfr')}>Manufacturer Data</button>
+      <button class=${'nav-btn'+(dataSource==='svc'?' active':'')} onClick=${()=>switchSource('svc')}>Service Data</button>
+    </div>`:null}
+    <div class="hex-viewer-layout">
+      <div class="hex-panel">
+        <div class="hex-grid" onMouseLeave=${()=>setDragging(false)}>
+          ${rows.map(off=>html`
+            <span class="hex-offset">${off.toString(16).padStart(4,'0')}</span>
+            ${Array.from({length:Math.min(16,bytes.length-off)},(_,j)=>{
+              const idx=off+j;const b=bytes[idx];
+              const isSel=hasSelection&&idx>=lo&&idx<=hi;
+              const fc=fieldColorAt(idx);
+              return html`<span class=${'hex-byte'+(isSel?' selected':'')+(fc?' '+fc:'')+tlvClassAt(idx)}
+                onMouseDown=${()=>{setSelStart(idx);setSelEnd(idx);setDragging(true)}}
+                onMouseEnter=${()=>{if(dragging)setSelEnd(idx)}}
+                onMouseUp=${()=>setDragging(false)}
+              >${b.toString(16).padStart(2,'0')}</span>`;
+            })}
+            ${bytes.length-off<16?Array.from({length:16-(bytes.length-off)},()=>html`<span class="hex-byte"></span>`):null}
+            <span class="hex-ascii">${Array.from(bytes.slice(off,off+16)).map(b=>b>=32&&b<=126?String.fromCharCode(b):'.').join('')}</span>
+          `)}
+        </div>
+        ${fields.length>0?html`<div style="padding:12px;border-top:1px solid var(--glass-border)">
+          <table style="width:100%;font-size:12px"><thead><tr><th></th><th>Name</th><th>Offset</th><th>Len</th><th>Type</th><th>Value</th><th></th></tr></thead>
+          <tbody>${fields.map((f,i)=>html`<tr>
+            <td><span style="display:inline-block;width:12px;height:12px;border-radius:3px" class=${'field-highlight-'+f.color}></span></td>
+            <td>${f.name}</td><td>0x${f.offset.toString(16)}</td><td>${f.length}</td><td>${f.type}</td>
+            <td>${decodeBytes(new Uint8Array(bytes.slice(f.offset,f.offset+f.length)),f.type,f.endian)}</td>
+            <td style="cursor:pointer;color:var(--red)" onClick=${()=>removeField(i)}>\u2715</td>
+          </tr>`)}</tbody></table>
+        </div>`:null}
+        ${tlvGroups.length>0?html`<div class="tlv-tree">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px">TLV Structure</div>
+          ${tlvGroups.map(g=>html`<${TlvTreeNode} group=${g} depth=${0}/>`)}
+        </div>`:null}
+      </div>
+      <div class="field-editor">
+        <h3>Field Editor</h3>
+        ${hasSelection?html`
+          <div style="margin-bottom:8px;font-size:12px;color:var(--text2)">Selected: offset 0x${lo.toString(16)} \u2013 0x${hi.toString(16)} (${hi-lo+1} byte${hi-lo>0?'s':''})</div>
+          <label style="display:block;margin-bottom:8px;font-size:11px;color:var(--text2)">Name
+            <input type="text" value=${fieldName} onInput=${e=>setFieldName(e.target.value)} style="display:block;width:100%;padding:6px 10px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-size:12px;margin-top:4px;outline:none"/>
+          </label>
+          <label style="display:block;margin-bottom:8px;font-size:11px;color:var(--text2)">Type
+            <select value=${fieldType} onChange=${e=>setFieldType(e.target.value)} style="display:block;width:100%;padding:6px 10px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-size:12px;margin-top:4px">
+              ${['uint8','uint16','uint32','int8','int16','int32','float32','utf8','mac_addr','uuid','bitfield','raw_hex'].map(t=>html`<option value=${t}>${t}</option>`)}
+            </select>
+          </label>
+          <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center">
+            <span style="font-size:11px;color:var(--text2)">Endian:</span>
+            <button class=${'nav-btn'+(endian==='LE'?' active':'')} style="padding:4px 10px;font-size:11px" onClick=${()=>setEndian('LE')}>LE</button>
+            <button class=${'nav-btn'+(endian==='BE'?' active':'')} style="padding:4px 10px;font-size:11px" onClick=${()=>setEndian('BE')}>BE</button>
+          </div>
+          <div style="padding:8px;background:var(--bg3);border-radius:6px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan)">${String(decoded)}</div>
+          <button class="nav-btn active" onClick=${saveField} style="width:100%">Save Field</button>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class=${'nav-btn'+(pendingType>=0?' active':'')} onClick=${markAsType} style="flex:1;font-size:11px;padding:4px 8px">Mark as Type</button>
+            <button class="nav-btn" onClick=${markAsLength} style="flex:1;font-size:11px;padding:4px 8px" disabled=${pendingType<0}>Mark as Length</button>
+          </div>
+          ${pendingType>=0?html`<div style="font-size:11px;color:var(--amber);margin-top:6px;display:flex;align-items:center;gap:8px">
+            <span>Type byte at 0x${pendingType.toString(16)} — now select the Length byte</span>
+            <span style="cursor:pointer;color:var(--red)" onClick=${()=>setPendingType(-1)}>\u2715</span>
+          </div>`:null}
+          ${tlvGroups.length>0?html`<button class="nav-btn" onClick=${()=>{setTlvGroups([]);setPendingType(-1)}} style="width:100%;font-size:11px;padding:4px 8px;margin-top:8px;color:var(--red)">Clear All TLV</button>`:null}
+        `:html`<p style="font-size:12px;color:var(--text3)">Click or drag bytes in the hex grid to select a range.</p>`}
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--glass-border)">
+          <h3 style="font-size:13px;color:var(--text2);margin-bottom:8px">Protocol Spec</h3>
+          <label style="display:block;margin-bottom:8px;font-size:11px;color:var(--text2)">Name
+            <input type="text" value=${specName} onInput=${e=>{setSpecName(e.target.value);setUnsavedChanges(true)}} placeholder="my_protocol" style="display:block;width:100%;padding:6px 10px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-size:12px;margin-top:4px;outline:none"/>
+          </label>
+          ${loadedSpec?html`<div style="font-size:10px;color:var(--text3);margin-bottom:8px">Editing: ${loadedSpec.name}${unsavedChanges?' (unsaved)':''}</div>`:null}
+          <div style="display:flex;gap:6px">
+            <button class="nav-btn${fields.length>0&&(unsavedChanges||!loadedSpec)?' active':''}" onClick=${saveSpec} style="flex:1;font-size:11px;padding:4px 8px" disabled=${fields.length===0}>Save Spec</button>
+            <button class="nav-btn" onClick=${()=>setShowLoadSpec(!showLoadSpec)} style="flex:1;font-size:11px;padding:4px 8px">Load Spec</button>
+          </div>
+          ${showLoadSpec?html`<div class="spec-dropdown" style="margin-top:6px;background:var(--bg3);border-radius:6px;padding:6px;max-height:200px;overflow-y:auto">
+            ${allSpecs.length===0?html`<div style="padding:4px 8px;font-size:11px;color:var(--text3)">No specs saved yet</div>`:null}
+            ${allSpecs.map(s=>{
+              const isMatch=matchingSpecs.some(m=>m.id===s.id);
+              return html`<div style=${"padding:4px 8px;cursor:pointer;font-size:11px;border-radius:4px"+(isMatch?";color:var(--cyan)":"")} onClick=${()=>loadSpec(s)}>${s.name}${isMatch?' *':''}</div>`;
+            })}
+          </div>`:null}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// --- CompareView ---
+function matchesFilters(ad,filters){
+  if(filters.ad_type&&filters.ad_type!=='__null__'&&ad.ad_type!==filters.ad_type)return false;
+  if(filters.ad_type==='__null__'&&ad.ad_type)return false;
+  if(filters.local_name&&!(ad.local_name||'').toLowerCase().includes(filters.local_name.toLowerCase()))return false;
+  if(filters.mac_prefix&&!(ad.mac_address||'').toLowerCase().startsWith(filters.mac_prefix.toLowerCase()))return false;
+  if(filters.parsed_by&&filters.parsed_by!=='__null__'&&ad.parsed_by!==filters.parsed_by)return false;
+  if(filters.parsed_by==='__null__'&&ad.parsed_by)return false;
+  return true;
+}
+
+function CompareView({ads,compareData,onSelectByte,onRemoveAd,onAddAd}){
+  const data=compareData||[];
+  const[addId,setAddId]=useState('');
+  if(!data.length)return html`<p style="color:var(--text2)">No comparison data.</p>`;
+  const adMap={};(ads||[]).forEach(a=>{adMap[a.id]=a});
+  const adIds=[...new Set(data.flatMap(d=>Object.keys(d.values||{}).map(Number)))];
+  return html`<div style="overflow-x:auto">
+    ${adIds.map(id=>html`<div class="compare-row" style="margin-bottom:4px">
+      <span style="min-width:120px;font-size:11px;color:var(--text2);font-family:monospace">${adMap[id]?adMap[id].mac_address:'#'+id}<span style="cursor:pointer;color:var(--red);margin-left:4px" onClick=${()=>onRemoveAd&&onRemoveAd(id)}>✕</span></span>
+      ${data.map(d=>{
+        const val=d.values&&d.values[id]!=null?d.values[id]:null;
+        const cls=d.is_constant?'byte-constant':d.unique_count>4?'byte-random':'byte-variable';
+        return html`<span class=${'hex-byte '+cls} style="min-width:28px;text-align:center;cursor:pointer" onClick=${()=>onSelectByte&&onSelectByte(id,d.offset)}>${val!=null?val.toString(16).padStart(2,'0'):'--'}</span>`;
+      })}
+    </div>`)}
+    <div class="compare-row" style="margin-top:8px;border-top:1px solid var(--glass-border);padding-top:4px">
+      <span style="min-width:120px;font-size:11px;color:var(--text2)">Summary</span>
+      ${data.map(d=>{
+        const lbl=d.is_constant?'C':d.unique_count>4?'R':'V';
+        const cls=d.is_constant?'byte-constant':d.unique_count>4?'byte-random':'byte-variable';
+        return html`<span class=${'hex-byte '+cls} style="min-width:28px;text-align:center;font-size:10px">${lbl}</span>`;
+      })}
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <input type="number" placeholder="Ad ID" value=${addId} onInput=${e=>setAddId(e.target.value)}
+        style="width:80px;padding:4px 8px;background:var(--bg3);border:1px solid var(--glass-border);border-radius:6px;color:var(--text);font-size:12px"/>
+      <button class="nav-btn" style="font-size:11px;padding:4px 10px" onClick=${()=>{if(addId&&onAddAd){onAddAd(parseInt(addId));setAddId('')}}}>Add</button>
+    </div>
+  </div>`;
+}
+
+// --- SpecsPanel ---
+function SpecsPanel({onApplySpec}){
+  const[specs,setSpecs]=useState([]);
+  const[codegenOutput,setCodegenOutput]=useState('');
+  const[showCodegen,setShowCodegen]=useState(false);
+
+  useEffect(()=>{
+    fetch('/api/explorer/specs').then(r=>r.json()).then(setSpecs).catch(()=>{});
+  },[]);
+
+  function deleteSpec(id){
+    fetch('/api/explorer/specs/'+id,{method:'DELETE'}).then(()=>{
+      setSpecs(ss=>ss.filter(s=>s.id!==id));
+    }).catch(()=>{});
+  }
+
+  function generateParser(id){
+    fetch('/api/explorer/specs/'+id+'/codegen').then(r=>r.json()).then(d=>{
+      setCodegenOutput(d.code);setShowCodegen(true);
+    }).catch(()=>{});
+  }
+
+  function copyCode(){navigator.clipboard.writeText(codegenOutput)}
+
+  function exportSpec(spec){
+    fetch('/api/explorer/specs/'+spec.id).then(r=>r.json()).then(d=>{
+      const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=spec.name+'.json';a.click();
+    }).catch(()=>{});
+  }
+
+  function importSpec(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{const data=JSON.parse(reader.result);
+        fetch('/api/explorer/specs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+          .then(r=>r.json()).then(s=>{setSpecs(ss=>[...ss,s])}).catch(()=>{});
+      }catch(err){}
+    };
+    reader.readAsText(file);
+  }
+
+  return html`<div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <h3 style="font-size:14px">Specs (${specs.length})</h3>
+      <label class="nav-btn" style="font-size:11px;padding:4px 10px;cursor:pointer">Import<input type="file" accept=".json" onChange=${importSpec} style="display:none"/></label>
+    </div>
+    ${specs.map(s=>html`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--glass);border:1px solid var(--glass-border);border-radius:8px;margin-bottom:6px;flex-wrap:wrap">
+      <span style="flex:1;font-size:13px;min-width:120px">${s.name}</span>
+      ${onApplySpec?html`<button class="nav-btn active" style="font-size:11px;padding:4px 8px" onClick=${()=>{fetch('/api/explorer/specs/'+s.id).then(r=>r.json()).then(full=>onApplySpec(full)).catch(()=>{})}}>Apply</button>`:null}
+      <button class="nav-btn" style="font-size:11px;padding:4px 8px" onClick=${()=>exportSpec(s)}>Export</button>
+      <button class="nav-btn" style="font-size:11px;padding:4px 8px" onClick=${()=>generateParser(s.id)}>Generate Parser</button>
+      <button class="nav-btn" style="font-size:11px;padding:4px 8px;color:var(--red)" onClick=${()=>deleteSpec(s.id)}>Delete</button>
+    </div>`)}
+    ${showCodegen?html`<div style="margin-top:12px;background:var(--bg3);border-radius:8px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;color:var(--text2)">Generated Parser</span>
+        <div style="display:flex;gap:6px">
+          <button class="nav-btn" style="font-size:11px;padding:4px 10px" onClick=${copyCode}>Copy to Clipboard</button>
+          <button class="nav-btn" style="font-size:11px;padding:4px 10px" onClick=${()=>setShowCodegen(false)}>Close</button>
+        </div>
+      </div>
+      <pre class="codegen-output" style="overflow-x:auto;font-size:12px;color:var(--text);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${codegenOutput}</pre>
+    </div>`:null}
+  </div>`;
+}
+
+// --- ExplorerTab ---
+function ExplorerTab({wsRef}){
+  const[filters,setFilters]=useState({min_sightings:1});
+  const[ads,setAds]=useState([]);
+  const[facets,setFacets]=useState({ad_types:[],company_ids:[],service_uuids:[],local_names:[]});
+  const[selectedAd,setSelectedAd]=useState(null);
+  const[selectedIds,setSelectedIds]=useState(new Set());
+  const[compareData,setCompareData]=useState([]);
+  const[panel,_setPanel]=useState('list');
+  const[liveAds,setLiveAds]=useState([]);
+  const[pendingSpec,setPendingSpec]=useState(null);
+
+  // History-aware panel switching
+  const setPanel=useCallback((p,replace)=>{
+    _setPanel(p);
+    const state={tab:'explorer',panel:p};
+    if(replace)history.replaceState(state,'','#explorer/'+p);
+    else history.pushState(state,'','#explorer/'+p);
+  },[]);
+
+  useEffect(()=>{
+    const onPop=(e)=>{
+      const p=e.state?.panel;
+      if(p)_setPanel(p);
+    };
+    window.addEventListener('popstate',onPop);
+    // Init panel from hash
+    const hash=location.hash.slice(1);
+    if(hash.startsWith('explorer/')){const p=hash.split('/')[1];if(p)_setPanel(p)}
+    history.replaceState({tab:'explorer',panel:panel},'','#explorer/'+panel);
+    return()=>window.removeEventListener('popstate',onPop);
+  },[]);
+
+  useEffect(()=>{fetch('/api/explorer/facets').then(r=>r.json()).then(setFacets).catch(()=>{})},[]);
+
+  function doSearch(f){
+    const ff=f||filters;
+    const p=new URLSearchParams();
+    if(ff.ad_type&&ff.ad_type!=='__null__')p.set('ad_type',ff.ad_type);
+    if(ff.parsed_by)p.set('parsed_by',ff.parsed_by);
+    if(ff.service_uuid)p.set('service_uuid',ff.service_uuid);
+    if(ff.local_name)p.set('local_name',ff.local_name);
+    if(ff.mac_prefix)p.set('mac_prefix',ff.mac_prefix);
+    if(ff.min_sightings>1)p.set('min_sightings',ff.min_sightings);
+    if(ff.group_by)p.set('group_by',ff.group_by);
+    fetch('/api/explorer/ads?'+p.toString()).then(r=>r.json()).then(d=>{setAds(d);setPanel('list')}).catch(()=>{});
+  }
+
+  // Debounced dynamic search on filter changes
+  useEffect(()=>{
+    const t=setTimeout(()=>doSearch(filters),300);
+    return()=>clearTimeout(t);
+  },[filters.ad_type,filters.parsed_by,filters.service_uuid,filters.local_name,filters.mac_prefix,filters.min_sightings,filters.group_by]);
+
+  function selectAd(ad){
+    fetch('/api/explorer/ad/'+ad.id).then(r=>r.json()).then(d=>{setSelectedAd(d);setPanel('detail')}).catch(()=>{});
+  }
+
+  function handleCompare(ids,newSet){
+    if(newSet){setSelectedIds(newSet);return}
+    if(!ids||ids.length<2)return;
+    fetch('/api/explorer/compare?ids='+ids.join(',')).then(r=>r.json()).then(d=>{
+      setCompareData(d);setPanel('compare');
+    }).catch(()=>{});
+  }
+
+  const filtersRef=useRef(filters);
+  useEffect(()=>{filtersRef.current=filters},[filters]);
+
+  function handleSelectByte(adId,offset){
+    fetch('/api/explorer/ad/'+adId).then(r=>r.json()).then(d=>{
+      setSelectedAd({...d,_initialOffset:offset});setPanel('detail');
+    }).catch(()=>{});
+  }
+
+  function handleRemoveAd(adId){
+    const newIds=new Set(selectedIds);newIds.delete(adId);setSelectedIds(newIds);
+    if(newIds.size>=2){fetch('/api/explorer/compare?ids='+[...newIds].join(',')).then(r=>r.json()).then(setCompareData).catch(()=>{});}
+    else{setPanel('list')}
+  }
+
+  function handleAddAd(adId){
+    const newIds=new Set(selectedIds);newIds.add(adId);setSelectedIds(newIds);
+    fetch('/api/explorer/compare?ids='+[...newIds].join(',')).then(r=>r.json()).then(setCompareData).catch(()=>{});
+  }
+
+  // Watch mode: listen to WS sighting events
+  useEffect(()=>{
+    if(!filters.watch||!wsRef||!wsRef.current)return;
+    const ws=wsRef.current;
+    function onMsg(ev){
+      try{const msg=JSON.parse(ev.data);
+        if(msg.type==='sighting_batch'&&Array.isArray(msg.data)){
+          const newAds=msg.data.map(d=>({...d.raw,ad_type:d.classification?.ad_type,parsed_by:d.parsed_by}));
+          const filtered=newAds.filter(a=>matchesFilters(a,filtersRef.current));
+          setLiveAds(la=>[...filtered,...la].slice(0,50));
+        }
+      }catch(e){}
+    }
+    ws.addEventListener('message',onMsg);
+    return()=>ws.removeEventListener('message',onMsg);
+  },[filters.watch,wsRef]);
+
+  return html`<div>
+    <${ExplorerFilters} filters=${filters} facets=${facets} onFilterChange=${setFilters}/>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      ${panel!=='list'?html`<button class="nav-btn" onClick=${()=>setPanel('list')}>\u2190 Back to list</button>`:null}
+      <button class=${'nav-btn'+(panel==='specs'?' active':'')} onClick=${()=>setPanel('specs')}>Specs</button>
+    </div>
+    ${panel==='list'?html`<${ExplorerList} ads=${ads} onSelectAd=${selectAd} onCompare=${handleCompare} selectedIds=${selectedIds}/>`:null}
+    ${panel==='detail'&&selectedAd?html`<${HexViewer} ad=${selectedAd} pendingSpec=${pendingSpec} onSpecLoaded=${()=>setPendingSpec(null)}/>`:null}
+    ${panel==='compare'?html`<${CompareView} ads=${ads.filter(a=>selectedIds.has(a.id))} compareData=${compareData} onSelectByte=${handleSelectByte} onRemoveAd=${handleRemoveAd} onAddAd=${handleAddAd}/>`:null}
+    ${panel==='specs'?html`<${SpecsPanel} onApplySpec=${selectedAd?(spec)=>{setPendingSpec(spec);setPanel('detail')}:null}/>`:null}
+    ${filters.watch&&liveAds.length>0?html`<div style="margin-top:16px"><h3 style="font-size:13px;color:var(--text2);margin-bottom:8px">Live (${liveAds.length})</h3>
+      <${ExplorerList} ads=${liveAds} onSelectAd=${selectAd} onCompare=${handleCompare} selectedIds=${selectedIds}/></div>`:null}
+  </div>`;
+}
+
+// --- App ---
+function App(){
+  const[overview,setOverview]=useState({});
+  const[feed,setFeed]=useState([]);
+  const[pluginUIs,setPluginUIs]=useState([]);
+  const[activeTab,_setActiveTab]=useState('overview');
+  const[wsStatus,setWsStatus]=useState('connecting');
+  const[paused,setPaused]=useState(false);
+  const pausedRef=useRef(false);
+  const wsRef=useRef(null);
+
+  // History-aware tab switching
+  const setActiveTab=useCallback((tab,replace)=>{
+    _setActiveTab(tab);
+    const state={tab};
+    if(replace)history.replaceState(state,'','#'+tab);
+    else history.pushState(state,'','#'+tab);
+  },[]);
+
+  useEffect(()=>{
+    const onPop=(e)=>{
+      const tab=e.state?.tab||'overview';
+      _setActiveTab(tab);
+    };
+    window.addEventListener('popstate',onPop);
+    // Init from hash
+    const hash=location.hash.slice(1);
+    if(hash){const tab=hash.split('/')[0]||'overview';_setActiveTab(tab);history.replaceState({tab},'','#'+hash)}
+    else{history.replaceState({tab:'overview'},'','#overview')}
+    return()=>window.removeEventListener('popstate',onPop);
+  },[]);
+
+  // Keep ref in sync so the WS callback sees current value
+  useEffect(()=>{pausedRef.current=paused},[paused]);
+
+  const connectWS=useCallback(()=>{
+    const proto=location.protocol==='https:'?'wss':'ws';
+    const ws=new WebSocket(proto+'://'+location.host+'/ws');
+    ws.onopen=()=>{setWsStatus('connected');wsRef.current=ws};
+    ws.onclose=()=>{setWsStatus('reconnecting');setTimeout(connectWS,3000)};
+    ws.onmessage=(ev)=>{
+      try{
+        const msg=JSON.parse(ev.data);
+        if(msg.type==='sighting_batch'&&Array.isArray(msg.data)){
+          if(!pausedRef.current){
+            const newRows=msg.data.map(d=>({...d.raw,ad_type:d.classification?.ad_type,ad_category:d.classification?.ad_category,_new:true}));
+            setFeed(f=>[...newRows.reverse(),...f].slice(0,200));
+          }
+        }
+        if(msg.type==='sighting'&&msg.data&&msg.data.raw){
+          if(!pausedRef.current){
+            const row={...msg.data.raw,ad_type:msg.data.classification?.ad_type,ad_category:msg.data.classification?.ad_category,_new:true};
+            setFeed(f=>[row,...f].slice(0,200));
+          }
+        }
+        if(msg.type==='summary')setOverview(msg.data);
+      }catch(e){}
+    };
+  },[]);
+
+  useEffect(()=>{
+    fetch('/api/overview').then(r=>r.json()).then(setOverview).catch(()=>{});
+    fetch('/api/feed?limit=100').then(r=>r.json()).then(setFeed).catch(()=>{});
+    fetch('/api/plugins/ui').then(r=>r.json()).then(setPluginUIs).catch(()=>{});
+    connectWS();
+    const poll=setInterval(()=>{fetch('/api/overview').then(r=>r.json()).then(setOverview).catch(()=>{})},15000);
+    return()=>clearInterval(poll);
+  },[]);
+
+  const pluginTabs=pluginUIs.map((p,i)=>({id:'plugin-'+i,label:p.tab_name}));
+  const categories=Object.entries(overview);
+
+  return html`
+    <div class="header">
+      <h1><span>ad</span>watch</h1>
+      <div class="status"><div class=${'dot'+(wsStatus!=='connected'?' '+'':'')} style=${wsStatus!=='connected'?'background:var(--amber)':''}></div>${wsStatus}</div>
+    </div>
+    <${NavBar} pluginTabs=${pluginTabs} active=${activeTab} onSelect=${setActiveTab}/>
+    <div class="main">
+      ${activeTab==='overview'?html`
+        <div class="cards">
+          ${categories.length?categories.map(([cat,info])=>{
+            const norm=cat.replace(/_/g,' ').toLowerCase();
+            let tabIdx=pluginUIs.findIndex(p=>p.tab_name.toLowerCase()===norm);
+            if(tabIdx<0)tabIdx=pluginUIs.findIndex(p=>p.tab_name.toLowerCase().startsWith(norm));
+            if(tabIdx<0)tabIdx=pluginUIs.findIndex(p=>p.tab_name.toLowerCase().includes(norm));
+            const click=tabIdx>=0?()=>setActiveTab('plugin-'+tabIdx):null;
+            return html`<${SummaryCard} label=${cat} value=${typeof info==='object'?info.total_sightings:info} onClick=${click}/>`;
+          }):html`<${SummaryCard} label="total" value=${0}/>`}
+        </div>
+        <${LiveFeed} rows=${feed} paused=${paused} onTogglePause=${()=>setPaused(p=>!p)}/>
+      `:null}
+      ${activeTab==='plugins'?html`<${PluginManager}/>`:null}
+      ${activeTab==='explorer'?html`<${ExplorerTab} wsRef=${wsRef}/>`:null}
+      ${activeTab.startsWith('plugin-')?html`<${PluginTab} config=${pluginUIs[parseInt(activeTab.split('-')[1])]} wsRef=${wsRef}/>`:''}
+    </div>`;
+}
+
+render(html`<${App}/>`,document.getElementById('app'));
+</script>
+</body>
+</html>
