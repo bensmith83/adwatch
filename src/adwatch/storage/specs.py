@@ -30,9 +30,6 @@ class SpecStorage:
     def __init__(self, db: Database):
         self._db = db
 
-    async def _enable_fk(self):
-        await self._db.execute("PRAGMA foreign_keys = ON")
-
     async def create_spec(
         self,
         name: str,
@@ -49,7 +46,6 @@ class SpecStorage:
             except re.error as e:
                 raise ValueError(f"Invalid regex pattern: {e}")
         now = time.time()
-        await self._enable_fk()
         await self._db.execute(
             """INSERT INTO protocol_specs
                (name, description, company_id, service_uuid, local_name_pattern, data_source, created_at, updated_at)
@@ -94,7 +90,6 @@ class SpecStorage:
         )
 
     async def delete_spec(self, spec_id: int) -> None:
-        await self._enable_fk()
         await self._db.execute(
             "DELETE FROM protocol_specs WHERE id = ?", (spec_id,)
         )
@@ -153,21 +148,28 @@ class SpecStorage:
         )
 
     async def replace_fields(self, spec_id: int, fields: list[dict]) -> None:
-        """Delete all existing fields for a spec and insert new ones."""
-        await self._db.execute(
-            "DELETE FROM protocol_spec_fields WHERE spec_id = ?", (spec_id,)
-        )
-        for i, f in enumerate(fields):
-            await self.add_field(
-                spec_id,
-                name=f["name"],
-                offset=f["offset"],
-                length=f["length"],
-                field_type=f["field_type"],
-                endian=f.get("endian", "LE"),
-                description=f.get("description"),
-                sort_order=f.get("sort_order", i),
+        """Delete all existing fields for a spec and insert new ones (atomic)."""
+        # Validate all field names up front before touching the database
+        for f in fields:
+            _validate_identifier(f["name"], "field name")
+
+        await self._db._conn.execute("BEGIN IMMEDIATE")
+        try:
+            await self._db._conn.execute(
+                "DELETE FROM protocol_spec_fields WHERE spec_id = ?", (spec_id,)
             )
+            for i, f in enumerate(fields):
+                await self._db._conn.execute(
+                    """INSERT INTO protocol_spec_fields
+                       (spec_id, name, offset, length, field_type, endian, description, sort_order)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (spec_id, f["name"], f["offset"], f["length"], f["field_type"],
+                     f.get("endian", "LE"), f.get("description"), f.get("sort_order", i)),
+                )
+            await self._db.commit()
+        except Exception:
+            await self._db.rollback()
+            raise
 
     async def match_specs(self, ad_row: dict) -> list[dict]:
         specs = await self._db.fetchall("SELECT * FROM protocol_specs")

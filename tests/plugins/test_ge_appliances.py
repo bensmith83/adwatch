@@ -135,6 +135,28 @@ class TestGEAppliancesIdentity:
         assert all(c in "0123456789abcdef" for c in result.identifier_hash)
 
 
+class TestGEAppliancesSubtypeNames:
+    def test_short_ad_subtype_name_idle(self, parser):
+        """Short ad (variant 0xB2) should have ad_subtype_name='idle'."""
+        raw = make_raw(manufacturer_data=SHORT_AD)
+        result = parser.parse(raw)
+        assert result.metadata["ad_subtype_name"] == "idle"
+
+    def test_long_ad_subtype_name_device_info(self, parser):
+        """Long ad (variant 0xB1) should have ad_subtype_name='device_info'."""
+        raw = make_raw(manufacturer_data=LONG_AD)
+        result = parser.parse(raw)
+        assert result.metadata["ad_subtype_name"] == "device_info"
+
+    def test_other_variant_subtype_name_status(self, parser):
+        """Other variant byte should have ad_subtype_name='status'."""
+        other = bytearray(SHORT_AD)
+        other[2] = 0xA0  # different variant byte
+        raw = make_raw(manufacturer_data=bytes(other))
+        result = parser.parse(raw)
+        assert result.metadata["ad_subtype_name"] == "status"
+
+
 class TestGEAppliancesStableKey:
     def test_stable_key_uses_mac(self, parser):
         """Stable key should be MAC-based so short/long ads dedup together."""

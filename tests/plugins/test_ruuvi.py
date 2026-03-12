@@ -289,3 +289,23 @@ class TestRuuviRegistration:
     def test_not_core(self):
         """Ruuvi should be a plugin (core=False)."""
         assert True  # verified by registration above
+
+
+class TestRuuviStructSafety:
+    """Defense-in-depth: if struct.unpack_from raises struct.error
+    for any reason, parser must return None instead of crashing."""
+
+    def test_struct_error_returns_none(self, parser):
+        """Monkeypatch struct.unpack_from to raise struct.error;
+        parser should catch it and return None."""
+        import struct as struct_mod
+        from unittest.mock import patch
+
+        raw = make_raw(manufacturer_data=VALID_DATA)
+
+        with patch.object(
+            struct_mod, "unpack_from", side_effect=struct_mod.error("boom")
+        ):
+            result = parser.parse(raw)
+
+        assert result is None

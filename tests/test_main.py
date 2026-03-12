@@ -129,7 +129,8 @@ async def test_shutdown_stops_scanner():
     scanner.stop.assert_awaited_once()
 
 
-def test_force_quit_on_second_signal():
+@pytest.mark.asyncio
+async def test_force_quit_on_second_signal():
     """Second signal should call sys.exit for force quit."""
     from adwatch.main import _make_signal_handler
 

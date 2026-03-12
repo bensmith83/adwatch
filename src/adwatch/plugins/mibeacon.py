@@ -46,6 +46,12 @@ class MiBeaconParser:
         if len(data) < 5:
             return None
 
+        try:
+            return self._parse_inner(raw, data)
+        except struct.error:
+            return None
+
+    def _parse_inner(self, raw: RawAdvertisement, data: bytes) -> ParseResult | None:
         frame_control, device_type, frame_counter = struct.unpack_from("<HHB", data, 0)
         offset = 5
 

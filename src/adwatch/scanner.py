@@ -21,6 +21,10 @@ class Scanner:
 
         self._callback = callback
 
+        def _handle_task_exception(task):
+            if not task.cancelled() and task.exception():
+                logger.error("Pipeline callback error: %s", task.exception())
+
         def _detection_callback(device, advertisement_data):
             manufacturer_data = None
             for company_id, data in advertisement_data.manufacturer_data.items():
@@ -52,7 +56,8 @@ class Scanner:
                 tx_power=advertisement_data.tx_power,
             )
             import asyncio
-            asyncio.ensure_future(callback(raw))
+            task = asyncio.create_task(callback(raw))
+            task.add_done_callback(_handle_task_exception)
 
         self._scanner = BleakScanner(
             detection_callback=_detection_callback,

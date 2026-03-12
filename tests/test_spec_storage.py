@@ -382,3 +382,35 @@ class TestFieldNameValidation:
         spec = await spec_storage.create_spec("proto1")
         with pytest.raises(ValueError):
             await spec_storage.add_field(spec["id"], "", 0, 2, "uint16")
+
+
+# ===================================================================
+# replace_fields atomicity
+# ===================================================================
+
+class TestReplaceFieldsAtomicity:
+    """replace_fields must be atomic — if any field insert fails,
+    the original fields should remain untouched."""
+
+    @pytest.mark.asyncio
+    async def test_replace_fields_rollback_on_invalid_field(self, spec_storage):
+        """If second field has an invalid name, original fields survive."""
+        spec = await spec_storage.create_spec("proto1")
+        await spec_storage.add_field(spec["id"], "original_a", 0, 2, "uint16")
+        await spec_storage.add_field(spec["id"], "original_b", 2, 2, "uint16")
+
+        # Second field has invalid name (starts with digit) — should fail validation
+        new_fields = [
+            {"name": "good_field", "offset": 0, "length": 2, "field_type": "uint16"},
+            {"name": "1bad_name", "offset": 2, "length": 2, "field_type": "uint16"},
+        ]
+
+        with pytest.raises(ValueError):
+            await spec_storage.replace_fields(spec["id"], new_fields)
+
+        # Original fields should still be intact (atomicity)
+        fields = await spec_storage.get_fields(spec["id"])
+        names = [f["name"] for f in fields]
+        assert "original_a" in names
+        assert "original_b" in names
+        assert len(fields) == 2

@@ -34,17 +34,20 @@ class RuuviParser:
         if payload[0] != RAWV2_FORMAT:
             return None
 
-        temperature = struct.unpack_from(">h", payload, 1)[0] * 0.005
-        humidity = struct.unpack_from(">H", payload, 3)[0] * 0.0025
-        pressure = struct.unpack_from(">H", payload, 5)[0] + 50000
-        accel_x = struct.unpack_from(">h", payload, 7)[0]
-        accel_y = struct.unpack_from(">h", payload, 9)[0]
-        accel_z = struct.unpack_from(">h", payload, 11)[0]
-        power_info = struct.unpack_from(">H", payload, 13)[0]
-        voltage = (power_info >> 5) + 1600
-        tx_power = (power_info & 0x1F) * 2 - 40
-        movement_counter = payload[15]
-        measurement_sequence = struct.unpack_from(">H", payload, 16)[0]
+        try:
+            temperature = struct.unpack_from(">h", payload, 1)[0] * 0.005
+            humidity = struct.unpack_from(">H", payload, 3)[0] * 0.0025
+            pressure = struct.unpack_from(">H", payload, 5)[0] + 50000
+            accel_x = struct.unpack_from(">h", payload, 7)[0]
+            accel_y = struct.unpack_from(">h", payload, 9)[0]
+            accel_z = struct.unpack_from(">h", payload, 11)[0]
+            power_info = struct.unpack_from(">H", payload, 13)[0]
+            voltage = (power_info >> 5) + 1600
+            tx_power = (power_info & 0x1F) * 2 - 40
+            movement_counter = payload[15]
+            measurement_sequence = struct.unpack_from(">H", payload, 16)[0]
+        except struct.error:
+            return None
 
         # MAC from payload bytes 18-23 if available
         if len(payload) >= 24:

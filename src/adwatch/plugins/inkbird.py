@@ -24,10 +24,13 @@ class InkbirdParser:
         if not raw.local_name:
             return None
 
-        if raw.local_name.startswith("iBBQ"):
-            return self._parse_ibbq(raw)
-        elif raw.local_name.startswith("sps"):
-            return self._parse_ibs_th(raw)
+        try:
+            if raw.local_name.startswith("iBBQ"):
+                return self._parse_ibbq(raw)
+            elif raw.local_name.startswith("sps"):
+                return self._parse_ibs_th(raw)
+        except struct.error:
+            return None
 
         return None
 

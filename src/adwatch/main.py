@@ -78,7 +78,7 @@ def _make_signal_handler(server, scanner):
         called = True
         logger.info("Shutting down...")
         server.should_exit = True
-        asyncio.ensure_future(scanner.stop())
+        asyncio.create_task(scanner.stop())
 
     return handler
 

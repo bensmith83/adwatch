@@ -22,7 +22,9 @@ class IBeaconParser:
 
         company_id = int.from_bytes(data[:2], "little")
         if company_id != 0x004C:
-            return None
+            company_id_be = int.from_bytes(data[:2], "big")
+            if company_id_be != 0x004C:
+                return None
 
         subtype = data[2]
         length = data[3]

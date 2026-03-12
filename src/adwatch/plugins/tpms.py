@@ -24,6 +24,12 @@ class TPMSParser:
         if not payload or len(payload) < 5:
             return None
 
+        try:
+            return self._parse_inner(raw, payload)
+        except struct.error:
+            return None
+
+    def _parse_inner(self, raw: RawAdvertisement, payload: bytes) -> ParseResult | None:
         sensor_index = payload[0]
         battery_voltage = payload[1] * 0.02
         temperature_c = payload[2] - 40

@@ -14,6 +14,10 @@ class Database:
     async def connect(self, db_path: str) -> None:
         self._conn = await aiosqlite.connect(db_path)
         self._conn.row_factory = sqlite3.Row
+        await self._conn.execute("PRAGMA foreign_keys = ON")
+        await self._conn.execute("PRAGMA busy_timeout = 5000")
+        if db_path != ":memory:":
+            await self._conn.execute("PRAGMA journal_mode = WAL")
 
     async def close(self) -> None:
         if self._conn:
@@ -33,3 +37,9 @@ class Database:
         cursor = await self._conn.execute(sql, params or ())
         row = await cursor.fetchone()
         return dict(row) if row else None
+
+    async def commit(self) -> None:
+        await self._conn.commit()
+
+    async def rollback(self) -> None:
+        await self._conn.rollback()

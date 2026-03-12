@@ -42,6 +42,12 @@ class QingpingParser:
         if len(data) < MIN_HEADER_LEN:
             return None
 
+        try:
+            return self._parse_inner(raw, data)
+        except struct.error:
+            return None
+
+    def _parse_inner(self, raw: RawAdvertisement, data: bytes) -> ParseResult | None:
         mac_bytes = data[0:6]
         device_type_code = struct.unpack_from("<H", data, 6)[0]
         # frame_control = data[8]

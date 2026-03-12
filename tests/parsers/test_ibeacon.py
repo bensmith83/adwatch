@@ -178,3 +178,47 @@ class TestIBeaconParser:
 
         assert result.metadata["major"] == 256
         assert result.metadata["minor"] == 1000
+
+
+class TestIBeaconBigEndianCompanyId:
+    """Test iBeacon ads with big-endian company ID (0x004c as bytes 00 4c)."""
+
+    # Real-world observed payload: company ID in big-endian byte order
+    # 004c02152686f39cbada4658854aa62e7e5e8b8d00010000c9
+    BIG_ENDIAN_PAYLOAD = bytes.fromhex(
+        "004c02152686f39cbada4658854aa62e7e5e8b8d00010000c9"
+    )
+    EXPECTED_UUID = "2686f39c-bada-4658-854a-a62e7e5e8b8d"
+
+    def test_parse_succeeds(self, parser):
+        """Big-endian company ID 004c should still be recognized as Apple."""
+        raw = make_raw(self.BIG_ENDIAN_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result is not None
+        assert isinstance(result, ParseResult)
+
+    def test_uuid(self, parser):
+        raw = make_raw(self.BIG_ENDIAN_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result.metadata["uuid"] == self.EXPECTED_UUID
+
+    def test_major(self, parser):
+        raw = make_raw(self.BIG_ENDIAN_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result.metadata["major"] == 1
+
+    def test_minor(self, parser):
+        raw = make_raw(self.BIG_ENDIAN_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result.metadata["minor"] == 0
+
+    def test_tx_power(self, parser):
+        raw = make_raw(self.BIG_ENDIAN_PAYLOAD)
+        result = parser.parse(raw)
+
+        # 0xC9 = -55 signed
+        assert result.metadata["tx_power"] == -55

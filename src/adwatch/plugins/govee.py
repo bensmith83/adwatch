@@ -73,6 +73,12 @@ class GoveeParser:
         if company_id not in (GOVEE_COMPANY_ID, GOVEE_VIBRATION_COMPANY_ID):
             return None
 
+        try:
+            return self._parse_inner(raw, company_id)
+        except struct.error:
+            return None
+
+    def _parse_inner(self, raw: RawAdvertisement, company_id: int) -> ParseResult | None:
         payload = raw.manufacturer_data[2:]
 
         # H512x encrypted format: 24 bytes after company ID

@@ -414,6 +414,78 @@ class TestTetheringSource:
         assert result.metadata["battery"] == 0x32
 
 
+class TestTetheringSourceType0x16:
+    """TLV type 0x16 — a different Tethering Source variant."""
+
+    TETHERING_SRC_0x16_PAYLOAD = bytes([
+        0x4C, 0x00,  # Apple company ID
+        0x16,        # Type: Tethering Source (alternate)
+        0x02,        # Length: 2
+        0xB0,        # signal_strength
+        0x50,        # battery
+    ])
+
+    def test_parse_succeeds(self, parser):
+        raw = make_raw(self.TETHERING_SRC_0x16_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result is not None
+
+    def test_beacon_type(self, parser):
+        raw = make_raw(self.TETHERING_SRC_0x16_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result.beacon_type == "apple_tethering_source"
+
+
+class TestOverflowAreaType0x01:
+    """TLV type 0x01 — Overflow Area."""
+
+    OVERFLOW_AREA_PAYLOAD = bytes([
+        0x4C, 0x00,  # Apple company ID
+        0x01,        # Type: Overflow Area
+        0x04,        # Length: 4
+        0xAA, 0xBB, 0xCC, 0xDD,
+    ])
+
+    def test_parse_succeeds(self, parser):
+        raw = make_raw(self.OVERFLOW_AREA_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result is not None
+
+    def test_parser_name(self, parser):
+        raw = make_raw(self.OVERFLOW_AREA_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result.parser_name == "apple_continuity"
+
+
+class TestHeySiriVariant0x0A:
+    """TLV type 0x0A — Hey Siri variant (NOT same as existing 0x08)."""
+
+    HEY_SIRI_0x0A_PAYLOAD = bytes([
+        0x4C, 0x00,  # Apple company ID
+        0x0A,        # Type: Hey Siri variant
+        0x04,        # Length: 4
+        0x56, 0x78,  # perceptual_hash
+        0x0C,        # snr
+        0x80,        # confidence
+    ])
+
+    def test_parse_succeeds(self, parser):
+        raw = make_raw(self.HEY_SIRI_0x0A_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert result is not None
+
+    def test_beacon_type(self, parser):
+        raw = make_raw(self.HEY_SIRI_0x0A_PAYLOAD)
+        result = parser.parse(raw)
+
+        assert "siri" in result.beacon_type
+
+
 class TestMalformed:
     def test_returns_none_for_wrong_company_id(self, parser):
         data = bytearray(NEARBY_INFO_PAYLOAD)

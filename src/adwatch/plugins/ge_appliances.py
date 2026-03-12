@@ -51,8 +51,10 @@ class GEAppliancesParser:
             f"ge_appliances:{raw.mac_address}".encode()
         ).hexdigest()[:16]
 
+        subtype_names = {0xB1: "device_info", 0xB2: "idle"}
         metadata = {
             "ad_variant": ad_variant,
+            "ad_subtype_name": subtype_names.get(ad_variant, "status"),
             "status_byte": status_byte,
         }
         if model:

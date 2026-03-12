@@ -34,14 +34,17 @@ class EddystoneParser:
 
         frame_type = data[0]
 
-        if frame_type == 0x00:
-            return self._parse_uid(data, raw)
-        elif frame_type == 0x10:
-            return self._parse_url(data, raw)
-        elif frame_type == 0x20:
-            return self._parse_tlm(data, raw)
-        elif frame_type == 0x30:
-            return self._parse_eid(data, raw)
+        try:
+            if frame_type == 0x00:
+                return self._parse_uid(data, raw)
+            elif frame_type == 0x10:
+                return self._parse_url(data, raw)
+            elif frame_type == 0x20:
+                return self._parse_tlm(data, raw)
+            elif frame_type == 0x30:
+                return self._parse_eid(data, raw)
+        except struct.error:
+            return None
         return None
 
     def _parse_uid(self, data: bytes, raw: RawAdvertisement) -> ParseResult | None:

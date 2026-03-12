@@ -266,33 +266,37 @@ class RawStorage:
             "WHERE ad_type IS NOT NULL GROUP BY ad_type ORDER BY count DESC"
         )
 
-        # Extract company_ids from manufacturer_data_hex
-        rows_with_mfr = await self._db.fetchall(
-            "SELECT manufacturer_data_hex FROM raw_advertisements "
-            "WHERE manufacturer_data_hex IS NOT NULL AND LENGTH(manufacturer_data_hex) >= 4"
+        # Extract company_ids from manufacturer_data_hex using SQL aggregation
+        _HEX_DIGIT = (
+            "(UNICODE(SUBSTR(manufacturer_data_hex,{pos},1)) - "
+            "CASE WHEN UNICODE(SUBSTR(manufacturer_data_hex,{pos},1)) >= 97 THEN 87 "
+            "WHEN UNICODE(SUBSTR(manufacturer_data_hex,{pos},1)) >= 65 THEN 55 "
+            "ELSE 48 END)"
         )
-        cid_counts: dict[int, int] = {}
-        for r in rows_with_mfr:
-            h = r["manufacturer_data_hex"]
-            low = int(h[0:2], 16)
-            high = int(h[2:4], 16)
-            cid = high * 256 + low
-            cid_counts[cid] = cid_counts.get(cid, 0) + 1
-        company_ids = [{"value": k, "count": v} for k, v in sorted(cid_counts.items(), key=lambda x: -x[1])]
+        lo_byte = f"({_HEX_DIGIT.format(pos=1)} * 16 + {_HEX_DIGIT.format(pos=2)})"
+        hi_byte = f"({_HEX_DIGIT.format(pos=3)} * 16 + {_HEX_DIGIT.format(pos=4)})"
+        cid_expr = f"({hi_byte} * 256 + {lo_byte})"
+
+        cid_rows = await self._db.fetchall(
+            f"SELECT {cid_expr} AS company_id_int, COUNT(*) AS count "
+            "FROM raw_advertisements "
+            "WHERE manufacturer_data_hex IS NOT NULL AND LENGTH(manufacturer_data_hex) >= 4 "
+            "GROUP BY company_id_int ORDER BY count DESC"
+        )
+        company_ids = [{"value": r["company_id_int"], "count": r["count"]} for r in cid_rows]
 
         uuid_rows = await self._db.fetchall(
             "SELECT DISTINCT service_uuids_json FROM raw_advertisements "
             "WHERE service_uuids_json IS NOT NULL"
         )
-        service_uuids: list[str] = []
+        service_uuids_set: set[str] = set()
         for r in uuid_rows:
             try:
                 uuids = json.loads(r["service_uuids_json"])
-                for u in uuids:
-                    if u not in service_uuids:
-                        service_uuids.append(u)
-            except Exception:
+                service_uuids_set.update(uuids)
+            except (json.JSONDecodeError, TypeError):
                 logger.debug("Failed to parse service_uuids_json", exc_info=True)
+        service_uuids = sorted(service_uuids_set)
 
         local_names = await self._db.fetchall(
             "SELECT DISTINCT local_name FROM raw_advertisements "
