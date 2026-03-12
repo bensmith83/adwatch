@@ -2,11 +2,16 @@
 
 import hashlib
 import json
+import logging
 import time
 from datetime import datetime, timezone
 
 from adwatch.models import Classification, RawAdvertisement
 from adwatch.storage.base import Database
+
+logger = logging.getLogger(__name__)
+
+NULL_SENTINEL = "__null__"
 
 
 class RawStorage:
@@ -185,13 +190,13 @@ class RawStorage:
         conditions: list[str] = []
         params: list = []
 
-        if ad_type == "__null__":
+        if ad_type == NULL_SENTINEL:
             conditions.append("ad_type IS NULL")
         elif ad_type is not None:
             conditions.append("ad_type = ?")
             params.append(ad_type)
 
-        if parsed_by == "__null__":
+        if parsed_by == NULL_SENTINEL:
             conditions.append("parsed_by IS NULL")
         elif parsed_by is not None:
             conditions.append("parsed_by LIKE ?")
@@ -281,14 +286,13 @@ class RawStorage:
         )
         service_uuids: list[str] = []
         for r in uuid_rows:
-            import json as _json
             try:
-                uuids = _json.loads(r["service_uuids_json"])
+                uuids = json.loads(r["service_uuids_json"])
                 for u in uuids:
                     if u not in service_uuids:
                         service_uuids.append(u)
             except Exception:
-                pass
+                logger.debug("Failed to parse service_uuids_json", exc_info=True)
 
         local_names = await self._db.fetchall(
             "SELECT DISTINCT local_name FROM raw_advertisements "

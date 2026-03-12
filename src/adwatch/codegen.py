@@ -94,21 +94,22 @@ def generate_parser(spec: dict) -> str:
         ftype = field["field_type"]
         endian = field.get("endian", "LE")
         endian_char = "<" if endian == "LE" else ">"
+        fname_repr = repr(fname)
 
         if ftype == "utf8":
-            lines.append(f'        parsed["{fname}"] = data[{offset}:{offset + length}].decode("utf-8", errors="replace")')
+            lines.append(f'        parsed[{fname_repr}] = data[{offset}:{offset + length}].decode("utf-8", errors="replace")')
         elif ftype == "mac_addr":
-            lines.append(f'        parsed["{fname}"] = ":".join(f"{{b:02x}}" for b in data[{offset}:{offset + length}])')
+            lines.append(f'        parsed[{fname_repr}] = ":".join(f"{{b:02x}}" for b in data[{offset}:{offset + length}])')
         elif ftype == "raw_hex":
-            lines.append(f'        parsed["{fname}"] = data[{offset}:{offset + length}].hex()')
+            lines.append(f'        parsed[{fname_repr}] = data[{offset}:{offset + length}].hex()')
         elif ftype in TYPE_MAP:
             fmt = f"{endian_char}{TYPE_MAP[ftype]}"
-            lines.append(f'        parsed["{fname}"] = struct.unpack("{fmt}", data[{offset}:{offset + length}])[0]')
+            lines.append(f'        parsed[{fname_repr}] = struct.unpack("{fmt}", data[{offset}:{offset + length}])[0]')
         else:
-            lines.append(f'        parsed["{fname}"] = data[{offset}:{offset + length}].hex()')
+            lines.append(f'        parsed[{fname_repr}] = data[{offset}:{offset + length}].hex()')
 
     lines.append("")
-    lines.append(f'        return ParseResult(device_type="{name}", parsed_data=parsed)')
+    lines.append(f'        return ParseResult(parser_name={repr(name)}, beacon_type={repr(name)}, device_class="unknown", identifier_hash="", raw_payload_hex=data.hex(), metadata=parsed)')
     lines.append("")
 
     return "\n".join(lines)

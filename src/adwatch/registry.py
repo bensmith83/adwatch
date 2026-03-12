@@ -1,7 +1,6 @@
 """Plugin registry and @register_parser decorator for adwatch."""
 
 import re
-import struct
 from dataclasses import dataclass
 
 
@@ -88,12 +87,6 @@ class ParserRegistry:
                     enabled=e["enabled"],
                 )
         return None
-
-    def load_core_parsers(self):
-        pass
-
-    def load_plugins(self):
-        pass
 
 
 def register_parser(*, name, company_id=None, service_uuid=None,

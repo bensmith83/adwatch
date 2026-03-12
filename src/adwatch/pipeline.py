@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import re
+
 from adwatch.models import RawAdvertisement
+
+_SQL_IDENT_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 class Pipeline:
@@ -26,6 +30,11 @@ class Pipeline:
                 if result.stable_key and stable_key is None:
                     stable_key = result.stable_key
                 if result.storage_table and result.storage_row and self._db:
+                    if not _SQL_IDENT_RE.match(result.storage_table):
+                        raise ValueError(f"Invalid storage table name: {result.storage_table!r}")
+                    for col_name in result.storage_row.keys():
+                        if not _SQL_IDENT_RE.match(col_name):
+                            raise ValueError(f"Invalid column name: {col_name!r}")
                     cols = ", ".join(result.storage_row.keys())
                     placeholders = ", ".join("?" for _ in result.storage_row)
                     await self._db.execute(

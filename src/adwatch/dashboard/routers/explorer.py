@@ -2,9 +2,32 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 
 from adwatch.vendors import bt_company_name, oui_vendor, best_vendor
+
+
+class CreateSpecRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    company_id: Optional[int] = None
+    service_uuid: Optional[str] = None
+    local_name_pattern: Optional[str] = None
+    data_source: str = "mfr"
+    fields: Optional[list[dict]] = None
+
+
+class AddFieldRequest(BaseModel):
+    name: str
+    offset: int
+    length: int
+    field_type: str
+    endian: str = "LE"
+    description: Optional[str] = None
+    sort_order: int = 0
 
 
 def _enrich_vendor(row: dict) -> dict:
@@ -36,18 +59,18 @@ def create_explorer_router(raw_storage, spec_storage=None) -> APIRouter:
 
     if spec_storage is not None:
         @router.post("/api/explorer/specs")
-        async def create_spec(body: dict):
+        async def create_spec(body: CreateSpecRequest):
             try:
                 spec = await spec_storage.create_spec(
-                    name=body["name"],
-                    description=body.get("description"),
-                    company_id=body.get("company_id"),
-                    service_uuid=body.get("service_uuid"),
-                    local_name_pattern=body.get("local_name_pattern"),
-                    data_source=body.get("data_source", "mfr"),
+                    name=body.name,
+                    description=body.description,
+                    company_id=body.company_id,
+                    service_uuid=body.service_uuid,
+                    local_name_pattern=body.local_name_pattern,
+                    data_source=body.data_source,
                 )
-                if body.get("fields"):
-                    for i, f in enumerate(body["fields"]):
+                if body.fields:
+                    for i, f in enumerate(body.fields):
                         await spec_storage.add_field(
                             spec["id"],
                             name=f["name"],
@@ -97,19 +120,19 @@ def create_explorer_router(raw_storage, spec_storage=None) -> APIRouter:
             return {"ok": True}
 
         @router.post("/api/explorer/specs/{spec_id}/fields")
-        async def add_field(spec_id: int, body: dict):
+        async def add_field(spec_id: int, body: AddFieldRequest):
             spec = await spec_storage.get_spec(spec_id)
             if spec is None:
                 raise HTTPException(status_code=404, detail="Spec not found")
             field = await spec_storage.add_field(
                 spec_id,
-                name=body["name"],
-                offset=body["offset"],
-                length=body["length"],
-                field_type=body["field_type"],
-                endian=body.get("endian", "LE"),
-                description=body.get("description"),
-                sort_order=body.get("sort_order", 0),
+                name=body.name,
+                offset=body.offset,
+                length=body.length,
+                field_type=body.field_type,
+                endian=body.endian,
+                description=body.description,
+                sort_order=body.sort_order,
             )
             return field
 

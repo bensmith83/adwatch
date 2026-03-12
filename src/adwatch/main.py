@@ -47,7 +47,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--disable",
         help="Comma-separated plugin names to disable",
     )
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "--listen-network", action="store_true",
+        help="Listen on all interfaces (0.0.0.0) instead of localhost",
+    )
+    args = parser.parse_args(argv)
+    if args.listen_network:
+        args.host = "0.0.0.0"
+    return args
 
 
 def list_plugins(registry) -> None:

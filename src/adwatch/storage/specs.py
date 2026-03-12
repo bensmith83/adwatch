@@ -1,10 +1,13 @@
 """Protocol Specs storage layer."""
 
 import json
+import logging
 import re
 import time
 
 from adwatch.storage.base import Database
+
+logger = logging.getLogger(__name__)
 
 
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -40,6 +43,11 @@ class SpecStorage:
         data_source: str = "mfr",
     ) -> dict:
         _validate_spec_name(name)
+        if local_name_pattern is not None:
+            try:
+                re.compile(local_name_pattern)
+            except re.error as e:
+                raise ValueError(f"Invalid regex pattern: {e}")
         now = time.time()
         await self._enable_fk()
         await self._db.execute(

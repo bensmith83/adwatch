@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 from adwatch.models import RawAdvertisement
+
+logger = logging.getLogger(__name__)
 
 
 class Scanner:
@@ -55,8 +58,6 @@ class Scanner:
             detection_callback=_detection_callback,
             adapter=self._adapter,
         )
-        import logging
-        logger = logging.getLogger("adwatch")
         try:
             await self._scanner.start()
             logger.info("BLE scanner started on %s", self._adapter)
@@ -70,5 +71,5 @@ class Scanner:
             try:
                 await self._scanner.stop()
             except Exception:
-                pass
+                logger.warning("Error stopping BLE scanner", exc_info=True)
             self._scanner = None

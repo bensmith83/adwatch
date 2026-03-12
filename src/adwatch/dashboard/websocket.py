@@ -5,6 +5,9 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WebSocketManager:

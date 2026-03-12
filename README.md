@@ -27,6 +27,7 @@ adwatch --port 9090                  # Custom dashboard port
 adwatch --host 127.0.0.1             # Bind to localhost only
 adwatch --list-plugins               # Show loaded plugins and exit
 adwatch --disable thermopro,matter   # Disable specific plugins
+adwatch --listen-network             # Listen on all interfaces (0.0.0.0)
 ```
 
 ## Environment Variables
@@ -37,7 +38,7 @@ All options can also be set via environment variables:
 |----------|---------|-------------|
 | `ADWATCH_ADAPTER` | `hci0` | BLE adapter |
 | `ADWATCH_DB_PATH` | `./adwatch.db` | SQLite database path |
-| `ADWATCH_HOST` | `0.0.0.0` | Dashboard bind address |
+| `ADWATCH_HOST` | `127.0.0.1` | Dashboard bind address |
 | `ADWATCH_PORT` | `8080` | Dashboard port |
 | `ADWATCH_RAW_RETENTION_DAYS` | `7` | Raw advertisement retention |
 | `ADWATCH_PARSED_RETENTION_DAYS` | `30` | Parsed data retention |
@@ -46,7 +47,7 @@ All options can also be set via environment variables:
 
 ## Parsers
 
-13 parsers ship built-in (9 core + 4 plugins):
+36 parsers ship built-in (9 core + 27 plugins):
 
 **Core parsers** (always loaded):
 - Apple: Continuity/Nearby, AirDrop, Find My, Proximity (AirPods), AirPlay, Nearby Action
@@ -55,10 +56,11 @@ All options can also be set via environment variables:
 - Microsoft CDP
 
 **Plugins** (can be disabled):
-- ThermoPro temperature/humidity sensors
-- Matter commissioning
-- Tile trackers
-- Samsung SmartTag
+- Sensors: ThermoPro, Ruuvi, Qingping, Inkbird, Tilt, BTHome, MiBeacon, SwitchBot, TPMS
+- Trackers: Tile, Samsung SmartTag, Google Find My Device, Exposure Notification
+- Beacons: AltBeacon, Eddystone, Estimote, BT Mesh, Matter
+- Audio: Sonos, Bose
+- Other: Govee, Hatch, Nest, Oral-B, Flipper Zero, Smart Glasses, GE Appliances
 
 ## Running Tests
 
@@ -73,6 +75,9 @@ The web dashboard at `http://<host>:<port>` provides:
 - Summary cards showing device counts by category
 - Live feed of incoming advertisements (WebSocket-powered)
 - Plugin-specific tabs (e.g. ThermoPro sensor readings)
+- Protocol Explorer for browsing, filtering, and comparing raw advertisements
+- HexViewer with field editor for reverse-engineering unknown BLE payloads
+- Protocol Specs: save field definitions, auto-match to ads, generate parser code
 
 ## API Endpoints
 
@@ -83,7 +88,18 @@ The web dashboard at `http://<host>:<port>` provides:
 | GET | `/api/raw?mac=XX&type=YY&since=ZZ` | Query raw ads with filters |
 | GET | `/api/plugins` | List loaded plugins |
 | GET | `/api/plugins/ui` | Plugin UI configurations |
+| GET | `/api/explorer/ads` | Browse ads with filters |
+| GET | `/api/explorer/facets` | Filter facets (types, company IDs, UUIDs) |
+| GET | `/api/explorer/compare?ids=1,2,3` | Byte-level ad comparison |
+| POST | `/api/explorer/specs` | Create protocol spec with fields |
+| GET | `/api/explorer/specs/{id}/codegen` | Generate parser plugin from spec |
 | WS | `/ws` | WebSocket for real-time events |
+
+## Security
+
+The dashboard has **no authentication**. By default it binds to `127.0.0.1` (localhost only). Use `--listen-network` or `--host 0.0.0.0` to expose on all interfaces — only do this on trusted networks.
+
+The `adwatch.db` database contains real BLE advertisement data from your environment (MAC addresses, device names, signal patterns). It is git-ignored by default — do not commit it to a public repository.
 
 ## Requirements
 

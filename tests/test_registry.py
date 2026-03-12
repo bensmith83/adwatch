@@ -685,13 +685,3 @@ class TestDecoratorPreservesClass:
 # Additional edge cases
 # ===================================================================
 
-class TestLoadMethods:
-    def test_load_core_parsers_method_exists(self):
-        registry = ParserRegistry()
-        assert hasattr(registry, "load_core_parsers")
-        assert callable(registry.load_core_parsers)
-
-    def test_load_plugins_method_exists(self):
-        registry = ParserRegistry()
-        assert hasattr(registry, "load_plugins")
-        assert callable(registry.load_plugins)
