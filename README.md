@@ -100,6 +100,10 @@ The dashboard has **no authentication**. By default it binds to `127.0.0.1` (loc
 
 The `adwatch.db` database contains real BLE advertisement data from your environment (MAC addresses, device names, signal patterns). It is git-ignored by default — do not commit it to a public repository.
 
+## Contributing
+
+If you use the Protocol Explorer to reverse-engineer a new BLE protocol and build a parser plugin for it, please contribute it back! Open a PR with your plugin — the more parsers we have, the more useful adwatch becomes for everyone.
+
 ## Requirements
 
 - Python 3.11+
