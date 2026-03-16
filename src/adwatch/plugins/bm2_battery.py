@@ -21,7 +21,7 @@ BM2_IV = b'\x00' * 16
 )
 class BM2BatteryParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.manufacturer_data or len(raw.manufacturer_data) < 16:
+        if not raw.manufacturer_data or len(raw.manufacturer_data) < 16 or len(raw.manufacturer_data) % 16 != 0:
             return None
 
         encrypted = raw.manufacturer_data

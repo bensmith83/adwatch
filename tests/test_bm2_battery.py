@@ -186,3 +186,26 @@ class TestBM2BatteryParser:
         result = parser.parse(ad)
 
         assert result.raw_payload_hex == encrypted.hex()
+
+    @pytest.mark.parametrize("length", [17, 20, 31])
+    def test_non_multiple_of_16_returns_none(self, length):
+        """AES-CBC requires data length to be a multiple of 16; non-multiples should return None."""
+        data = b'\xab' * length
+        ad = _make_ad(manufacturer_data=data, local_name="Battery Monitor")
+        parser = BM2BatteryParser()
+        result = parser.parse(ad)
+        assert result is None
+
+    def test_cryptography_in_pyproject_dependencies(self):
+        """cryptography must be listed in pyproject.toml dependencies."""
+        import tomllib
+        from pathlib import Path
+
+        pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+        with open(pyproject, "rb") as f:
+            config = tomllib.load(f)
+
+        deps = config["project"]["dependencies"]
+        assert any("cryptography" in d for d in deps), (
+            "cryptography must be in [project] dependencies"
+        )
