@@ -59,6 +59,7 @@ SERVICE_UUID_REGISTRY: dict[str, tuple[str, str]] = {
     "0000feaf-0000-1000-8000-00805f9b34fb": ("nest", "smart_home"),
     "0000fe9a-0000-1000-8000-00805f9b34fb": ("estimote", "beacon"),
     "00003081-0000-1000-8000-00805f9b34fb": ("flipper", "tool"),
+    "021a9004-0382-4aea-bff4-6b3f1c5adfb4": ("esp_prov", "iot"),
 }
 
 
