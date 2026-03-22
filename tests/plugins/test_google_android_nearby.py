@@ -140,10 +140,22 @@ class TestAndroidNearbyFrameTypes:
         assert result.metadata["magic"] == "1102"
 
     def test_data_length_in_metadata(self, parser):
-        """Should report data length in metadata."""
+        """data_length should be the total service data length."""
         raw = make_raw(service_data={"fef3": LONG_FRAME})
         result = parser.parse(raw)
-        assert result.metadata["data_length"] == 26
+        assert result.metadata["data_length"] == len(LONG_FRAME)  # 27, not 26
+
+    def test_data_length_short_frame(self, parser):
+        """Short frame data_length should be total bytes."""
+        raw = make_raw(service_data={"fef3": SHORT_FRAME_1101})
+        result = parser.parse(raw)
+        assert result.metadata["data_length"] == len(SHORT_FRAME_1101)  # 6
+
+    def test_data_length_1102_frame(self, parser):
+        """Extended short frame data_length should be total bytes."""
+        raw = make_raw(service_data={"fef3": SHORT_FRAME_1102})
+        result = parser.parse(raw)
+        assert result.metadata["data_length"] == len(SHORT_FRAME_1102)  # 10
 
 
 class TestAndroidNearbyRejectsInvalid:

@@ -166,3 +166,10 @@ class TestBoseExistingBehavior:
         )
         result = parser.parse(raw)
         assert result.device_class == "audio"
+
+
+class TestBoseFebeConstant:
+    def test_bose_febe_company_id_constant_exists(self):
+        """BOSE_FEBE_COMPANY_ID should be a named constant, not a magic number."""
+        from adwatch.plugins.bose import BOSE_FEBE_COMPANY_ID
+        assert BOSE_FEBE_COMPANY_ID == 0x3703

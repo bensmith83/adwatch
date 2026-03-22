@@ -26,8 +26,7 @@ class PhilipsSonicareParser:
         if not uuid_match and not name_match:
             return None
 
-        name = raw.local_name or ""
-        id_hash = hashlib.sha256(f"{raw.mac_address}:{name}".encode()).hexdigest()[:16]
+        id_hash = hashlib.sha256(f"philips_sonicare:{raw.mac_address}".encode()).hexdigest()[:16]
 
         metadata: dict = {}
         if raw.local_name:

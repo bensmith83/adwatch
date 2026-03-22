@@ -40,7 +40,7 @@ class GoogleAndroidNearbyParser:
         metadata = {
             "frame_type": frame_type,
             "magic": magic_hex,
-            "data_length": len(data) - 1,
+            "data_length": len(data),
         }
 
         return ParseResult(

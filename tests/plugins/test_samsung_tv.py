@@ -131,7 +131,7 @@ class TestSamsungTVTypeBytes:
         assert result.metadata["type_bytes"] == "4204"
 
     def test_type_bytes_0218(self, parser):
-        raw = make_raw(manufacturer_data=ALT_TYPE_DATA)
+        raw = make_raw(manufacturer_data=ALT_TYPE_DATA, local_name="[TV] TestModel")
         result = parser.parse(raw)
         assert result.metadata["type_bytes"] == "0218"
 
@@ -167,3 +167,48 @@ class TestSamsungTVIdentity:
             mac_address="11:22:33:44:55:66",
         ))
         assert r1.identifier_hash != r2.identifier_hash
+
+
+# Samsung phone manufacturer data — company 0x0075 but NOT a TV type
+SAMSUNG_PHONE_DATA = bytes.fromhex("7500011044a113aee3055c03e6882b2275f2768c47852740477d")
+
+
+class TestSamsungTVFalsePositiveFiltering:
+    def test_rejects_unknown_type_no_name(self, parser):
+        """Samsung ads with unknown type_bytes and no TV name should be rejected."""
+        raw = make_raw(manufacturer_data=SAMSUNG_PHONE_DATA)
+        assert parser.parse(raw) is None
+
+    def test_accepts_known_type_4204_no_name(self, parser):
+        """Unnamed ads with known TV type '4204' should still parse."""
+        raw = make_raw(manufacturer_data=UNNAMED_TV_DATA)
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_rejects_non_tv_name(self, parser):
+        """Samsung ads with non-TV names should be rejected."""
+        raw = make_raw(manufacturer_data=SAMSUNG_PHONE_DATA, local_name="Galaxy S24")
+        assert parser.parse(raw) is None
+
+    def test_accepts_tv_name_with_any_type(self, parser):
+        """[TV] prefixed names should always be accepted regardless of type_bytes."""
+        raw = make_raw(manufacturer_data=SAMSUNG_PHONE_DATA, local_name="[TV] SomeModel")
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_accepts_av_name_with_any_type(self, parser):
+        """[AV] prefixed names should always be accepted."""
+        raw = make_raw(manufacturer_data=SAMSUNG_PHONE_DATA, local_name="[AV] Soundbar")
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_accepts_crystal_uhd_name_with_any_type(self, parser):
+        """Crystal UHD names should always be accepted."""
+        raw = make_raw(manufacturer_data=SAMSUNG_PHONE_DATA, local_name='75" Crystal UHD')
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_rejects_alt_type_no_name(self, parser):
+        """Type 0218 without a TV name should be rejected (could be any Samsung device)."""
+        raw = make_raw(manufacturer_data=ALT_TYPE_DATA)
+        assert parser.parse(raw) is None

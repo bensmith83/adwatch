@@ -6,6 +6,7 @@ from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, Widget
 from adwatch.registry import register_parser
 
 BOSE_COMPANY_ID = 0x0065
+BOSE_FEBE_COMPANY_ID = 0x3703
 BOSE_SERVICE_UUID_FDF7 = "fdf7"
 
 
@@ -22,7 +23,7 @@ class BoseParser:
         if not raw.manufacturer_data or len(raw.manufacturer_data) < 2:
             return None
 
-        if raw.company_id not in (BOSE_COMPANY_ID, 0x3703):
+        if raw.company_id not in (BOSE_COMPANY_ID, BOSE_FEBE_COMPANY_ID):
             return None
 
         payload = raw.manufacturer_payload

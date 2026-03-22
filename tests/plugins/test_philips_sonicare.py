@@ -73,10 +73,10 @@ class TestPhilipsSonicareParsing:
         assert result.device_class == "personal_care"
 
     def test_identity_hash(self, parser):
-        """Identity = SHA256('{mac}:{local_name}')[:16] per protocol doc."""
+        """Identity should use standard pattern: SHA256('philips_sonicare:{mac}')[:16]."""
         raw = make_raw(local_name="Sonicare DiamondClean")
         result = parser.parse(raw)
-        expected = hashlib.sha256(f"{MAC}:Sonicare DiamondClean".encode()).hexdigest()[:16]
+        expected = hashlib.sha256(f"philips_sonicare:{MAC}".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
 
     def test_identity_hash_format(self, parser):
@@ -89,6 +89,20 @@ class TestPhilipsSonicareParsing:
         raw = make_raw(local_name="Sonicare DiamondClean")
         result = parser.parse(raw)
         assert result.metadata["device_name"] == "Sonicare DiamondClean"
+
+
+class TestPhilipsSonicareIdentity:
+    def test_same_mac_same_hash_regardless_of_name(self, parser):
+        """Same MAC with different names should produce same identity hash."""
+        r1 = parser.parse(make_raw(local_name="Sonicare DiamondClean", service_uuids=[SONICARE_UUID]))
+        r2 = parser.parse(make_raw(local_name="Sonicare 9900", service_uuids=[SONICARE_UUID]))
+        assert r1.identifier_hash == r2.identifier_hash
+
+    def test_uuid_only_same_hash_as_named(self, parser):
+        """UUID-only match (no name) should have same hash as named match."""
+        r1 = parser.parse(make_raw(service_uuids=[SONICARE_UUID]))
+        r2 = parser.parse(make_raw(local_name="Sonicare DiamondClean", service_uuids=[SONICARE_UUID]))
+        assert r1.identifier_hash == r2.identifier_hash
 
 
 class TestPhilipsSonicareRejection:

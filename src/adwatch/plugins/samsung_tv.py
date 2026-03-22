@@ -10,6 +10,7 @@ from adwatch.models import ParseResult, RawAdvertisement
 from adwatch.registry import register_parser
 
 SAMSUNG_COMPANY_ID = 0x0075
+KNOWN_TV_TYPES = {"4204"}
 
 
 @register_parser(
@@ -35,15 +36,22 @@ class SamsungTVParser:
         model = None
         device_class = "tv"
         name = raw.local_name
+        is_tv_name = False
         if name:
             if name.startswith("[TV] "):
                 model = name[5:]
                 device_class = "tv"
+                is_tv_name = True
             elif name.startswith("[AV] "):
                 model = name[5:]
                 device_class = "soundbar"
+                is_tv_name = True
             elif "Crystal UHD" in name:
                 device_class = "tv"
+                is_tv_name = True
+
+        if not is_tv_name and type_bytes not in KNOWN_TV_TYPES:
+            return None
 
         id_hash = hashlib.sha256(
             f"samsung_tv:{raw.mac_address}".encode()
