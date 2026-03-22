@@ -59,11 +59,18 @@ class ParserRegistry:
                     return True
 
         if entry["service_uuid"] is not None:
-            uuid = entry["service_uuid"]
-            if uuid in (raw.service_uuids or []):
-                return True
-            if raw.service_data and uuid in raw.service_data:
-                return True
+            suuid = entry["service_uuid"]
+            if isinstance(suuid, (list, tuple)):
+                for u in suuid:
+                    if u in (raw.service_uuids or []):
+                        return True
+                    if raw.service_data and u in raw.service_data:
+                        return True
+            else:
+                if suuid in (raw.service_uuids or []):
+                    return True
+                if raw.service_data and suuid in raw.service_data:
+                    return True
 
         if entry["local_name_pattern"] is not None:
             if raw.local_name is not None and re.search(entry["local_name_pattern"], raw.local_name):
