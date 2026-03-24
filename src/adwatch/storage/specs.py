@@ -142,6 +142,11 @@ class SpecStorage:
             "SELECT * FROM protocol_spec_fields WHERE id = ?", (field_id,)
         )
 
+    async def get_field(self, field_id: int) -> dict | None:
+        return await self._db.fetchone(
+            "SELECT * FROM protocol_spec_fields WHERE id = ?", (field_id,)
+        )
+
     async def delete_field(self, field_id: int) -> None:
         await self._db.execute(
             "DELETE FROM protocol_spec_fields WHERE id = ?", (field_id,)

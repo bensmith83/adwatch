@@ -4,7 +4,7 @@
 
 ThermoPro wireless temperature/humidity sensors (TP357S, TP359S, TP351S) broadcast readings via BLE advertisements. They use a non-standard encoding that embeds part of the temperature value inside the BLE `company_id` field, which normally identifies the manufacturer.
 
-Air Alert parses these advertisements to provide a live sensor dashboard with temperature, humidity, room speculation, and user-assignable nicknames.
+adwatch parses these advertisements to provide a live sensor dashboard with temperature, humidity, room speculation, and user-assignable nicknames.
 
 ## Supported Models
 

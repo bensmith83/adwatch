@@ -6,6 +6,18 @@ build-backend = "setuptools.build_meta"
 name = "adwatch"
 version = "0.1.0"
 description = "BLE Advertisement Analyzer"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Ben Smith"}]
+keywords = ["bluetooth", "ble", "advertisement", "scanner", "analyzer"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Networking :: Monitoring",
+]
 requires-python = ">=3.11"
 dependencies = [
     "bleak>=0.21.0",
@@ -28,6 +40,11 @@ adwatch = "adwatch.main:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.urls]
+Homepage = "https://github.com/bensmith83/adwatch"
+Repository = "https://github.com/bensmith83/adwatch"
+Issues = "https://github.com/bensmith83/adwatch/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

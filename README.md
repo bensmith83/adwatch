@@ -46,7 +46,7 @@ All options can also be set via environment variables:
 
 ## Parsers
 
-36 parsers ship built-in (9 core + 27 plugins):
+81 parsers ship built-in (9 core + 72 plugins):
 
 **Core parsers** (always loaded):
 - Apple: Continuity/Nearby, AirDrop, Find My, Proximity (AirPods), AirPlay, Nearby Action
@@ -55,11 +55,14 @@ All options can also be set via environment variables:
 - Microsoft CDP
 
 **Plugins** (can be disabled):
-- Sensors: ThermoPro, Ruuvi, Qingping, Inkbird, Tilt, BTHome, MiBeacon, SwitchBot, TPMS
-- Trackers: Tile, Samsung SmartTag, Google Find My Device, Exposure Notification
-- Beacons: AltBeacon, Eddystone, Estimote, BT Mesh, Matter
-- Audio: Sonos, Bose
-- Other: Govee, Hatch, Nest, Oral-B, Flipper Zero, Smart Glasses, GE Appliances
+- Sensors: ThermoPro, Ruuvi, Qingping, Inkbird, Tilt, BTHome, MiBeacon, SwitchBot, TPMS, Aranet4, Airthings, ATC/PVVX, BlueMaestro, Efento, SensorPush, Sensirion, SmartDry, ThermoBeacon, Moat, Mopeka, RadonEye, Renpho, Xiaogui Scale, Mi Scale
+- Trackers: Tile, Samsung SmartTag, Google Find My Device, Exposure Notification, Chipolo, Nutale, Jaalee, MikroTik Tag, Minew
+- Beacons: AltBeacon, Eddystone, Estimote, BT Mesh, Matter, iNode Energy, ELA Innovation, Smart Sensor Devices, Teltonika Eye, NodOn NIU
+- Audio: Sonos, Bose, Sony Audio, Samsung Galaxy Buds, Jieli Audio
+- Smart Home: Govee, Hatch, Nest, Ember Mug, SwitchBot, ELK-BLEDOM, Philips Sonicare, Kegtron, iBBQ, Meater
+- Automotive: Rivian, TPMS, Victron Energy
+- TV/Media: LG TV, Samsung TV, Amazon Fire TV, Apple AirPlay
+- Other: Oral-B, Flipper Zero, Smart Glasses, GE Appliances, August/Yale, BM2 Battery, Amphiro, UniFi Protect, Google Android Nearby, ENOcean, NoDoN NIU
 
 ## Running Tests
 

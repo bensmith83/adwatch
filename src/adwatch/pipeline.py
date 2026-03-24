@@ -35,10 +35,10 @@ class Pipeline:
                     for col_name in result.storage_row.keys():
                         if not _SQL_IDENT_RE.match(col_name):
                             raise ValueError(f"Invalid column name: {col_name!r}")
-                    cols = ", ".join(result.storage_row.keys())
+                    cols = ", ".join(f'"{k}"' for k in result.storage_row.keys())
                     placeholders = ", ".join("?" for _ in result.storage_row)
                     await self._db.execute(
-                        f"INSERT INTO {result.storage_table} ({cols}) VALUES ({placeholders})",
+                        f'INSERT INTO "{result.storage_table}" ({cols}) VALUES ({placeholders})',
                         list(result.storage_row.values()),
                     )
                 if result.event_type and self._ws:

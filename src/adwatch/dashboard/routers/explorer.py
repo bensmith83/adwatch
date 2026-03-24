@@ -20,6 +20,16 @@ class CreateSpecRequest(BaseModel):
     fields: Optional[list[dict]] = None
 
 
+class UpdateSpecRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    company_id: Optional[int] = None
+    service_uuid: Optional[str] = None
+    local_name_pattern: Optional[str] = None
+    data_source: Optional[str] = None
+    fields: Optional[list[dict]] = None
+
+
 class AddFieldRequest(BaseModel):
     name: str
     offset: int
@@ -28,6 +38,16 @@ class AddFieldRequest(BaseModel):
     endian: str = "LE"
     description: Optional[str] = None
     sort_order: int = 0
+
+
+class UpdateFieldRequest(BaseModel):
+    name: Optional[str] = None
+    offset: Optional[int] = None
+    length: Optional[int] = None
+    field_type: Optional[str] = None
+    endian: Optional[str] = None
+    description: Optional[str] = None
+    sort_order: Optional[int] = None
 
 
 def _enrich_vendor(row: dict) -> dict:
@@ -102,9 +122,10 @@ def create_explorer_router(raw_storage, spec_storage=None) -> APIRouter:
             return spec
 
         @router.put("/api/explorer/specs/{spec_id}")
-        async def update_spec(spec_id: int, body: dict):
-            fields = body.pop("fields", None)
-            result = await spec_storage.update_spec(spec_id, **body)
+        async def update_spec(spec_id: int, body: UpdateSpecRequest):
+            updates = {k: v for k, v in body.model_dump().items() if v is not None and k != "fields"}
+            fields = body.fields
+            result = await spec_storage.update_spec(spec_id, **updates)
             if result is None:
                 raise HTTPException(status_code=404, detail="Spec not found")
             if fields is not None:
@@ -137,17 +158,16 @@ def create_explorer_router(raw_storage, spec_storage=None) -> APIRouter:
             return field
 
         @router.put("/api/explorer/specs/{spec_id}/fields/{field_id}")
-        async def update_field(spec_id: int, field_id: int, body: dict):
-            result = await spec_storage.update_field(field_id, **body)
+        async def update_field(spec_id: int, field_id: int, body: UpdateFieldRequest):
+            updates = {k: v for k, v in body.model_dump().items() if v is not None}
+            result = await spec_storage.update_field(field_id, **updates)
             if result is None:
                 raise HTTPException(status_code=404, detail="Field not found")
             return result
 
         @router.delete("/api/explorer/specs/{spec_id}/fields/{field_id}")
         async def delete_field(spec_id: int, field_id: int):
-            existing = await spec_storage._db.fetchone(
-                "SELECT * FROM protocol_spec_fields WHERE id = ?", (field_id,)
-            )
+            existing = await spec_storage.get_field(field_id)
             if existing is None:
                 raise HTTPException(status_code=404, detail="Field not found")
             await spec_storage.delete_field(field_id)
