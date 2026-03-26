@@ -415,14 +415,13 @@ class TestTetheringSource:
 
 
 class TestTetheringSourceType0x16:
-    """TLV type 0x16 — a different Tethering Source variant."""
+    """TLV type 0x16 — undocumented subtype, now classified as apple_unknown."""
 
     TETHERING_SRC_0x16_PAYLOAD = bytes([
         0x4C, 0x00,  # Apple company ID
-        0x16,        # Type: Tethering Source (alternate)
+        0x16,        # Type: undocumented (was speculated as tethering source alt)
         0x02,        # Length: 2
-        0xB0,        # signal_strength
-        0x50,        # battery
+        0xB0, 0x50,
     ])
 
     def test_parse_succeeds(self, parser):
@@ -435,7 +434,7 @@ class TestTetheringSourceType0x16:
         raw = make_raw(self.TETHERING_SRC_0x16_PAYLOAD)
         result = parser.parse(raw)
 
-        assert result.beacon_type == "apple_tethering_source"
+        assert result.beacon_type == "apple_unknown"
 
 
 class TestOverflowAreaType0x01:
@@ -461,29 +460,27 @@ class TestOverflowAreaType0x01:
         assert result.parser_name == "apple_continuity"
 
 
-class TestHeySiriVariant0x0A:
-    """TLV type 0x0A — Hey Siri variant (NOT same as existing 0x08)."""
+class TestAirPlaySource0x0A:
+    """TLV type 0x0A — AirPlay Source (was mislabeled as Hey Siri Variant)."""
 
-    HEY_SIRI_0x0A_PAYLOAD = bytes([
+    AIRPLAY_SOURCE_PAYLOAD = bytes([
         0x4C, 0x00,  # Apple company ID
-        0x0A,        # Type: Hey Siri variant
+        0x0A,        # Type: AirPlay Source
         0x04,        # Length: 4
-        0x56, 0x78,  # perceptual_hash
-        0x0C,        # snr
-        0x80,        # confidence
+        0x56, 0x78, 0x0C, 0x80,
     ])
 
     def test_parse_succeeds(self, parser):
-        raw = make_raw(self.HEY_SIRI_0x0A_PAYLOAD)
+        raw = make_raw(self.AIRPLAY_SOURCE_PAYLOAD)
         result = parser.parse(raw)
 
         assert result is not None
 
     def test_beacon_type(self, parser):
-        raw = make_raw(self.HEY_SIRI_0x0A_PAYLOAD)
+        raw = make_raw(self.AIRPLAY_SOURCE_PAYLOAD)
         result = parser.parse(raw)
 
-        assert "siri" in result.beacon_type
+        assert result.beacon_type == "apple_airplay_source"
 
 
 class TestMalformed:

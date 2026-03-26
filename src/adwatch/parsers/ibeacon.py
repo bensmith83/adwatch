@@ -9,7 +9,7 @@ from adwatch.registry import register_parser
 
 @register_parser(
     name="ibeacon",
-    company_id=0x004C,
+    company_id=[0x004C, 0x4C00],
     description="Apple iBeacon",
     version="1.0",
     core=True,
