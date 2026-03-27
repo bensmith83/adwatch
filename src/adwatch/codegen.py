@@ -40,7 +40,12 @@ def generate_parser(spec: dict) -> str:
         else:
             # Both quote types present — fall back to repr
             dec_args.append(f"local_name_pattern={repr(pat)}")
-    dec_str = ", ".join(dec_args) if dec_args else ""
+    # Always include required decorator arguments
+    dec_args.append(f"name={repr(name)}")
+    dec_args.append(f'description="Auto-generated parser for {name}"')
+    dec_args.append(f'version="0.1.0"')
+    dec_args.append(f"core=False")
+    dec_str = ", ".join(dec_args)
 
     # Min data length
     if fields:

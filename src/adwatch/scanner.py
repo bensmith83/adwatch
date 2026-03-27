@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
+import asyncio
+
 from adwatch.models import RawAdvertisement
 
 logger = logging.getLogger(__name__)
@@ -31,9 +33,7 @@ class Scanner:
                 manufacturer_data = company_id.to_bytes(2, "little") + data
                 break
 
-            service_data = {}
-            for uuid, data in advertisement_data.service_data.items():
-                service_data[uuid] = data
+            service_data = dict(advertisement_data.service_data)
 
             # Get address type from BlueZ D-Bus properties if available
             address_type = "random"
@@ -55,7 +55,6 @@ class Scanner:
                 rssi=advertisement_data.rssi,
                 tx_power=advertisement_data.tx_power,
             )
-            import asyncio
             task = asyncio.create_task(callback(raw))
             task.add_done_callback(_handle_task_exception)
 

@@ -66,13 +66,13 @@ SERVICE_UUID_REGISTRY: dict[str, tuple[str, str]] = {
 # Local name patterns: list of (regex_str, ad_type, ad_category)
 # ---------------------------------------------------------------------------
 
-LOCAL_NAME_PATTERNS: list[tuple[str, str, str]] = [
-    (r"^TP\d{3}", "thermopro", "sensor"),
-    (r"iPhone", "apple", "phone"),
-    (r"^Sonos\b", "sonos", "speaker"),
-    (r"Flipper", "flipper", "tool"),
-    (r"Hatch", "hatch", "smart_home"),
-    (r"^GV(H5|5124)", "govee", "sensor"),
+LOCAL_NAME_PATTERNS: list[tuple[re.Pattern, str, str]] = [
+    (re.compile(r"^TP\d{3}"), "thermopro", "sensor"),
+    (re.compile(r"iPhone"), "apple", "phone"),
+    (re.compile(r"^Sonos\b"), "sonos", "speaker"),
+    (re.compile(r"Flipper"), "flipper", "tool"),
+    (re.compile(r"Hatch"), "hatch", "smart_home"),
+    (re.compile(r"^GV(H5|5124)"), "govee", "sensor"),
 ]
 
 
@@ -138,6 +138,6 @@ class Classifier:
         if not raw.local_name:
             return None
         for pattern, ad_type, ad_category in LOCAL_NAME_PATTERNS:
-            if re.search(pattern, raw.local_name):
+            if pattern.search(raw.local_name):
                 return Classification(ad_type=ad_type, ad_category=ad_category, source="local_name")
         return None

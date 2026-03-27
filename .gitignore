@@ -5,4 +5,13 @@ dist/
 build/
 venv/
 .pytest_cache/
-adwatch.db
+*.db
+.env
+.vscode/
+.idea/
+*.so
+*.egg
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

@@ -9,9 +9,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from adwatch.dashboard.routers.explorer import create_explorer_router
-from adwatch.storage.specs import SpecStorage
 from adwatch.dashboard.routers.overview import create_overview_router
 from adwatch.dashboard.routers.raw import create_raw_router
+from adwatch.storage.specs import SpecStorage
 
 FRONTEND_DIR = pathlib.Path(__file__).parent / "frontend"
 
@@ -21,8 +21,8 @@ def create_app(raw_storage, classifier, registry, ws_manager, db=None, spec_stor
 
     app.include_router(create_overview_router(raw_storage, registry))
     app.include_router(create_raw_router(raw_storage))
-    if spec_storage is None:
-        spec_storage = SpecStorage(raw_storage._db)
+    if spec_storage is None and db is not None:
+        spec_storage = SpecStorage(db)
     app.include_router(create_explorer_router(raw_storage, spec_storage))
 
     # Mount plugin API routers

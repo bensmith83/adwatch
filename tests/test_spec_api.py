@@ -37,12 +37,13 @@ def ws_manager():
 
 
 @pytest.fixture
-async def client(raw_storage, registry, ws_manager):
+async def client(raw_storage, registry, ws_manager, db):
     app = create_app(
         raw_storage=raw_storage,
         classifier=None,
         registry=registry,
         ws_manager=ws_manager,
+        db=db,
     )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:

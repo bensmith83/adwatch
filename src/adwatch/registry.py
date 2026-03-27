@@ -20,11 +20,13 @@ class ParserRegistry:
 
     def register(self, *, name, company_id=None, service_uuid=None,
                  local_name_pattern=None, description, version, core, instance):
+        compiled_pattern = re.compile(local_name_pattern) if local_name_pattern else None
         self._parsers.append({
             "name": name,
             "company_id": company_id,
             "service_uuid": service_uuid,
             "local_name_pattern": local_name_pattern,
+            "_compiled_pattern": compiled_pattern,
             "description": description,
             "version": version,
             "core": core,
@@ -72,8 +74,8 @@ class ParserRegistry:
                 if raw.service_data and suuid in raw.service_data:
                     return True
 
-        if entry["local_name_pattern"] is not None:
-            if raw.local_name is not None and re.search(entry["local_name_pattern"], raw.local_name):
+        if entry["_compiled_pattern"] is not None:
+            if raw.local_name is not None and entry["_compiled_pattern"].search(raw.local_name):
                 return True
 
         return False
@@ -84,6 +86,10 @@ class ParserRegistry:
             version=e["version"], core=e["core"], instance=e["instance"],
             enabled=e["enabled"],
         ) for e in self._parsers]
+
+    def get_entries(self):
+        """Return raw parser entries (for copying between registries)."""
+        return list(self._parsers)
 
     def get_by_name(self, name):
         for e in self._parsers:

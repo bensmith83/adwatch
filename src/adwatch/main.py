@@ -113,9 +113,9 @@ async def _run(args: argparse.Namespace) -> None:
 
     # Copy non-disabled entries from the default registry
     from adwatch.registry import _default_registry
-    for entry in _default_registry._parsers:
+    for entry in _default_registry.get_entries():
         if entry["name"] not in disabled:
-            registry.register(**{k: v for k, v in entry.items() if k != "enabled"})
+            registry.register(**{k: v for k, v in entry.items() if k not in ("enabled", "_compiled_pattern")})
 
     await run_migrations(db, registry=registry)
 
@@ -170,13 +170,16 @@ async def _run(args: argparse.Namespace) -> None:
         finally:
             if not scanner_task.done():
                 scanner_task.cancel()
-            else:
-                # Surface any scanner startup exception
-                scanner_task.result()
+            elif scanner_task.exception():
+                logger.error("Scanner error: %s", scanner_task.exception())
 
-    await scanner.stop()
-    await throttled.stop()
-    await db.close()
+    try:
+        await scanner.stop()
+    finally:
+        try:
+            await throttled.stop()
+        finally:
+            await db.close()
     logger.info("Shutdown complete.")
 
 
