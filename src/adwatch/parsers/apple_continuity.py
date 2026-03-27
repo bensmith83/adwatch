@@ -13,7 +13,7 @@ MAGIC_SWITCH_TYPE = 0x0B
 TETHERING_TARGET_TYPE = 0x0D
 TETHERING_SOURCE_TYPE = 0x0E
 OVERFLOW_AREA_TYPE = 0x01
-HEY_SIRI_VARIANT_TYPE = 0x0A
+AIRPLAY_SOURCE_TYPE = 0x0A
 TETHERING_SOURCE_ALT_TYPE = 0x16
 
 ACTION_CODES = {
@@ -31,7 +31,7 @@ KNOWN_TLV_TYPES = {
     NEARBY_INFO_TYPE, HANDOFF_TYPE, HOMEKIT_TYPE,
     HEY_SIRI_TYPE, MAGIC_SWITCH_TYPE,
     TETHERING_TARGET_TYPE, TETHERING_SOURCE_TYPE,
-    OVERFLOW_AREA_TYPE, HEY_SIRI_VARIANT_TYPE, TETHERING_SOURCE_ALT_TYPE,
+    OVERFLOW_AREA_TYPE, AIRPLAY_SOURCE_TYPE, TETHERING_SOURCE_ALT_TYPE,
 }
 
 
@@ -74,11 +74,11 @@ class AppleContinuityParser:
         elif tlv_type == TETHERING_SOURCE_TYPE:
             return self._parse_tethering(raw, tlv_len, tlv_value, data, "apple_tethering_source")
         elif tlv_type == TETHERING_SOURCE_ALT_TYPE:
-            return self._parse_tethering(raw, tlv_len, tlv_value, data, "apple_tethering_source")
+            return self._parse_unknown(raw, tlv_len, tlv_value, data, tlv_type)
         elif tlv_type == OVERFLOW_AREA_TYPE:
-            return self._parse_overflow_area(raw, tlv_len, tlv_value, data)
-        elif tlv_type == HEY_SIRI_VARIANT_TYPE:
-            return self._parse_hey_siri(raw, tlv_len, tlv_value, data)
+            return self._parse_unknown(raw, tlv_len, tlv_value, data, tlv_type)
+        elif tlv_type == AIRPLAY_SOURCE_TYPE:
+            return self._parse_airplay_source(raw, tlv_len, tlv_value, data)
         return None
 
     def _parse_nearby_info(self, raw, tlv_len, tlv_value, data):
@@ -226,6 +226,39 @@ class AppleContinuityParser:
             raw_payload_hex=data[2:].hex(),
             metadata={
                 "data": tlv_value[:tlv_len].hex(),
+            },
+        )
+
+    def _parse_airplay_source(self, raw, tlv_len, tlv_value, data):
+        identifier_hash = hashlib.sha256(
+            f"{raw.mac_address}:{tlv_value[:tlv_len].hex()}".encode()
+        ).hexdigest()[:16]
+
+        return ParseResult(
+            parser_name="apple_continuity",
+            beacon_type="apple_airplay_source",
+            device_class="media",
+            identifier_hash=identifier_hash,
+            raw_payload_hex=data[2:].hex(),
+            metadata={
+                "payload_hex": tlv_value[:tlv_len].hex(),
+            },
+        )
+
+    def _parse_unknown(self, raw, tlv_len, tlv_value, data, tlv_type):
+        identifier_hash = hashlib.sha256(
+            f"{raw.mac_address}:{tlv_value[:tlv_len].hex()}".encode()
+        ).hexdigest()[:16]
+
+        return ParseResult(
+            parser_name="apple_continuity",
+            beacon_type="apple_unknown",
+            device_class="phone",
+            identifier_hash=identifier_hash,
+            raw_payload_hex=data[2:].hex(),
+            metadata={
+                "subtype_hex": f"0x{tlv_type:02X}",
+                "payload_hex": tlv_value[:tlv_len].hex(),
             },
         )
 
