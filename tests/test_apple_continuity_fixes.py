@@ -51,47 +51,46 @@ class TestAirPlaySourceSubtype:
         assert result.metadata["payload_hex"] == "deadbeef"
 
 
-class TestUnknownSubtypes:
-    def test_0x16_returns_apple_unknown(self):
-        """Subtype 0x16 should return apple_unknown, not apple_tethering_source."""
+class TestRoutedSubtypes:
+    def test_0x16_returns_tethering_source_alt(self):
+        """Subtype 0x16 should route to _parse_tethering as apple_tethering_source_alt."""
         registry = _make_registry()
         mfr = struct.pack("<H", 0x004C) + bytes([0x16, 0x04]) + bytes(4)
         ad = _make_ad(manufacturer_data=mfr)
         result = registry.match(ad)[0].parse(ad)
         assert result is not None
-        assert result.beacon_type == "apple_unknown"
-        assert "subtype_hex" in result.metadata
+        assert result.beacon_type == "apple_tethering_source_alt"
 
-    def test_0x16_has_subtype_hex(self):
-        """Subtype 0x16 metadata should contain subtype_hex='0x16'."""
+    def test_0x16_extracts_tethering_fields(self):
+        """Subtype 0x16 metadata should contain tethering fields."""
         registry = _make_registry()
-        mfr = struct.pack("<H", 0x004C) + bytes([0x16, 0x04]) + bytes(4)
+        mfr = struct.pack("<H", 0x004C) + bytes([0x16, 0x04]) + bytes([0x08, 0x64, 0x00, 0x00])
         ad = _make_ad(manufacturer_data=mfr)
         result = registry.match(ad)[0].parse(ad)
-        assert result.metadata["subtype_hex"] == "0x16"
+        assert result.metadata["signal_strength"] == 0x08
+        assert result.metadata["battery"] == 0x64
 
-    def test_0x01_returns_apple_unknown(self):
-        """Subtype 0x01 should return apple_unknown."""
+    def test_0x01_returns_overflow_area(self):
+        """Subtype 0x01 should route to _parse_overflow_area."""
         registry = _make_registry()
         mfr = struct.pack("<H", 0x004C) + bytes([0x01, 0x04]) + bytes(4)
         ad = _make_ad(manufacturer_data=mfr)
         result = registry.match(ad)[0].parse(ad)
         assert result is not None
-        assert result.beacon_type == "apple_unknown"
-        assert result.metadata["subtype_hex"] == "0x01"
+        assert result.beacon_type == "apple_overflow_area"
 
     def test_0x01_has_device_class_phone(self):
-        """Unknown subtypes should have device_class='phone'."""
+        """Overflow area should have device_class='phone'."""
         registry = _make_registry()
         mfr = struct.pack("<H", 0x004C) + bytes([0x01, 0x04]) + bytes(4)
         ad = _make_ad(manufacturer_data=mfr)
         result = registry.match(ad)[0].parse(ad)
         assert result.device_class == "phone"
 
-    def test_unknown_has_payload_hex(self):
-        """Unknown subtypes should include payload_hex in metadata."""
+    def test_overflow_area_has_data(self):
+        """Overflow area should include data in metadata."""
         registry = _make_registry()
         mfr = struct.pack("<H", 0x004C) + bytes([0x01, 0x03]) + bytes([0xAA, 0xBB, 0xCC])
         ad = _make_ad(manufacturer_data=mfr)
         result = registry.match(ad)[0].parse(ad)
-        assert result.metadata["payload_hex"] == "aabbcc"
+        assert "data" in result.metadata
