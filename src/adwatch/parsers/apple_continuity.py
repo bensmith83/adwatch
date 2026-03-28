@@ -74,9 +74,9 @@ class AppleContinuityParser:
         elif tlv_type == TETHERING_SOURCE_TYPE:
             return self._parse_tethering(raw, tlv_len, tlv_value, data, "apple_tethering_source")
         elif tlv_type == TETHERING_SOURCE_ALT_TYPE:
-            return self._parse_unknown(raw, tlv_len, tlv_value, data, tlv_type)
+            return self._parse_tethering(raw, tlv_len, tlv_value, data, "apple_tethering_source_alt")
         elif tlv_type == OVERFLOW_AREA_TYPE:
-            return self._parse_unknown(raw, tlv_len, tlv_value, data, tlv_type)
+            return self._parse_overflow_area(raw, tlv_len, tlv_value, data)
         elif tlv_type == AIRPLAY_SOURCE_TYPE:
             return self._parse_airplay_source(raw, tlv_len, tlv_value, data)
         return None
