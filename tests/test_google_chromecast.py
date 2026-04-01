@@ -209,3 +209,26 @@ class TestGoogleChromecastParser:
         assert result is not None
         assert result.parser_name == "google_chromecast"
         assert result.raw_payload_hex == ""
+
+    def test_rejects_uuid_with_fe2c_substring_that_is_not_chromecast(self):
+        """A UUID containing 'fe2c' as substring but NOT the Chromecast UUID must be rejected."""
+        parser = GoogleChromecastParser()
+        ad = _make_ad(
+            service_data=None,
+            service_uuids=["abcfe2cd-1234-5678-9abc-def012345678"],
+        )
+        result = parser.parse(ad)
+        assert result is None, (
+            "Parser should not match a UUID that merely contains 'fe2c' as a substring"
+        )
+
+    def test_matches_full_chromecast_uuid(self):
+        """The full-form Chromecast UUID 0000fe2c-... must still match."""
+        parser = GoogleChromecastParser()
+        ad = _make_ad(
+            service_data=None,
+            service_uuids=["0000fe2c-0000-1000-8000-00805f9b34fb"],
+        )
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.parser_name == "google_chromecast"

@@ -24,7 +24,7 @@ class GoogleChromecastParser:
             data = raw.service_data[CHROMECAST_SERVICE_UUID]
         # Fallback: check service_uuids for full UUID containing fe2c
         elif hasattr(raw, "service_uuids") and raw.service_uuids:
-            if any("fe2c" in u.lower() for u in raw.service_uuids):
+            if any(u.lower() == "fe2c" or u.lower() == "0000fe2c-0000-1000-8000-00805f9b34fb" for u in raw.service_uuids):
                 data = b""
         else:
             return None

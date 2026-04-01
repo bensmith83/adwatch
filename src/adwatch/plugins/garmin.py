@@ -26,6 +26,8 @@ class GarminParser:
             return None
 
         payload = raw.manufacturer_data[2:]
+        if not payload:
+            return None
         local_name = getattr(raw, "local_name", None) or ""
 
         # Device class based on local_name prefix

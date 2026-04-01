@@ -250,3 +250,20 @@ class TestGarminParser:
         assert result is not None
         assert result.metadata["device_family"] == "Unknown"
         assert result.parser_name == "garmin"
+
+    def test_returns_none_exact_two_bytes_company_id_only(self):
+        """Exactly 2 bytes (company ID, no payload) returns None."""
+        parser = GarminParser()
+        ad = _make_ad(manufacturer_data=GARMIN_COMPANY_ID.to_bytes(2, "little"))
+        result = parser.parse(ad)
+        assert result is None
+
+    def test_parses_minimum_three_byte_payload(self):
+        """Exactly 3 bytes (company ID + 1 byte payload) parses successfully."""
+        parser = GarminParser()
+        ad = _make_ad(
+            manufacturer_data=GARMIN_COMPANY_ID.to_bytes(2, "little") + b"\x42",
+        )
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["message_type"] == 0x42

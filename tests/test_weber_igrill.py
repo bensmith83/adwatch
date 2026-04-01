@@ -27,7 +27,7 @@ def _make_registry():
 
     @register_parser(
         name="weber_igrill",
-        local_name_pattern=r"(?i)igrill",
+        local_name_pattern=r"(?i)^igrill",
         description="Weber iGrill thermometer advertisements",
         version="1.0.0",
         core=False,
@@ -189,3 +189,21 @@ class TestWeberIGrillParser:
         result = parser.parse(ad)
         assert result is not None
         assert result.parser_name == "weber_igrill"
+
+    def test_rejects_name_with_igrill_as_substring(self):
+        """A name like 'refrigrill_ABC' contains 'igrill' but should NOT match."""
+        parser = WeberIGrillParser()
+        ad = _make_ad(local_name="refrigrill_ABC")
+        result = parser.parse(ad)
+        assert result is None, (
+            "Parser should not match 'igrill' as a substring in the middle of a word"
+        )
+
+    def test_rejects_bigrill_device(self):
+        """A name like 'BigRillDevice' contains 'igrill' pattern but should NOT match."""
+        parser = WeberIGrillParser()
+        ad = _make_ad(local_name="BigRillDevice")
+        result = parser.parse(ad)
+        assert result is None, (
+            "Parser should not match 'igrill' embedded in unrelated device names"
+        )

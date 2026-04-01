@@ -164,7 +164,7 @@ class TestPluginsUIEndpointWidgetTypes:
 
     @pytest.mark.asyncio
     async def test_plugins_ui_returns_widget_type(self, ui_client):
-        resp = await ui_client.get("/api/plugins/ui")
+        resp = await ui_client.get("/api/plugins/ui?all=true")
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) > 0
@@ -175,7 +175,7 @@ class TestPluginsUIEndpointWidgetTypes:
 
     @pytest.mark.asyncio
     async def test_plugins_ui_sensor_card_has_render_hints(self, ui_client):
-        resp = await ui_client.get("/api/plugins/ui")
+        resp = await ui_client.get("/api/plugins/ui?all=true")
         data = resp.json()
         # Find thermopro config
         thermo_cfg = [c for c in data if c["tab_name"] == "ThermoPro"][0]
@@ -189,7 +189,7 @@ class TestPluginsUIEndpointWidgetTypes:
     @pytest.mark.asyncio
     async def test_plugins_ui_includes_render_hints_key(self, ui_client):
         """Every widget in /api/plugins/ui should have render_hints."""
-        resp = await ui_client.get("/api/plugins/ui")
+        resp = await ui_client.get("/api/plugins/ui?all=true")
         data = resp.json()
         for plugin_cfg in data:
             for widget in plugin_cfg["widgets"]:
