@@ -415,7 +415,7 @@ class TestTetheringSource:
 
 
 class TestTetheringSourceType0x16:
-    """TLV type 0x16 — undocumented subtype, now classified as apple_unknown."""
+    """TLV type 0x16 — tethering source alt subtype."""
 
     TETHERING_SRC_0x16_PAYLOAD = bytes([
         0x4C, 0x00,  # Apple company ID
@@ -434,7 +434,7 @@ class TestTetheringSourceType0x16:
         raw = make_raw(self.TETHERING_SRC_0x16_PAYLOAD)
         result = parser.parse(raw)
 
-        assert result.beacon_type == "apple_unknown"
+        assert result.beacon_type == "apple_tethering_source_alt"
 
 
 class TestOverflowAreaType0x01:
