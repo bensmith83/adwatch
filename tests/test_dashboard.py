@@ -208,6 +208,78 @@ async def test_plugins_ui_empty(client):
 
 
 @pytest.mark.asyncio
+async def test_plugins_ui_filters_to_active_parsers(client, raw_storage, registry):
+    """Only plugins with parsed data appear in /api/plugins/ui by default."""
+    from adwatch.registry import register_parser
+
+    @register_parser(
+        name="has_data",
+        company_id=0x9999,
+        description="Plugin with data",
+        version="1.0.0",
+        core=False,
+        registry=registry,
+    )
+    class HasDataParser:
+        def parse(self, raw):
+            return None
+
+    @register_parser(
+        name="no_data",
+        company_id=0x8888,
+        description="Plugin without data",
+        version="1.0.0",
+        core=False,
+        registry=registry,
+    )
+    class NoDataParser:
+        def parse(self, raw):
+            return None
+
+    # Insert an ad that was parsed by "has_data"
+    ad = RawAdvertisement(
+        timestamp="2025-01-15T10:30:00+00:00",
+        mac_address="AA:BB:CC:DD:EE:FF",
+        address_type="random",
+        manufacturer_data=None,
+        service_data=None,
+    )
+    classification = Classification(ad_type="test", ad_category="test", source="test")
+    await raw_storage.save(ad, classification, parsed_by=["has_data"])
+
+    resp = await client.get("/api/plugins/ui")
+    assert resp.status_code == 200
+    data = resp.json()
+    tab_names = [d["tab_name"] for d in data]
+    assert "Has Data" in tab_names
+    assert "No Data" not in tab_names
+
+
+@pytest.mark.asyncio
+async def test_plugins_ui_all_param_returns_all(client, raw_storage, registry):
+    """/api/plugins/ui?all=true returns all plugins regardless of data."""
+    from adwatch.registry import register_parser
+
+    @register_parser(
+        name="some_plugin",
+        company_id=0x7777,
+        description="Some plugin",
+        version="1.0.0",
+        core=False,
+        registry=registry,
+    )
+    class SomePlugin:
+        def parse(self, raw):
+            return None
+
+    resp = await client.get("/api/plugins/ui?all=true")
+    assert resp.status_code == 200
+    data = resp.json()
+    tab_names = [d["tab_name"] for d in data]
+    assert "Some Plugin" in tab_names
+
+
+@pytest.mark.asyncio
 async def test_websocket_manager_connect_disconnect():
     manager = WebSocketManager()
 

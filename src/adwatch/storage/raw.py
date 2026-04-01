@@ -153,6 +153,20 @@ class RawStorage:
             for row in rows
         }
 
+    async def get_active_parsers(self) -> set[str]:
+        """Return the set of parser names that have actually parsed ads."""
+        rows = await self._db.fetchall(
+            "SELECT DISTINCT parsed_by FROM raw_advertisements WHERE parsed_by IS NOT NULL"
+        )
+        result = set()
+        for row in rows:
+            # parsed_by can be comma-separated (multiple parsers)
+            for name in row["parsed_by"].split(","):
+                name = name.strip()
+                if name:
+                    result.add(name)
+        return result
+
     # --- Protocol Explorer methods ---
 
     async def explorer_query(

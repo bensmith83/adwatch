@@ -9,7 +9,7 @@ from adwatch.registry import register_parser
 
 @register_parser(
     name="weber_igrill",
-    local_name_pattern=r"(?i)igrill",
+    local_name_pattern=r"(?i)^igrill",
     description="Weber iGrill thermometer advertisements",
     version="1.0.0",
     core=False,
@@ -17,7 +17,7 @@ from adwatch.registry import register_parser
 class WeberIGrillParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         local_name = getattr(raw, "local_name", None)
-        if not local_name or not re.search(r"igrill", local_name, re.IGNORECASE):
+        if not local_name or not re.match(r"igrill", local_name, re.IGNORECASE):
             return None
 
         # Model detection

@@ -15,3 +15,9 @@ venv/
 .ruff_cache/
 .coverage
 htmlcov/
+*.swp
+*.db-shm
+*.db-wal
+*.csv
+samples/
+.claude/

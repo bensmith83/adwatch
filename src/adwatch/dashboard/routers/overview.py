@@ -24,11 +24,19 @@ def create_overview_router(raw_storage, registry) -> APIRouter:
         ]
 
     @router.get("/api/plugins/ui")
-    async def plugins_ui():
+    async def plugins_ui(all: bool = False):
         import dataclasses
         from adwatch.models import PluginUIConfig, WidgetConfig
+
+        active_parsers = None
+        if not all:
+            active_parsers = await raw_storage.get_active_parsers()
+
         configs = []
         for p in registry.get_all():
+            if active_parsers is not None and p.name not in active_parsers:
+                continue
+
             if hasattr(p.instance, "ui_config"):
                 cfg = p.instance.ui_config()
                 if cfg is not None:
