@@ -61,6 +61,15 @@ class RawAdvertisement:
     rssi: int = -100
     tx_power: int | None = None
 
+    def __post_init__(self):
+        # Normalize service UUIDs and service_data keys to lowercase
+        # (bleak reports 16-bit UUIDs uppercase e.g. "FEAF" but parsers
+        # use lowercase e.g. "feaf")
+        if self.service_uuids:
+            self.service_uuids = [u.lower() for u in self.service_uuids]
+        if self.service_data:
+            self.service_data = {k.lower(): v for k, v in self.service_data.items()}
+
     @classmethod
     def now(cls, **kwargs) -> "RawAdvertisement":
         """Create a RawAdvertisement with current timestamp."""
