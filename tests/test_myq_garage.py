@@ -7,7 +7,9 @@ import pytest
 from adwatch.models import RawAdvertisement, ParseResult
 from adwatch.registry import ParserRegistry, register_parser
 
-from adwatch.plugins.myq_garage import MyQGarageParser
+from adwatch.plugins.myq_garage import MyQGarageParser, MYQ_COMPANY_ID, MYQ_SERVICE_UUID
+
+MYQ_UUID_FULL = "26d91a37-c279-4d0f-96a1-532ce41ce0f6"
 
 
 def _make_ad(**kwargs):
@@ -27,6 +29,8 @@ def _make_registry():
 
     @register_parser(
         name="myq",
+        company_id=MYQ_COMPANY_ID,
+        service_uuid=MYQ_SERVICE_UUID,
         local_name_pattern=r"^MyQ-",
         description="Chamberlain/LiftMaster MyQ garage door advertisements",
         version="1.0.0",
@@ -53,6 +57,27 @@ class TestMyQGarageRegistry:
         ad = _make_ad(local_name="SomeOtherDevice")
         matches = registry.match(ad)
         assert len(matches) == 0
+
+    def test_matches_service_uuid(self):
+        """Matches on MyQ custom 128-bit service UUID."""
+        registry = _make_registry()
+        ad = _make_ad(
+            local_name="MyQ-017",
+            service_uuids=[MYQ_UUID_FULL],
+            manufacturer_data=bytes.fromhex("78082e00"),
+        )
+        matches = registry.match(ad)
+        assert len(matches) >= 1
+
+    def test_matches_company_id(self):
+        """Matches on Chamberlain company ID 0x0878."""
+        registry = _make_registry()
+        ad = _make_ad(
+            local_name="MyQ-75D",
+            manufacturer_data=bytes.fromhex("78082b00"),
+        )
+        matches = registry.match(ad)
+        assert len(matches) >= 1
 
 
 class TestMyQGarageParser:
