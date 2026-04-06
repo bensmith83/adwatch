@@ -6,11 +6,15 @@ import re
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
 from adwatch.registry import register_parser
 
+MYQ_COMPANY_ID = 0x0878
+MYQ_SERVICE_UUID = "26d91a37-c279-4d0f-96a1-532ce41ce0f6"
 MYQ_NAME_RE = re.compile(r"^MyQ-(.+)")
 
 
 @register_parser(
     name="myq",
+    company_id=MYQ_COMPANY_ID,
+    service_uuid=MYQ_SERVICE_UUID,
     local_name_pattern=r"^MyQ-",
     description="Chamberlain/LiftMaster MyQ garage door advertisements",
     version="1.0.0",
