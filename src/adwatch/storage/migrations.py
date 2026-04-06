@@ -66,6 +66,18 @@ async def run_migrations(db: Database, registry=None) -> None:
         )
     """)
 
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS insights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            generated_at REAL NOT NULL,
+            summary_payload TEXT NOT NULL,
+            insight_text TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            model TEXT,
+            token_count INTEGER
+        )
+    """)
+
     if registry:
         for p in registry.get_all():
             if hasattr(p.instance, "storage_schemas"):

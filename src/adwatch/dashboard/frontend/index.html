@@ -297,6 +297,7 @@ function NavBar({pluginTabs,active,onSelect}){
     <button class=${'nav-btn'+(active==='overview'?' active':'')} onClick=${()=>onSelect('overview')}>Overview</button>
     <button class=${'nav-btn'+(active==='plugins'?' active':'')} onClick=${()=>onSelect('plugins')}>Plugins</button>
     <button class=${'nav-btn'+(active==='explorer'?' active':'')} onClick=${()=>onSelect('explorer')}>Explorer</button>
+    <button class=${'nav-btn'+(active==='insights'?' active':'')} onClick=${()=>onSelect('insights')}>Insights</button>
     ${pluginTabs.length>0?html`
       <select class=${'nav-select'+(isPlugin?' active':'')}
         value=${isPlugin?active:''}
@@ -996,6 +997,142 @@ function SpecsPanel({onApplySpec}){
   </div>`;
 }
 
+// --- InsightsTab ---
+function InsightsTab(){
+  const[insight,setInsight]=useState(null);
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState(null);
+  const[cfg,setCfg]=useState({});
+  const[history,setHistory]=useState([]);
+  const[showHistory,setShowHistory]=useState(false);
+  const[showPayload,setShowPayload]=useState(false);
+  const[payload,setPayload]=useState(null);
+  const[needsRefresh,setNeedsRefresh]=useState(false);
+
+  const load=useCallback(()=>{
+    fetch('/api/insights/latest').then(r=>r.json()).then(d=>{
+      setInsight(d.insight);setNeedsRefresh(d.needs_refresh);
+    }).catch(()=>{});
+    fetch('/api/insights/config').then(r=>r.json()).then(setCfg).catch(()=>{});
+  },[]);
+
+  useEffect(()=>{load()},[]);
+
+  const generate=async()=>{
+    setLoading(true);setError(null);
+    try{
+      const r=await fetch('/api/insights/generate',{method:'POST'});
+      if(!r.ok){const d=await r.json();throw new Error(d.detail||'Failed')}
+      const d=await r.json();
+      setInsight({insight_text:d.insight_text,provider:d.provider,model:d.model,token_count:d.token_count,generated_at:Date.now()/1000});
+      setNeedsRefresh(false);
+    }catch(e){setError(e.message)}
+    finally{setLoading(false)}
+  };
+
+  const loadHistory=()=>{
+    setShowHistory(!showHistory);
+    if(!showHistory)fetch('/api/insights/history').then(r=>r.json()).then(setHistory).catch(()=>{});
+  };
+
+  const loadPayload=()=>{
+    setShowPayload(!showPayload);
+    if(!showPayload)fetch('/api/insights/payload-preview').then(r=>r.json()).then(setPayload).catch(()=>{});
+  };
+
+  const renderMd=(text)=>{
+    if(!text)return '';
+    return text
+      .replace(/^### (.+)$/gm,'<h3 style="color:var(--cyan);margin:16px 0 8px">$1</h3>')
+      .replace(/^## (.+)$/gm,'<h2 style="color:var(--cyan);margin:20px 0 10px;font-size:16px">$1</h2>')
+      .replace(/^# (.+)$/gm,'<h1 style="color:var(--cyan);margin:24px 0 12px;font-size:18px">$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--text)">$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/`(.+?)`/g,'<code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:12px">$1</code>')
+      .replace(/^- (.+)$/gm,'<div style="padding:2px 0 2px 16px">• $1</div>')
+      .replace(/^\d+\. (.+)$/gm,'<div style="padding:2px 0 2px 16px">$&</div>')
+      .replace(/\n\n/g,'<br/><br/>')
+      .replace(/\n/g,'<br/>');
+  };
+
+  if(!cfg.has_api_key)return html`
+    <div class="feed-wrap" style="padding:40px;text-align:center">
+      <h2 style="border:none;justify-content:center;color:var(--text2)">AI Insights</h2>
+      <p style="color:var(--text2);margin:20px 0">Configure an AI API key to enable insights.</p>
+      <code style="background:var(--bg3);padding:8px 16px;border-radius:8px;font-size:13px;display:inline-block">
+        export ADWATCH_AI_API_KEY=sk-ant-...
+      </code>
+      <p style="color:var(--text3);margin-top:12px;font-size:12px">Supports Claude and OpenAI. Set ADWATCH_AI_PROVIDER=openai for OpenAI.</p>
+    </div>`;
+
+  return html`<div>
+    <div class="feed-wrap" style="margin-bottom:16px">
+      <h2 style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+        <span>AI Insights</span>
+        <span style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:11px;color:var(--text3);font-weight:400">
+            ${cfg.provider} / ${cfg.interval}
+          </span>
+          ${needsRefresh?html`<span class="badge badge-sensor" style="font-size:10px">refresh available</span>`:null}
+          <button class="nav-btn" style="font-size:11px;padding:4px 12px" onClick=${loadPayload}>
+            ${showPayload?'Hide':'Preview'} Payload
+          </button>
+          <button class="nav-btn" style="font-size:11px;padding:4px 12px" onClick=${loadHistory}>
+            History
+          </button>
+          <button class="nav-btn active" style="font-size:11px;padding:4px 12px" onClick=${generate} disabled=${loading}>
+            ${loading?'Generating...':'Generate Now'}
+          </button>
+        </span>
+      </h2>
+      ${error?html`<div style="padding:12px 20px;color:var(--red);font-size:13px">Error: ${error}</div>`:null}
+      ${insight?html`
+        <div style="padding:20px">
+          <div style="font-size:13px;line-height:1.7;color:var(--text)" dangerouslySetInnerHTML=${{__html:renderMd(insight.insight_text)}}></div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--glass-border);display:flex;gap:16px;font-size:11px;color:var(--text3)">
+            <span>Model: ${insight.model}</span>
+            <span>Tokens: ${insight.token_count}</span>
+            <span>Generated: ${insight.generated_at?timeAgo(insight.generated_at):'just now'}</span>
+          </div>
+        </div>
+      `:html`
+        <div style="padding:40px;text-align:center;color:var(--text3)">
+          No insights generated yet. Click "Generate Now" to analyze your BLE scan data.
+        </div>
+      `}
+    </div>
+
+    ${showPayload&&payload?html`
+      <div class="feed-wrap" style="margin-bottom:16px">
+        <h2>Data Payload Preview</h2>
+        <div style="padding:16px;overflow-x:auto">
+          <pre style="font-size:11px;color:var(--text2);white-space:pre-wrap;font-family:'JetBrains Mono',monospace">${JSON.stringify(payload,null,2)}</pre>
+        </div>
+      </div>
+    `:null}
+
+    ${showHistory&&history.length>0?html`
+      <div class="feed-wrap">
+        <h2>Insight History</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Generated</th><th>Provider</th><th>Model</th><th>Tokens</th><th>Preview</th></tr></thead>
+            <tbody>
+              ${history.map(h=>html`<tr style="cursor:pointer" onClick=${()=>{setInsight(h);setShowHistory(false)}}>
+                <td>${timeAgo(h.generated_at)}</td>
+                <td>${h.provider}</td>
+                <td>${h.model||'-'}</td>
+                <td>${h.token_count||'-'}</td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.insight_text?.substring(0,80)}...</td>
+              </tr>`)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `:null}
+  </div>`;
+}
+
 // --- ExplorerTab ---
 function ExplorerTab({wsRef}){
   const[filters,setFilters]=useState({min_sightings:1});
@@ -1208,6 +1345,7 @@ function App(){
       `:null}
       ${activeTab==='plugins'?html`<${PluginManager}/>`:null}
       ${activeTab==='explorer'?html`<${ExplorerTab} wsRef=${wsRef}/>`:null}
+      ${activeTab==='insights'?html`<${InsightsTab}/>`:null}
       ${activeTab.startsWith('plugin-')?html`<${PluginTab} config=${pluginUIs[parseInt(activeTab.split('-')[1])]} wsRef=${wsRef}/>`:''}
     </div>`;
 }
