@@ -41,12 +41,14 @@ class TestDexcomCgmParsing:
         assert isinstance(result, ParseResult)
 
     def test_parse_by_name_dex(self, parser):
-        raw = make_raw(local_name="DEX", service_uuids=[DEVICE_INFO_UUID, DEXCOM_UUID])
+        """Name-only match — no Dexcom service UUID present."""
+        raw = make_raw(local_name="DEX", service_uuids=[DEVICE_INFO_UUID])
         result = parser.parse(raw)
         assert result is not None
 
     def test_parse_by_name_dexcom(self, parser):
-        raw = make_raw(local_name="Dexcom1A", service_uuids=[DEXCOM_UUID])
+        """Name-only match for G6-style 'DexcomXX' names."""
+        raw = make_raw(local_name="Dexcom1A", service_uuids=[DEVICE_INFO_UUID])
         result = parser.parse(raw)
         assert result is not None
 

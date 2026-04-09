@@ -96,6 +96,13 @@ class TestPolestarKeyParsing:
         result = parser.parse(raw)
         assert result is None
 
+    def test_parse_by_name_only(self, parser):
+        """Name-only match — no Polestar service UUID present."""
+        raw = make_raw(local_name="Polestar2")
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["model"] == "Polestar 2"
+
     def test_no_match_empty(self, parser):
         raw = make_raw()
         result = parser.parse(raw)
