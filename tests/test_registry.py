@@ -682,6 +682,119 @@ class TestDecoratorPreservesClass:
 
 
 # ===================================================================
+# 11. Register a parser by mac_prefix, verify it matches
+# ===================================================================
+
+class TestMatchByMacPrefix:
+    def test_matches_single_mac_prefix(self):
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="test_mac_single",
+            mac_prefix="D4:11:D6",
+            description="SoundThinking OUI",
+            version="1.0.0",
+            core=False,
+            registry=registry,
+        )
+        class MacParser(_BaseStub):
+            pass
+
+        ad = _make_ad(mac_address="D4:11:D6:AA:BB:CC")
+        matches = registry.match(ad)
+
+        assert len(matches) == 1
+        assert isinstance(matches[0], MacParser)
+
+    def test_matches_mac_prefix_case_insensitive(self):
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="test_mac_case",
+            mac_prefix="d4:11:d6",
+            description="Lowercase OUI",
+            version="1.0.0",
+            core=False,
+            registry=registry,
+        )
+        class MacCaseParser(_BaseStub):
+            pass
+
+        ad = _make_ad(mac_address="D4:11:D6:AA:BB:CC")
+        matches = registry.match(ad)
+
+        assert len(matches) == 1
+
+    def test_matches_mac_prefix_list(self):
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="test_mac_list",
+            mac_prefix=["D4:11:D6", "EC:1B:BD"],
+            description="Multiple OUIs",
+            version="1.0.0",
+            core=False,
+            registry=registry,
+        )
+        class MacListParser(_BaseStub):
+            pass
+
+        ad1 = _make_ad(mac_address="D4:11:D6:AA:BB:CC")
+        ad2 = _make_ad(mac_address="EC:1B:BD:11:22:33")
+        ad3 = _make_ad(mac_address="AA:BB:CC:DD:EE:FF")
+
+        assert len(registry.match(ad1)) == 1
+        assert len(registry.match(ad2)) == 1
+        assert len(registry.match(ad3)) == 0
+
+    def test_does_not_match_different_mac(self):
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="test_mac_miss",
+            mac_prefix="D4:11:D6",
+            description="SoundThinking only",
+            version="1.0.0",
+            core=False,
+            registry=registry,
+        )
+        class MacMissParser(_BaseStub):
+            pass
+
+        ad = _make_ad(mac_address="AA:BB:CC:DD:EE:FF")
+        matches = registry.match(ad)
+
+        assert len(matches) == 0
+
+    def test_mac_prefix_or_with_other_criteria(self):
+        """mac_prefix participates in OR logic with other criteria."""
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="test_mac_or",
+            mac_prefix="D4:11:D6",
+            company_id=0x09C8,
+            description="MAC or company ID",
+            version="1.0.0",
+            core=False,
+            registry=registry,
+        )
+        class MacOrParser(_BaseStub):
+            pass
+
+        # Match by MAC only
+        ad_mac = _make_ad(mac_address="D4:11:D6:AA:BB:CC")
+        assert len(registry.match(ad_mac)) == 1
+
+        # Match by company_id only
+        ad_cid = _make_ad(
+            mac_address="AA:BB:CC:DD:EE:FF",
+            manufacturer_data=b"\xC8\x09\x01\x02",
+        )
+        assert len(registry.match(ad_cid)) == 1
+
+
+# ===================================================================
 # Additional edge cases
 # ===================================================================
 
