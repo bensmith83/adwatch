@@ -97,6 +97,16 @@ class TestFlockSafetyDeviceNameDetection:
         assert result is not None
         assert result.metadata["device_type"] == "pigvision"
 
+    def test_generic_flock_name(self, parser):
+        """Name containing 'Flock' should match the generic flock type."""
+        raw = make_raw(
+            local_name="FlockCam-ABC123",
+            manufacturer_data=FLOCK_MFR_DATA,
+        )
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["device_type"] == "flock"
+
     def test_unknown_name_with_company_id(self, parser):
         """Device with XUNTONG company ID but no recognized name."""
         raw = make_raw(manufacturer_data=FLOCK_MFR_DATA)

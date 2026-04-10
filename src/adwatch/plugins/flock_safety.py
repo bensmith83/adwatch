@@ -14,7 +14,7 @@ from adwatch.registry import register_parser
 XUNTONG_COMPANY_ID = 0x09C8
 
 # Known Flock Safety BLE device OUI prefixes (MAC address first 3 octets)
-FLOCK_BLE_OUIS = [
+FLOCK_BLE_OUIS = frozenset({
     "EC:1B:BD",
     "58:8E:81",
     "90:35:EA",
@@ -22,7 +22,7 @@ FLOCK_BLE_OUIS = [
     "B4:E3:F9",
     "04:0D:84",
     "F0:82:C0",
-]
+})
 
 # Device name patterns for classification
 _NAME_PATTERNS = [
