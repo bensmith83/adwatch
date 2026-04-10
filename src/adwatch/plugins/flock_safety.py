@@ -14,7 +14,9 @@ from adwatch.registry import register_parser
 XUNTONG_COMPANY_ID = 0x09C8
 
 # Known Flock Safety BLE device OUI prefixes (MAC address first 3 octets)
+# Sources: colonelpanichacks/flock-you, IEEE OUI registry
 FLOCK_BLE_OUIS = frozenset({
+    # FS Ext Battery / Penguin devices
     "EC:1B:BD",
     "58:8E:81",
     "90:35:EA",
@@ -22,6 +24,11 @@ FLOCK_BLE_OUIS = frozenset({
     "B4:E3:F9",
     "04:0D:84",
     "F0:82:C0",
+    "1C:34:F1",
+    "38:5B:44",
+    "94:34:69",
+    # Flock Safety IEEE-registered OUI
+    "B4:1E:52",
 })
 
 # Device name patterns for classification

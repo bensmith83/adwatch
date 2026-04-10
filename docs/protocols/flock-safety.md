@@ -14,7 +14,7 @@ adwatch detects Flock Safety hardware by matching the XUNTONG (`0x09C8`) BLE man
 | Penguin | `Penguin-XXXXXXXXXX` | Rechargeable battery pack (li-ion 10.8V 20Ah) |
 | Pigvision | `Pigvision` | Camera module / processor unit |
 | Flock (generic) | Contains `Flock` | Various Flock Safety hardware |
-| Raven | Service UUID fingerprint | SoundThinking/ShotSpotter gunshot detector (co-deployed) |
+| Raven | OUI `D4:11:D6` | SoundThinking/ShotSpotter gunshot detector — see [raven-gunshot-detector.md](raven-gunshot-detector.md) |
 
 ## BLE Advertisement Format
 
@@ -52,6 +52,10 @@ These MAC address prefixes are associated with Flock Safety BLE devices (battery
 | `B4:E3:F9` | FS Ext Battery / Penguin |
 | `04:0D:84` | FS Ext Battery / Penguin |
 | `F0:82:C0` | FS Ext Battery / Penguin |
+| `1C:34:F1` | FS Ext Battery / Penguin |
+| `38:5B:44` | FS Ext Battery / Penguin |
+| `94:34:69` | FS Ext Battery / Penguin |
+| `B4:1E:52` | Flock Safety (IEEE-registered) |
 
 ### Known WiFi AP OUI Prefixes
 
@@ -69,25 +73,7 @@ Flock cameras also broadcast WiFi access points with SSID format `Flock-XXXXXX`.
 
 ## Raven Gunshot Detector (Co-deployed)
 
-Flock Safety deploys SoundThinking (formerly ShotSpotter) "Raven" gunshot detectors alongside their ALPR cameras. Ravens advertise BLE GATT services that reveal device telemetry:
-
-| Service | UUID (16-bit) | Data Exposed |
-|---------|---------------|-------------|
-| Device Info | `0x180A` | Part number, serial, firmware version, MAC |
-| GPS | `0x3100` | Latitude, longitude, altitude |
-| Power | `0x3200` | Board temp, battery voltage, charge current, solar voltage |
-| Network | `0x3300` | LTE/WiFi RSSI, RSRQ, RSRP, SINR |
-| Uploads | `0x3400` | Upload timing and counts |
-| Failures | `0x3500` | Error counters (identity, status, heartbeat, OTA, audio) |
-
-**Legacy services** (firmware 1.1.x): `0x1809` (Health), `0x1819` (Location)
-
-Firmware version can be estimated from which service UUIDs are advertised:
-- **1.1.x**: Legacy UUIDs (`0x1809`, `0x1819`)
-- **1.2.x**: Standard service set (`0x180A`, `0x3100`–`0x3500`)
-- **1.3.x**: Extended service set
-
-> **Note:** Raven GATT services require an active connection to read. The current plugin only detects Flock hardware via passive BLE advertisement scanning (manufacturer data). Raven service UUID detection is documented here for future implementation.
+Flock Safety deploys SoundThinking (formerly ShotSpotter) "Raven" gunshot detectors alongside their ALPR cameras. Ravens are detected by a separate plugin — see [raven-gunshot-detector.md](raven-gunshot-detector.md) for full protocol documentation.
 
 ## What We Can Parse from Advertisements
 

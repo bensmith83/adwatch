@@ -141,6 +141,8 @@ class TestFlockSafetyOUIDetection:
         expected_ouis = [
             "EC:1B:BD", "58:8E:81", "90:35:EA", "CC:CC:CC",
             "B4:E3:F9", "04:0D:84", "F0:82:C0",
+            "1C:34:F1", "38:5B:44", "94:34:69",
+            "B4:1E:52",
         ]
         for oui in expected_ouis:
             assert oui in FLOCK_BLE_OUIS, f"{oui} not in FLOCK_BLE_OUIS"
