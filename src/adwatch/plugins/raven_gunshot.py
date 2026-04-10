@@ -58,18 +58,26 @@ def _estimate_firmware(service_uuids: list[str]) -> str:
     return "unknown"
 
 
+# Non-standard service UUIDs unique to Raven (secondary detection if MAC is randomized)
+RAVEN_DISTINCTIVE_UUIDS = [
+    "00003100-0000-1000-8000-00805f9b34fb",  # GPS
+    "00003200-0000-1000-8000-00805f9b34fb",  # Power
+    "00003300-0000-1000-8000-00805f9b34fb",  # Network
+    "00003400-0000-1000-8000-00805f9b34fb",  # Uploads
+    "00003500-0000-1000-8000-00805f9b34fb",  # Diagnostics
+]
+
+
 @register_parser(
     name="raven_gunshot",
     mac_prefix=SOUNDTHINKING_OUI,
+    service_uuid=RAVEN_DISTINCTIVE_UUIDS,
     description="SoundThinking Raven gunshot detector",
     version="1.0.0",
     core=False,
 )
 class RavenGunShotParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.mac_address.upper().startswith(SOUNDTHINKING_OUI):
-            return None
-
         services = _detect_services(raw.service_uuids or [])
         firmware = _estimate_firmware(raw.service_uuids or [])
 

@@ -10,6 +10,7 @@ from adwatch.plugins.raven_gunshot import (
     SOUNDTHINKING_OUI,
     RAVEN_SERVICE_UUIDS,
     RAVEN_LEGACY_UUIDS,
+    RAVEN_DISTINCTIVE_UUIDS,
 )
 
 
@@ -65,9 +66,12 @@ class TestRavenBasicDetection:
         result = parser.parse(raw)
         assert result.device_class == "surveillance"
 
-    def test_non_soundthinking_mac_returns_none(self, parser):
+    def test_parses_non_soundthinking_mac(self, parser):
+        """Parser trusts registry matching — parses any ad routed to it."""
         raw = make_raw(mac_address="AA:BB:CC:DD:EE:FF")
-        assert parser.parse(raw) is None
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.parser_name == "raven_gunshot"
 
 
 class TestRavenFirmwareEstimation:
@@ -238,6 +242,12 @@ class TestRavenConstants:
     def test_raven_legacy_uuids_count(self):
         # 2 legacy services: health, location
         assert len(RAVEN_LEGACY_UUIDS) == 2
+
+    def test_distinctive_uuids_are_non_standard(self):
+        """Distinctive UUIDs are the custom 0x3100-0x3500 range only."""
+        assert len(RAVEN_DISTINCTIVE_UUIDS) == 5
+        for uuid in RAVEN_DISTINCTIVE_UUIDS:
+            assert uuid in RAVEN_SERVICE_UUIDS
 
 
 class TestRavenStorageSchema:
