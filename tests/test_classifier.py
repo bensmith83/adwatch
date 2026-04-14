@@ -299,6 +299,18 @@ class TestLocalNamePatterns:
                 break
         assert matched, "No pattern matched 'Flipper Zero'"
 
+    def test_ks03_pattern_matches(self):
+        """KS03~xxxxxx HID remotes need a classifier entry so the plugin's
+        /recent endpoint can filter by ad_type."""
+        matched = False
+        for pattern, ad_type, ad_category in LOCAL_NAME_PATTERNS:
+            if re.search(pattern, "KS03~2520e0"):
+                matched = True
+                assert ad_type == "ks03_hid_remote"
+                assert ad_category == "remote"
+                break
+        assert matched, "No pattern matched 'KS03~2520e0'"
+
 
 # ===================================================================
 # Classifier.classify() — Apple company_id with subtypes

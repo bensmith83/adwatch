@@ -130,3 +130,38 @@ class TestKS03Parser:
         )
         result = parser.parse(ad)
         assert result.metadata["advertises_hid"] is True
+
+    def test_hid_service_flagged_full_uuid(self):
+        """Linux/BlueZ delivers the HID service as the full 128-bit UUID."""
+        parser = KS03HidRemoteParser()
+        ad = _make_ad(
+            local_name="KS03~2520e0",
+            service_uuids=["00001812-0000-1000-8000-00805f9b34fb"],
+        )
+        result = parser.parse(ad)
+        assert result.metadata["advertises_hid"] is True
+
+    def test_hid_service_flagged_uppercase_full(self):
+        """Some backends deliver uppercase full 128-bit UUIDs."""
+        parser = KS03HidRemoteParser()
+        ad = _make_ad(
+            local_name="KS03~2520e0",
+            service_uuids=["00001812-0000-1000-8000-00805F9B34FB"],
+        )
+        result = parser.parse(ad)
+        assert result.metadata["advertises_hid"] is True
+
+    def test_raw_payload_hex_captures_mfg_data(self):
+        parser = KS03HidRemoteParser()
+        ad = _make_ad(
+            local_name="KS03~2520e0",
+            manufacturer_data=KS03_PLACEHOLDER_MFG,
+        )
+        result = parser.parse(ad)
+        assert result.raw_payload_hex == KS03_PLACEHOLDER_MFG.hex()
+
+    def test_raw_payload_hex_empty_when_no_mfg_data(self):
+        parser = KS03HidRemoteParser()
+        ad = _make_ad(local_name="KS03~2520e0")
+        result = parser.parse(ad)
+        assert result.raw_payload_hex == ""

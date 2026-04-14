@@ -64,7 +64,7 @@ class KS03HidRemoteParser:
             beacon_type="ks03_hid_remote",
             device_class="remote",
             identifier_hash=id_hash,
-            raw_payload_hex="",
+            raw_payload_hex=raw.manufacturer_data.hex() if raw.manufacturer_data else "",
             metadata=metadata,
         )
 

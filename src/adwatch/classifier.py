@@ -73,6 +73,7 @@ LOCAL_NAME_PATTERNS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r"Flipper"), "flipper", "tool"),
     (re.compile(r"Hatch"), "hatch", "smart_home"),
     (re.compile(r"^GV(H5|5124)"), "govee", "sensor"),
+    (re.compile(r"^KS03~[0-9a-fA-F]{6}$"), "ks03_hid_remote", "remote"),
 ]
 
 
