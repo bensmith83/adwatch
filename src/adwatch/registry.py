@@ -4,6 +4,31 @@ import re
 from dataclasses import dataclass
 
 
+_BT_BASE_SUFFIX = "-0000-1000-8000-00805f9b34fb"
+
+
+def _normalize_uuid(u):
+    """Return a canonical lowercase 128-bit string for a BLE service UUID.
+
+    BLE backends report UUIDs in different shapes depending on the OS:
+      - bleak / BlueZ (Linux, Android): ``0000fcf1-0000-1000-8000-00805f9b34fb``
+      - CoreBluetooth (iOS, macOS): ``FCF1`` (short, uppercase)
+      - some Python code: ``fcf1`` (short, lowercase)
+    Registrations use the same variations. This helper collapses all forms to
+    the canonical full-128-bit lowercase string so comparisons are platform-
+    agnostic. Non-string inputs and unrecognized strings are returned as-is
+    (lowercased when possible) to avoid false matches.
+    """
+    if not isinstance(u, str):
+        return u
+    s = u.lower()
+    if len(s) == 4 and all(c in "0123456789abcdef" for c in s):
+        return f"0000{s}" + _BT_BASE_SUFFIX
+    if len(s) == 8 and all(c in "0123456789abcdef" for c in s):
+        return s + _BT_BASE_SUFFIX
+    return s
+
+
 @dataclass
 class ParserInfo:
     name: str
@@ -21,10 +46,19 @@ class ParserRegistry:
     def register(self, *, name, company_id=None, service_uuid=None,
                  local_name_pattern=None, description, version, core, instance):
         compiled_pattern = re.compile(local_name_pattern) if local_name_pattern else None
+        # Normalize service UUIDs at registration so matching is cheap and
+        # platform-agnostic (see _normalize_uuid).
+        normalized_uuids = None
+        if service_uuid is not None:
+            if isinstance(service_uuid, (list, tuple)):
+                normalized_uuids = frozenset(_normalize_uuid(u) for u in service_uuid)
+            else:
+                normalized_uuids = frozenset((_normalize_uuid(service_uuid),))
         self._parsers.append({
             "name": name,
             "company_id": company_id,
             "service_uuid": service_uuid,
+            "_normalized_service_uuids": normalized_uuids,
             "local_name_pattern": local_name_pattern,
             "_compiled_pattern": compiled_pattern,
             "description": description,
@@ -60,19 +94,15 @@ class ParserRegistry:
                 elif ad_company == cid:
                     return True
 
-        if entry["service_uuid"] is not None:
-            suuid = entry["service_uuid"]
-            if isinstance(suuid, (list, tuple)):
-                for u in suuid:
-                    if u in (raw.service_uuids or []):
-                        return True
-                    if raw.service_data and u in raw.service_data:
-                        return True
-            else:
-                if suuid in (raw.service_uuids or []):
+        if entry["_normalized_service_uuids"]:
+            wanted = entry["_normalized_service_uuids"]
+            for advertised in (raw.service_uuids or []):
+                if _normalize_uuid(advertised) in wanted:
                     return True
-                if raw.service_data and suuid in raw.service_data:
-                    return True
+            if raw.service_data:
+                for key in raw.service_data:
+                    if _normalize_uuid(key) in wanted:
+                        return True
 
         if entry["_compiled_pattern"] is not None:
             if raw.local_name is not None and entry["_compiled_pattern"].search(raw.local_name):
