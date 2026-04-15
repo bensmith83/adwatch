@@ -44,7 +44,8 @@ class ParserRegistry:
         self._parsers: list[dict] = []
 
     def register(self, *, name, company_id=None, service_uuid=None,
-                 local_name_pattern=None, description, version, core, instance):
+                 local_name_pattern=None, mac_prefix=None, description,
+                 version, core, instance):
         compiled_pattern = re.compile(local_name_pattern) if local_name_pattern else None
         # Normalize service UUIDs at registration so matching is cheap and
         # platform-agnostic (see _normalize_uuid).
@@ -54,12 +55,19 @@ class ParserRegistry:
                 normalized_uuids = frozenset(_normalize_uuid(u) for u in service_uuid)
             else:
                 normalized_uuids = frozenset((_normalize_uuid(service_uuid),))
+        # Normalize mac_prefix to a tuple of uppercase strings
+        if mac_prefix is not None:
+            if isinstance(mac_prefix, str):
+                mac_prefix = (mac_prefix.upper(),)
+            else:
+                mac_prefix = tuple(p.upper() for p in mac_prefix)
         self._parsers.append({
             "name": name,
             "company_id": company_id,
             "service_uuid": service_uuid,
             "_normalized_service_uuids": normalized_uuids,
             "local_name_pattern": local_name_pattern,
+            "mac_prefix": mac_prefix,
             "_compiled_pattern": compiled_pattern,
             "description": description,
             "version": version,
@@ -104,6 +112,12 @@ class ParserRegistry:
                     if _normalize_uuid(key) in wanted:
                         return True
 
+        if entry["mac_prefix"] is not None:
+            mac_upper = raw.mac_address.upper()
+            for prefix in entry["mac_prefix"]:
+                if mac_upper.startswith(prefix):
+                    return True
+
         if entry["_compiled_pattern"] is not None:
             if raw.local_name is not None and entry["_compiled_pattern"].search(raw.local_name):
                 return True
@@ -133,15 +147,16 @@ class ParserRegistry:
 
 
 def register_parser(*, name, company_id=None, service_uuid=None,
-                    local_name_pattern=None, description, version, core,
-                    registry=None):
+                    local_name_pattern=None, mac_prefix=None, description,
+                    version, core, registry=None):
     def decorator(cls):
         reg = registry or _default_registry
         instance = cls()
         reg.register(
             name=name, company_id=company_id, service_uuid=service_uuid,
-            local_name_pattern=local_name_pattern, description=description,
-            version=version, core=core, instance=instance,
+            local_name_pattern=local_name_pattern, mac_prefix=mac_prefix,
+            description=description, version=version, core=core,
+            instance=instance,
         )
         return cls
     return decorator
