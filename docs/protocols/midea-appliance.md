@@ -113,7 +113,7 @@ The serial number is more stable than the BLE MAC (which can be a randomized res
 
 ## Parsing Strategy
 
-1. Match on `company_id == 0x06A8` OR `local_name == "net"` AND `company_id == 0x06A8`
+1. Match on `company_id == 0x06A8` (the Midea CID is the sole required signal; `local_name == "net"` is captured as a `setup_mode` hint but is not required for the match)
 2. Validate `manufacturer_payload[0] == 0x01` (frame type)
 3. Extract 14-byte ASCII serial from `manufacturer_payload[1:15]`
 4. If `len(manufacturer_payload) >= 22` and `manufacturer_payload[15] == 0x01`, extract BD address from bytes 16-21

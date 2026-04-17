@@ -2,7 +2,7 @@
 
 Midea Wi-Fi appliances (air conditioners, dehumidifiers, washers, etc. —
 also sold as Comfee, Inventor EVO, and Toshiba HA) broadcast a BLE frame
-carrying their 16-byte ASCII serial number while in network-setup mode.
+carrying their 14-byte ASCII serial number while in network-setup mode.
 The frame is identified by company ID 0x06A8 (Midea) and usually the
 local name "net".
 """

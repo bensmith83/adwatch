@@ -95,7 +95,7 @@ The same logical device will be observed under multiple identifier hashes as the
 ## Parsing Strategy
 
 1. Match on `FCF1` in `service_data`
-2. Validate first byte == `0x04` (currently the only known frame type)
+2. Capture `frame_type` (first byte; `0x04` is the only value observed so far — record as metadata rather than gating on it, so future frame types still produce a presence signal)
 3. Capture `payload_hex` and `payload_length` for the explorer / spec UI
 4. Return device class `phone` (best-effort), beacon type `google_fcf1`
 
