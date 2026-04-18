@@ -16,19 +16,19 @@ from adwatch.registry import register_parser
 # Sense Android-mode / uWeave 128-bit service UUID (little-endian in raw ad).
 SENSE_UWEAVE_UUID = "1f6b43aa-94de-4ba9-981c-da38823117bd"
 
-# Name prefixes / substrings per passive report.
+# Name prefixes per passive report. Anchored at start so unrelated names
+# containing "sense" (e.g. "Smart Sense Thermostat") don't false-match.
 _SCHLAGE_NAME_RE = re.compile(
-    r"(?:SENSE|schlage|NDE|Walton|GSELENT|SSELENT)", re.IGNORECASE
+    r"^(?:SENSE|schlage|NDE|Walton|GSELENT|SSELENT)", re.IGNORECASE
 )
 
 
 def _extract_encode_serial(name: str) -> str | None:
     """Encode/Encode Plus WiFi locks embed the serial after 'schlage'."""
     low = name.lower()
-    if "schlage" in low:
-        stripped = low.replace("schlage", "").strip()
-        if stripped:
-            return stripped
+    stripped = low.removeprefix("schlage").strip()
+    if stripped and stripped != low:
+        return stripped
     return None
 
 
@@ -37,14 +37,14 @@ def _extract_encode_serial(name: str) -> str | None:
     service_uuid=SENSE_UWEAVE_UUID,
     local_name_pattern=_SCHLAGE_NAME_RE.pattern,
     description="Schlage / Allegion smart locks",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class SchlageParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         name = raw.local_name or ""
         has_uuid = SENSE_UWEAVE_UUID in [u.lower() for u in (raw.service_uuids or [])]
-        name_match = bool(_SCHLAGE_NAME_RE.search(name))
+        name_match = bool(_SCHLAGE_NAME_RE.match(name))
 
         if not (has_uuid or name_match):
             return None
