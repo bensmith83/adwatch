@@ -1,28 +1,49 @@
-"""Tile tracker BLE advertisement parser."""
+"""Tile tracker BLE advertisement parser.
+
+Identifiers and variants per apk-ble-hunting/reports/thetileapp-tile_passive.md.
+"""
 
 import hashlib
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
 from adwatch.registry import register_parser
 
-TILE_UUID = "feed"
+
+# Tile SIG-assigned service UUIDs.
+TILE_UUID_LEGACY = "feed"       # legacy format: plain tileId (no rotation)
+TILE_UUID_PRIVATEID = "feec"    # current format: rotating hashedId (~15 min)
+
+_TILE_UUIDS = (TILE_UUID_LEGACY, TILE_UUID_PRIVATEID)
 
 
 @register_parser(
     name="tile",
-    service_uuid=TILE_UUID,
+    service_uuid=list(_TILE_UUIDS),
     description="Tile tracker advertisements",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class TileParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.service_data or TILE_UUID not in raw.service_data:
+        if not raw.service_data:
             return None
 
-        data = raw.service_data[TILE_UUID]
-        if not data:
+        variant = None
+        data = None
+        for uuid in _TILE_UUIDS:
+            if uuid in raw.service_data and raw.service_data[uuid]:
+                data = raw.service_data[uuid]
+                variant = "privateid" if uuid == TILE_UUID_PRIVATEID else "legacy"
+                break
+
+        if data is None or variant is None:
             return None
+
+        metadata: dict = {
+            "payload_hex": data.hex(),
+            "variant": variant,
+            "service_data_length": len(data),
+        }
 
         id_hash = hashlib.sha256(
             f"{raw.mac_address}:{data.hex()}".encode()
@@ -34,7 +55,7 @@ class TileParser:
             device_class="tracker",
             identifier_hash=id_hash,
             raw_payload_hex=data.hex(),
-            metadata={"payload_hex": data.hex()},
+            metadata=metadata,
         )
 
     def storage_schema(self):

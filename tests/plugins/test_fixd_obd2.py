@@ -90,8 +90,27 @@ class TestFixdObd2Parsing:
         result = parser.parse(raw)
         assert result is None
 
-    def test_requires_name_match(self, parser):
-        """FFF0 alone is too generic — require name match too."""
-        raw = make_raw(service_uuids=["fff0"])
+    def test_matches_by_mac_prefix_without_name(self, parser):
+        # Per passive report the FIXD app uses MAC-prefix matching — plain
+        # Viecar/Seto OBD-II dongles with no "FIXD" name should still be
+        # detected.
+        raw = make_raw(mac_address="88:1B:99:AA:BB:CC")
         result = parser.parse(raw)
-        assert result is None
+        assert result is not None
+        assert result.metadata["sensor_model"] == "VIECAR"
+
+    def test_matches_setosmart_prefix(self, parser):
+        raw = make_raw(mac_address="00:11:67:11:12:34")
+        assert parser.parse(raw).metadata["sensor_model"] == "SETOSMART"
+
+    def test_matches_viecar_v2_prefix(self, parser):
+        raw = make_raw(mac_address="66:1B:11:AA:BB:CC")
+        assert parser.parse(raw).metadata["sensor_model"] == "VIECAR_V2"
+
+    def test_matches_old_kickstarter_exact_mac(self, parser):
+        raw = make_raw(mac_address="00:0D:18:00:00:01")
+        assert parser.parse(raw).metadata["sensor_model"] == "OLD_KICKSTARTER"
+
+    def test_unrecognised_mac_without_name_does_not_match(self, parser):
+        raw = make_raw(mac_address="AA:BB:CC:DD:EE:FF", service_uuids=["fff0"])
+        assert parser.parse(raw) is None

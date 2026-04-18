@@ -1,11 +1,14 @@
-"""Tests for Bose audio device plugin."""
+"""Tests for Bose audio device plugin.
+
+Identifier constants per apk-ble-hunting/reports/bose-bosemusic_passive.md.
+"""
 
 import hashlib
 
 import pytest
 
 from adwatch.models import RawAdvertisement, ParseResult
-from adwatch.plugins.bose import BoseParser
+from adwatch.plugins.bose import BoseParser, BOSE_COMPANY_ID, BOSE_SERVICE_UUID_FEBE
 
 
 @pytest.fixture
@@ -28,11 +31,11 @@ def make_raw(manufacturer_data=None, service_data=None, service_uuids=None, **kw
     )
 
 
-# Realistic sample: company_id 0x0065 LE = 0x65, 0x00, then payload 0x01, 0xc9, 0x01
-BOSE_MFR_DATA = bytes.fromhex("650001c901")
+# Bose SIG company ID 0x009E (little-endian: 9e 00) + arbitrary payload.
+BOSE_MFR_DATA = BOSE_COMPANY_ID.to_bytes(2, "little") + bytes.fromhex("01c901")
 BOSE_PAYLOAD = bytes.fromhex("01c901")
 
-FDF7_SERVICE_DATA = bytes(range(36))
+FEBE_SERVICE_DATA = bytes(range(36))
 
 
 class TestBoseParsing:
@@ -61,10 +64,9 @@ class TestBoseParsing:
         raw = make_raw(manufacturer_data=BOSE_MFR_DATA)
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
-        int(result.identifier_hash, 16)  # must be valid hex
+        int(result.identifier_hash, 16)
 
     def test_identity_hash_value(self, parser):
-        """Identity = SHA256(mac_address)[:16]."""
         raw = make_raw(manufacturer_data=BOSE_MFR_DATA, mac_address="11:22:33:44:55:66")
         result = parser.parse(raw)
         expected = hashlib.sha256("11:22:33:44:55:66".encode()).hexdigest()[:16]
@@ -90,14 +92,14 @@ class TestBoseParsing:
         result = parser.parse(raw)
         assert "service_payload_hex" not in result.metadata
 
-    def test_metadata_with_fdf7_service_data(self, parser):
+    def test_metadata_with_febe_service_data(self, parser):
         raw = make_raw(
             manufacturer_data=BOSE_MFR_DATA,
-            service_data={"fdf7": FDF7_SERVICE_DATA},
+            service_data={BOSE_SERVICE_UUID_FEBE: FEBE_SERVICE_DATA},
         )
         result = parser.parse(raw)
-        assert result.metadata["service_payload_hex"] == FDF7_SERVICE_DATA.hex()
-        assert result.metadata["service_payload_length"] == len(FDF7_SERVICE_DATA)
+        assert result.metadata["service_payload_hex"] == FEBE_SERVICE_DATA.hex()
+        assert result.metadata["service_payload_length"] == len(FEBE_SERVICE_DATA)
 
 
 class TestBoseMalformed:
@@ -106,13 +108,13 @@ class TestBoseMalformed:
         assert parser.parse(raw) is None
 
     def test_returns_none_wrong_company_id(self, parser):
-        # Company ID 0x004C (Apple) instead of 0x0065 (Bose)
+        # Apple company ID 0x004C, no other Bose signal → no match.
         raw = make_raw(manufacturer_data=bytes.fromhex("4c0001c901"))
         assert parser.parse(raw) is None
 
-    def test_returns_none_empty_payload(self, parser):
-        # Just company ID bytes, no payload
-        raw = make_raw(manufacturer_data=bytes.fromhex("6500"))
+    def test_returns_none_empty_payload_no_other_signal(self, parser):
+        # Bose company ID but zero-length payload and no other Bose signal → no match.
+        raw = make_raw(manufacturer_data=BOSE_COMPANY_ID.to_bytes(2, "little"))
         assert parser.parse(raw) is None
 
 

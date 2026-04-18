@@ -107,12 +107,22 @@ class TestSpheroParsing:
         result = parser.parse(ad)
         assert result.metadata["device_name"] == "SB-2C30"
 
-    def test_identity_hash(self):
-        """Identity hash is SHA256('sphero:{mac}')[:16]."""
+    def test_identity_hash_uses_stable_device_id_when_available(self):
         mac = "11:22:33:44:55:66"
         parser = SpherParser()
         ad = _make_ad(
             local_name="SB-9B13",
+            service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
+            mac_address=mac,
+        )
+        result = parser.parse(ad)
+        expected = hashlib.sha256("sphero:SB-9B13".encode()).hexdigest()[:16]
+        assert result.identifier_hash == expected
+
+    def test_identity_hash_falls_back_to_mac(self):
+        mac = "11:22:33:44:55:66"
+        parser = SpherParser()
+        ad = _make_ad(
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
             mac_address=mac,
         )
@@ -146,3 +156,33 @@ class TestSpheroParsing:
         )
         result = parser.parse(ad)
         assert result.metadata["model"] == "BOLT"
+
+    def test_model_bb8(self):
+        parser = SpherParser()
+        ad = _make_ad(local_name="BB-1234")
+        assert parser.parse(ad).metadata["model"] == "BB-8"
+
+    def test_model_bb9e(self):
+        parser = SpherParser()
+        ad = _make_ad(local_name="GB-ABCD")
+        assert parser.parse(ad).metadata["model"] == "BB-9E"
+
+    def test_model_sprk_plus(self):
+        parser = SpherParser()
+        ad = _make_ad(local_name="SK-0001")
+        assert parser.parse(ad).metadata["model"] == "SPRK+"
+
+    def test_model_mini(self):
+        parser = SpherParser()
+        ad = _make_ad(local_name="SM-FEED")
+        assert parser.parse(ad).metadata["model"] == "Mini"
+
+    def test_model_rvr(self):
+        parser = SpherParser()
+        ad = _make_ad(local_name="RV-Z9Y8")
+        assert parser.parse(ad).metadata["model"] == "RVR"
+
+    def test_v1_service_uuid_match(self):
+        parser = SpherParser()
+        ad = _make_ad(service_uuids=["22bb746f-2ba0-7554-2d6f-726568705327"])
+        assert parser.parse(ad) is not None
