@@ -106,6 +106,14 @@ class TestSchlage:
     def test_no_match(self, parser):
         assert parser.parse(_make_ad(local_name="Random")) is None
 
+    @pytest.mark.parametrize("name", [
+        "Smart Sense Thermostat",   # contains "sense" as substring
+        "Defense Monitor",          # contains "nse" but not as prefix
+        "Pretend-NDE Beacon",       # contains "NDE" mid-string
+    ])
+    def test_rejects_unanchored_substring_match(self, parser, name):
+        assert parser.parse(_make_ad(local_name=name)) is None
+
 
 # ---- ecobee ----------------------------------------------------------------
 

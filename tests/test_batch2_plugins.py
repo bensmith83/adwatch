@@ -64,6 +64,17 @@ class TestTesla:
     def test_no_match(self, parser):
         assert parser.parse(_make_ad(local_name="Random")) is None
 
+    @pytest.mark.parametrize("name", [
+        "Sonos Arc",
+        "Samsung Galaxy",
+        "Surface Laptop",
+        "Sensor42",
+        "Speaker-01",
+    ])
+    def test_rejects_non_tesla_s_prefix(self, parser, name):
+        # Position-3 char is not a recognized Tesla model char (3/Y/S/X/C/R/D/P).
+        assert parser.parse(_make_ad(local_name=name)) is None
+
 
 # ---- Tractive --------------------------------------------------------------
 
