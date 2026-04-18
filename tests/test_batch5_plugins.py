@@ -194,3 +194,10 @@ def test_volvo_non_volvo_ibeacon_rejected():
     payload = bytes([0x02, 0x15]) + bytes(16) + bytes([0, 0, 0, 0, 0])
     mfr = _mfr(0x004C, payload)
     assert VolvoParser().parse(_make_ad(manufacturer_data=mfr)) is None
+
+
+def test_volvo_name_alone_does_not_classify():
+    # A device named "Volvo ..." without the iBeacon proximity UUID must not
+    # classify as a Volvo vehicle — UUID is the primary signal.
+    from adwatch.plugins.volvo import VolvoParser
+    assert VolvoParser().parse(_make_ad(local_name="Volvo XC40")) is None
