@@ -112,3 +112,39 @@ class TestFitbitParser:
         result = registry.match(ad)[0].parse(ad)
         expected = hashlib.sha256("11:22:33:44:55:66:fitbit".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
+
+
+class TestFitbitServiceUUID:
+    """Service UUID matches per apk-ble-hunting/reports/fitbit-fitbitmobile_passive.md."""
+
+    def test_matches_fd62_sig(self):
+        from adwatch.plugins.fitbit import FitbitParser
+        parser = FitbitParser()
+        ad = _make_ad(service_uuids=["fd62"])
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["has_fitbit_service_uuid"] is True
+
+    def test_matches_gattlink_128bit(self):
+        from adwatch.plugins.fitbit import FitbitParser
+        parser = FitbitParser()
+        ad = _make_ad(service_uuids=["abbaff00-e56a-484c-b832-8b17cf6cbfe8"])
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["has_fitbit_service_uuid"] is True
+
+    def test_matches_aria_scale_uuid(self):
+        from adwatch.plugins.fitbit import FitbitParser
+        parser = FitbitParser()
+        ad = _make_ad(service_uuids=["26f33a00-52a8-414b-99a2-1db75c99c032"])
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["product_line"] == "Aria"
+
+    def test_aria_name_tagged_as_product_line(self):
+        from adwatch.plugins.fitbit import FitbitParser
+        parser = FitbitParser()
+        ad = _make_ad(local_name="Aria")
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["product_line"] == "Aria"

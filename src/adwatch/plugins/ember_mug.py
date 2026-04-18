@@ -1,11 +1,27 @@
-"""Ember Mug heated mug plugin."""
+"""Ember Mug heated mug plugin.
+
+Vendor service UUIDs per apk-ble-hunting/reports/embertech_passive.md.
+Manufacturer-data model/color decoding is from the Home Assistant ember-mug
+community integration — the Ember app itself does not parse ad mfr data
+(telemetry is GATT-only).
+"""
 
 import hashlib
 
 from adwatch.models import RawAdvertisement, ParseResult
-from adwatch.registry import register_parser
+from adwatch.registry import _normalize_uuid, register_parser
 
 EMBER_COMPANY_ID = 0x03C1
+
+# Vendor service UUIDs identifying Ember mugs by generation.
+EMBER_SERVICE_UUID_ORIGINAL = "fc543621-236c-4c94-8fa9-944a3e5353fa"
+EMBER_SERVICE_UUID_CERAMIC = "fc543622-236c-4c94-8fa9-944a3e5353fa"
+NORDIC_DFU_SERVICE_UUID = "00001530-1212-efde-1523-785feabcd123"
+
+_GENERATION_BY_UUID = {
+    _normalize_uuid(EMBER_SERVICE_UUID_ORIGINAL): "original",
+    _normalize_uuid(EMBER_SERVICE_UUID_CERAMIC): "ceramic_mug",
+}
 
 MODEL_NAMES = {
     1: ("Mug", "10oz"),
@@ -28,18 +44,43 @@ COLORS = {
 @register_parser(
     name="ember_mug",
     company_id=EMBER_COMPANY_ID,
+    service_uuid=[EMBER_SERVICE_UUID_ORIGINAL, EMBER_SERVICE_UUID_CERAMIC],
     local_name_pattern=r"^Ember",
     description="Ember Mug heated drinkware",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class EmberMugParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
+        metadata: dict = {}
+
+        uuid_generation = None
+        dfu_mode = False
+        for u in (raw.service_uuids or []):
+            n = _normalize_uuid(u)
+            if n in _GENERATION_BY_UUID:
+                uuid_generation = _GENERATION_BY_UUID[n]
+            if n == _normalize_uuid(NORDIC_DFU_SERVICE_UUID):
+                dfu_mode = True
+        if uuid_generation:
+            metadata["service_generation"] = uuid_generation
+        if dfu_mode:
+            metadata["dfu_mode"] = True
+
         payload = raw.manufacturer_payload
         if not payload:
+            if uuid_generation or dfu_mode:
+                id_hash = hashlib.sha256(f"{raw.mac_address}:Ember".encode()).hexdigest()[:16]
+                return ParseResult(
+                    parser_name="ember_mug",
+                    beacon_type="ember_mug",
+                    device_class="drinkware",
+                    identifier_hash=id_hash,
+                    raw_payload_hex="",
+                    metadata=metadata,
+                )
             return None
 
-        metadata: dict = {}
 
         if len(payload) >= 4:
             # Extended format: header(1) + model_id(1) + generation(1) + color_id(1)

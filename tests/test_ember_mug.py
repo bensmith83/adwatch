@@ -269,3 +269,65 @@ class TestEmberMugParser:
         ad = _make_ad(manufacturer_data=mfr_data)
         result = registry.match(ad)[0].parse(ad)
         assert result.device_class in ("mug", "drinkware")
+
+
+class TestEmberMugServiceUUID:
+    """Service UUID matching per apk-ble-hunting/reports/embertech_passive.md."""
+
+    def _register(self, registry):
+        from adwatch.plugins.ember_mug import (
+            EMBER_SERVICE_UUID_ORIGINAL,
+            EMBER_SERVICE_UUID_CERAMIC,
+        )
+
+        @register_parser(
+            name="ember_mug",
+            company_id=0x03C1,
+            service_uuid=[EMBER_SERVICE_UUID_ORIGINAL, EMBER_SERVICE_UUID_CERAMIC],
+            local_name_pattern=r"^Ember",
+            description="Ember Mug",
+            version="1.1.0",
+            core=False,
+            registry=registry,
+        )
+        class _P(EmberMugParser):
+            pass
+
+    def test_matches_original_service_uuid(self):
+        from adwatch.plugins.ember_mug import EMBER_SERVICE_UUID_ORIGINAL
+        registry = ParserRegistry()
+        self._register(registry)
+        ad = _make_ad(service_uuids=[EMBER_SERVICE_UUID_ORIGINAL])
+        assert len(registry.match(ad)) == 1
+
+    def test_matches_ceramic_service_uuid(self):
+        from adwatch.plugins.ember_mug import EMBER_SERVICE_UUID_CERAMIC
+        registry = ParserRegistry()
+        self._register(registry)
+        ad = _make_ad(service_uuids=[EMBER_SERVICE_UUID_CERAMIC])
+        assert len(registry.match(ad)) == 1
+
+    def test_service_generation_tagged_from_uuid(self):
+        from adwatch.plugins.ember_mug import (
+            EmberMugParser,
+            EMBER_SERVICE_UUID_CERAMIC,
+        )
+        registry = ParserRegistry()
+        self._register(registry)
+        ad = _make_ad(service_uuids=[EMBER_SERVICE_UUID_CERAMIC])
+        result = registry.match(ad)[0].parse(ad)
+        assert result is not None
+        assert result.metadata["service_generation"] == "ceramic_mug"
+
+    def test_dfu_mode_detected_from_nordic_uuid(self):
+        from adwatch.plugins.ember_mug import (
+            EMBER_SERVICE_UUID_ORIGINAL,
+            NORDIC_DFU_SERVICE_UUID,
+        )
+        registry = ParserRegistry()
+        self._register(registry)
+        ad = _make_ad(
+            service_uuids=[EMBER_SERVICE_UUID_ORIGINAL, NORDIC_DFU_SERVICE_UUID]
+        )
+        result = registry.match(ad)[0].parse(ad)
+        assert result.metadata["dfu_mode"] is True

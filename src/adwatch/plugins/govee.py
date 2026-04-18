@@ -59,9 +59,10 @@ _FORMAT_MIN_LEN = {
 @register_parser(
     name="govee",
     company_id=[GOVEE_COMPANY_ID, GOVEE_VIBRATION_COMPANY_ID],
+    service_uuid="ec88",
     local_name_pattern=r"^(GVH5|GV5124|Govee)",
     description="Govee Sensors",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class GoveeParser:

@@ -1,11 +1,18 @@
-"""Tests for Tile tracker plugin."""
+"""Tests for Tile tracker plugin.
+
+Identifiers per apk-ble-hunting/reports/thetileapp-tile_passive.md.
+"""
 
 import hashlib
 
 import pytest
 
 from adwatch.models import RawAdvertisement, ParseResult
-from adwatch.plugins.tile import TileParser
+from adwatch.plugins.tile import (
+    TileParser,
+    TILE_UUID_LEGACY,
+    TILE_UUID_PRIVATEID,
+)
 
 
 @pytest.fixture
@@ -28,30 +35,36 @@ def make_raw(service_data=None, service_uuids=None, **kwargs):
     )
 
 
-TILE_DATA = bytes([0x01, 0x02, 0x03, 0x04, 0x05])
+TILE_DATA = bytes(range(1, 17))  # 16 bytes, the PrivateID expected length
 
 
 class TestTileParsing:
-    def test_parse_valid_tile(self, parser):
-        raw = make_raw(service_data={"feed": TILE_DATA})
+    def test_parses_legacy_feed(self, parser):
+        raw = make_raw(service_data={TILE_UUID_LEGACY: TILE_DATA})
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
+        assert result.metadata["variant"] == "legacy"
+
+    def test_parses_privateid_feec(self, parser):
+        raw = make_raw(service_data={TILE_UUID_PRIVATEID: TILE_DATA})
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["variant"] == "privateid"
 
     def test_parser_name(self, parser):
-        raw = make_raw(service_data={"feed": TILE_DATA})
+        raw = make_raw(service_data={TILE_UUID_LEGACY: TILE_DATA})
         result = parser.parse(raw)
         assert result.parser_name == "tile"
 
     def test_device_class_tracker(self, parser):
-        raw = make_raw(service_data={"feed": TILE_DATA})
+        raw = make_raw(service_data={TILE_UUID_LEGACY: TILE_DATA})
         result = parser.parse(raw)
         assert result.device_class == "tracker"
 
     def test_identity_hash(self, parser):
-        """Identity = SHA256(mac:service_data_hex)[:16]."""
         raw = make_raw(
-            service_data={"feed": TILE_DATA},
+            service_data={TILE_UUID_LEGACY: TILE_DATA},
             mac_address="AA:BB:CC:DD:EE:FF",
         )
         result = parser.parse(raw)
@@ -61,15 +74,20 @@ class TestTileParsing:
         assert result.identifier_hash == expected
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(service_data={"feed": TILE_DATA})
+        raw = make_raw(service_data={TILE_UUID_LEGACY: TILE_DATA})
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
 
     def test_raw_payload_hex(self, parser):
-        raw = make_raw(service_data={"feed": TILE_DATA})
+        raw = make_raw(service_data={TILE_UUID_LEGACY: TILE_DATA})
         result = parser.parse(raw)
         assert result.raw_payload_hex == TILE_DATA.hex()
+
+    def test_service_data_length_reported(self, parser):
+        raw = make_raw(service_data={TILE_UUID_PRIVATEID: TILE_DATA})
+        result = parser.parse(raw)
+        assert result.metadata["service_data_length"] == 16
 
     def test_no_storage(self, parser):
         assert parser.storage_schema() is None
@@ -89,6 +107,10 @@ class TestTileMalformed:
         raw = make_raw(service_data={"abcd": TILE_DATA})
         assert parser.parse(raw) is None
 
-    def test_returns_none_empty_data(self, parser):
-        raw = make_raw(service_data={"feed": b""})
+    def test_returns_none_empty_legacy(self, parser):
+        raw = make_raw(service_data={TILE_UUID_LEGACY: b""})
+        assert parser.parse(raw) is None
+
+    def test_returns_none_empty_privateid(self, parser):
+        raw = make_raw(service_data={TILE_UUID_PRIVATEID: b""})
         assert parser.parse(raw) is None
