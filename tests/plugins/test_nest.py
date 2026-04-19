@@ -54,7 +54,7 @@ class TestNestParsing:
         assert result.device_class == "smart_home"
 
     def test_identity_hash(self, parser):
-        """Identity = SHA256(mac:service_data_hex)[:16]."""
+        """Without local_name, identity falls back to SHA256(mac:service_data_hex)[:16]."""
         raw = make_raw(
             service_data={"feaf": NEST_DATA},
             mac_address="AA:BB:CC:DD:EE:FF",
@@ -64,6 +64,38 @@ class TestNestParsing:
             f"AA:BB:CC:DD:EE:FF:{NEST_DATA.hex()}".encode()
         ).hexdigest()[:16]
         assert result.identifier_hash == expected
+
+    def test_identity_hash_prefers_local_name_over_payload(self, parser):
+        """When local_name is present, identity is SHA256(mac:local_name)[:16].
+
+        The FEAF payload contains a rotating counter, so hashing it would
+        change the identifier every emission and fragment a single device
+        into many. The local_name (e.g. "NW3J0") is stable per device.
+        """
+        raw = make_raw(
+            service_data={"feaf": NEST_DATA},
+            local_name="NW3J0",
+            mac_address="AA:BB:CC:DD:EE:FF",
+        )
+        result = parser.parse(raw)
+        expected = hashlib.sha256(
+            "AA:BB:CC:DD:EE:FF:NW3J0".encode()
+        ).hexdigest()[:16]
+        assert result.identifier_hash == expected
+
+    def test_identity_stable_across_payload_rotation(self, parser):
+        """Same device, same name, different payload counter → same identity."""
+        payload_a = bytes.fromhex("1001000200e11900546313520066166401")
+        payload_b = bytes.fromhex("1001000200e11900546313520066166402")
+        raw_a = make_raw(service_data={"feaf": payload_a}, local_name="NW3J0")
+        raw_b = make_raw(service_data={"feaf": payload_b}, local_name="NW3J0")
+        assert parser.parse(raw_a).identifier_hash == parser.parse(raw_b).identifier_hash
+
+    def test_identity_stable_across_modes(self, parser):
+        """Same device seen with-payload and name-only → same identity."""
+        with_data = make_raw(service_data={"feaf": NEST_DATA}, local_name="NW3J0")
+        name_only = make_raw(service_uuids=["FEAF"], local_name="NW3J0")
+        assert parser.parse(with_data).identifier_hash == parser.parse(name_only).identifier_hash
 
     def test_identity_hash_format(self, parser):
         raw = make_raw(service_data={"feaf": NEST_DATA})
@@ -188,4 +220,40 @@ class TestNestNameOnly:
             service_uuids=["FEAF"],
         )
         result = parser.parse(raw)
+        assert result.raw_payload_hex == NEST_DATA.hex()
+
+    def test_empty_service_data_falls_through_when_uuid_present(self, parser):
+        """Empty service_data + UUID in service_uuids → name-only branch.
+
+        BlueZ occasionally surfaces a present-but-empty service_data entry
+        alongside the UUID in service_uuids. Treat it like the name-only case
+        rather than returning None.
+        """
+        raw = make_raw(
+            service_data={"feaf": b""},
+            service_uuids=["FEAF"],
+            local_name="NW3J0",
+        )
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.beacon_type == "nest"
+        assert result.raw_payload_hex == ""
+
+    def test_feaf_uuid_full_128_bit_form(self, parser):
+        """BlueZ on Linux reports UUIDs as full 128-bit strings."""
+        raw = make_raw(
+            service_uuids=["0000feaf-0000-1000-8000-00805f9b34fb"],
+            local_name="NW3J0",
+        )
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.beacon_type == "nest"
+
+    def test_service_data_full_128_bit_key(self, parser):
+        """Service data dict keyed by full 128-bit UUID is also matched."""
+        raw = make_raw(
+            service_data={"0000feaf-0000-1000-8000-00805f9b34fb": NEST_DATA},
+        )
+        result = parser.parse(raw)
+        assert result is not None
         assert result.raw_payload_hex == NEST_DATA.hex()

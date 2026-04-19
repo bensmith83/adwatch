@@ -3,9 +3,10 @@
 import hashlib
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig, deserialize_service_data
-from adwatch.registry import register_parser
+from adwatch.registry import _normalize_uuid, register_parser
 
 NEST_UUID = "feaf"
+_NEST_UUID_NORMALIZED = _normalize_uuid(NEST_UUID)
 
 
 @register_parser(
@@ -20,21 +21,28 @@ class NestParser:
         data = b""
         if raw.service_data:
             for key, value in raw.service_data.items():
-                if key.lower() == NEST_UUID and value:
+                if _normalize_uuid(key) == _NEST_UUID_NORMALIZED and value:
                     data = value
                     break
 
-        has_uuid = any(u.lower() == NEST_UUID for u in (raw.service_uuids or []))
+        has_uuid = any(
+            _normalize_uuid(u) == _NEST_UUID_NORMALIZED
+            for u in (raw.service_uuids or [])
+        )
         if not data and not has_uuid:
             return None
 
-        if data:
+        # Prefer local_name for identity when present. Nest local names like
+        # "NW3J0" are stable per device, while the FEAF service-data payload
+        # contains a rotating counter — hashing that produces a new identity
+        # per emission and fragments a single device into many.
+        if raw.local_name:
             id_hash = hashlib.sha256(
-                f"{raw.mac_address}:{data.hex()}".encode()
+                f"{raw.mac_address}:{raw.local_name}".encode()
             ).hexdigest()[:16]
         else:
             id_hash = hashlib.sha256(
-                f"{raw.mac_address}:{raw.local_name or ''}".encode()
+                f"{raw.mac_address}:{data.hex()}".encode()
             ).hexdigest()[:16]
 
         return ParseResult(
