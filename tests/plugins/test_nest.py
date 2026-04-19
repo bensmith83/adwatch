@@ -114,7 +114,7 @@ class TestNestParsing:
 
 
 class TestNestMalformed:
-    def test_returns_none_no_service_data(self, parser):
+    def test_returns_none_no_service_data_no_uuid(self, parser):
         raw = make_raw(service_data=None)
         assert parser.parse(raw) is None
 
@@ -122,6 +122,70 @@ class TestNestMalformed:
         raw = make_raw(service_data={"abcd": NEST_DATA})
         assert parser.parse(raw) is None
 
-    def test_returns_none_empty_data(self, parser):
+    def test_returns_none_empty_data_no_uuid(self, parser):
         raw = make_raw(service_data={"feaf": b""})
         assert parser.parse(raw) is None
+
+
+class TestNestNameOnly:
+    """Nest devices sometimes advertise FEAF service UUID without service data.
+
+    Observed in 2026-04-18 captures: `NW3J0` and `NJXAS` seen with
+    ``service_uuids=["FEAF"]`` and empty service data (scan-response-only
+    beacon). Should still identify as Nest.
+    """
+
+    def test_parses_feaf_uuid_without_service_data(self, parser):
+        raw = make_raw(
+            service_uuids=["FEAF"],
+            local_name="NW3J0",
+        )
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.beacon_type == "nest"
+        assert result.device_class == "smart_home"
+
+    def test_feaf_uuid_lowercase(self, parser):
+        raw = make_raw(service_uuids=["feaf"], local_name="NJXAS")
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_feaf_uuid_without_local_name(self, parser):
+        """UUID alone is sufficient — FEAF is exclusively Nest Labs."""
+        raw = make_raw(service_uuids=["FEAF"])
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_name_only_metadata_records_device_code(self, parser):
+        raw = make_raw(service_uuids=["FEAF"], local_name="NW3J0")
+        result = parser.parse(raw)
+        assert result.metadata["device_code"] == "NW3J0"
+
+    def test_name_only_payload_empty(self, parser):
+        raw = make_raw(service_uuids=["FEAF"], local_name="NW3J0")
+        result = parser.parse(raw)
+        assert result.raw_payload_hex == ""
+        assert result.metadata["payload_length"] == 0
+
+    def test_name_only_identity_hash_uses_mac_and_name(self, parser):
+        """Without service data, identity falls back to mac+name to keep
+        different co-located Nest devices distinguishable."""
+        raw = make_raw(
+            service_uuids=["FEAF"],
+            local_name="NW3J0",
+            mac_address="AA:BB:CC:DD:EE:FF",
+        )
+        result = parser.parse(raw)
+        expected = hashlib.sha256(
+            "AA:BB:CC:DD:EE:FF:NW3J0".encode()
+        ).hexdigest()[:16]
+        assert result.identifier_hash == expected
+
+    def test_service_data_still_preferred(self, parser):
+        """If service_data is present, its payload still drives the hash/payload."""
+        raw = make_raw(
+            service_data={"feaf": NEST_DATA},
+            service_uuids=["FEAF"],
+        )
+        result = parser.parse(raw)
+        assert result.raw_payload_hex == NEST_DATA.hex()

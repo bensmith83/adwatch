@@ -3,38 +3,6 @@
 Captures of BLE advertisements adwatch cannot yet attribute. Documented here
 so future exports + external research can close the gaps.
 
-## NJXAS — Service UUID `0xFEAF`
-
-Observed continuously since 2026-03-19. Single persistent emitter with 4273+
-sightings.
-
-| Field | Value |
-|-------|-------|
-| `local_name` | `NJXAS` |
-| `service_uuids` | `["FEAF"]` |
-| `service_data[FEAF]` | `1001000200e11900546313520066166401` (17 bytes) |
-| address type | random |
-
-**FEAF** is *Nest Labs Inc.* in the Bluetooth SIG assigned-numbers registry
-(Nest is now owned by Google). Structure of the 17-byte service data:
-
-```
-10 01 00 02 00 e1 19 00 54 63 13 52 00 66 16 64 01
-│  │  │     │     │                 │  ...
-│  │  │     │     └── appears to change over time (24-bit counter?)
-│  │  │     └──────── 0x00 0x02 — fixed
-│  │  └────────────── 0x00 — fixed
-│  └───────────────── 0x01 — frame / version
-└──────────────────── 0x10 — magic
-```
-
-"NJXAS" doesn't match a known Nest product SKU. Guess: a research /
-pre-production Nest device or a third-party vendor reusing FEAF. If this is a
-resident Nest thermostat, Nest Cam, or Nest Hub, the stable local name makes
-it easy to fingerprint.
-
-**Action:** capture longer service-data time series to see which bytes vary.
-
 ## W600N — Service UUID `0xFE79`
 
 Observed 2026-04-14 01:14 UTC (9 sightings in a short burst).
@@ -71,6 +39,30 @@ suggests the hex block is a MAC address or serial embedded in the name.
 
 Guess: an IoT gateway / ESP32-based hobby project or a cheap tracker using
 the SDK's default UUID without requesting a real one.
+
+## OVAT5-K0194559 — Local Name Only
+
+Observed 2026-04-18 around 17:01 UTC (6 sightings, rssi -92 dBm).
+
+| Field | Value |
+|-------|-------|
+| `local_name` | `OVAT5-K0194559` |
+| `service_uuids` | *(empty)* |
+| `manufacturer_data` | *(empty)* |
+| `service_data` | *(empty)* |
+| address type | random |
+
+The name format `OVAT5-K0194559` looks like `<model>-<serial>` where `OVAT5`
+is a 5-character product code and `K0194559` is a 7-digit serial prefixed
+with `K`. The ad carries no payload beyond the name (random-address
+connectable beacon — likely a device waiting to be paired).
+
+No matching SKU found in public product databases. The signal is weak
+(-92 dBm max) so this was almost certainly observed as a drive-by / neighbor
+and may not repeat.
+
+**Action:** if re-observed at close range, attempt a GATT connect to read the
+Device Information service (0x180A) for manufacturer / model strings.
 
 ## Tracking
 

@@ -17,16 +17,25 @@ NEST_UUID = "feaf"
 )
 class NestParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.service_data or NEST_UUID not in raw.service_data:
+        data = b""
+        if raw.service_data:
+            for key, value in raw.service_data.items():
+                if key.lower() == NEST_UUID and value:
+                    data = value
+                    break
+
+        has_uuid = any(u.lower() == NEST_UUID for u in (raw.service_uuids or []))
+        if not data and not has_uuid:
             return None
 
-        data = raw.service_data[NEST_UUID]
-        if not data:
-            return None
-
-        id_hash = hashlib.sha256(
-            f"{raw.mac_address}:{data.hex()}".encode()
-        ).hexdigest()[:16]
+        if data:
+            id_hash = hashlib.sha256(
+                f"{raw.mac_address}:{data.hex()}".encode()
+            ).hexdigest()[:16]
+        else:
+            id_hash = hashlib.sha256(
+                f"{raw.mac_address}:{raw.local_name or ''}".encode()
+            ).hexdigest()[:16]
 
         return ParseResult(
             parser_name="nest",
