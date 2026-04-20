@@ -1,9 +1,5 @@
 """Tests for the Beta Bionics iLet bionic pancreas parser."""
 
-import hashlib
-
-import pytest
-
 from adwatch.models import RawAdvertisement
 from adwatch.registry import ParserRegistry, register_parser
 

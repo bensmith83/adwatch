@@ -4,8 +4,9 @@ A huge family of cheap Bluetooth-connected thermal / receipt / label printers
 (GB01, GB02, GB03, GT01, MX05, MTP-2, MTP-3, PT-210, PT-220, PeriPage A6,
 YT01, GLI1050, etc.) all advertise a common vendor 128-bit service UUID
 `e7810a71-73ae-499d-8c15-faa9aef0c3f2` alongside the standard Nordic DFU
-UUID `0x18F0`. The vendor UUID is the distinctive marker -- 18F0 alone is
-not specific enough (many non-printer Nordic-based devices use it for DFU).
+UUID `0x18F0`. Only the vendor UUID is distinctive — `18F0` is shared by
+every Nordic-DFU-capable device, so we don't register on it. The name
+pattern already catches name-only printer ads.
 
 See `docs/protocols/ble-thermal-printer.md` for field layout and references.
 """
@@ -18,18 +19,16 @@ from adwatch.registry import register_parser
 
 
 PRINTER_SERVICE_UUID = "e7810a71-73ae-499d-8c15-faa9aef0c3f2"
-PRINTER_DFU_UUID = "18f0"
-
-_MODEL_RE = re.compile(
-    r"^(GB0[123]|GT0[12]|MX0[0-9]|PT-?2[01]0|MTP-?[23]|PeriPage[\w\-]*|YT01|GLI\d{3,4})",
-    re.I,
+PRINTER_NAME_PATTERN = (
+    r"(?i)^(GB0[123]|GT0[12]|MX0[0-9]|PT-?2[01]0|MTP-?[23]|PeriPage[\w\-]*|YT01|GLI\d{3,4})"
 )
+_MODEL_RE = re.compile(PRINTER_NAME_PATTERN)
 
 
 @register_parser(
     name="thermal_printer",
-    service_uuid=[PRINTER_SERVICE_UUID, PRINTER_DFU_UUID],
-    local_name_pattern=r"^(GB0[123]|GT0[12]|MX0[0-9]|PT-?2[01]0|MTP-?[23]|PeriPage|YT01|GLI\d{3,4})",
+    service_uuid=PRINTER_SERVICE_UUID,
+    local_name_pattern=PRINTER_NAME_PATTERN,
     description="BLE thermal / receipt / label printer (cat printer, GOOJPRT, PeriPage, GLI)",
     version="1.0.0",
     core=False,
@@ -62,6 +61,6 @@ class ThermalPrinterParser:
             beacon_type="thermal_printer",
             device_class="printer",
             identifier_hash=id_hash,
-            raw_payload_hex="",
+            raw_payload_hex=raw.manufacturer_data.hex() if raw.manufacturer_data else "",
             metadata=metadata,
         )

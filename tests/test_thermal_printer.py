@@ -10,7 +10,7 @@ from adwatch.registry import ParserRegistry, register_parser
 from adwatch.plugins.thermal_printer import (
     ThermalPrinterParser,
     PRINTER_SERVICE_UUID,
-    PRINTER_DFU_UUID,
+    PRINTER_NAME_PATTERN,
 )
 
 
@@ -31,8 +31,8 @@ def _make_registry():
 
     @register_parser(
         name="thermal_printer",
-        service_uuid=[PRINTER_SERVICE_UUID, PRINTER_DFU_UUID],
-        local_name_pattern=r"^(GB0[123]|GT0[12]|MX0[0-9]|PT-?2[01]0|MTP-?[23]|PeriPage|YT01|GLI\d{3,4})",
+        service_uuid=PRINTER_SERVICE_UUID,
+        local_name_pattern=PRINTER_NAME_PATTERN,
         description="BLE thermal / receipt printer (cat printer, GOOJPRT, PeriPage)",
         version="1.0.0",
         core=False,
@@ -51,8 +51,9 @@ class TestThermalPrinterRegistry:
         ad = _make_ad(service_uuids=[PRINTER_SERVICE_UUID])
         assert len(registry.match(ad)) >= 1
 
-    def test_matches_on_dfu_uuid_with_known_name(self):
-        """Matches on DFU UUID 18F0 + recognizable GLI1050 product name."""
+    def test_matches_on_known_name_without_vendor_uuid(self):
+        """Name pattern alone is sufficient — e.g. GLI1050.I advertising only
+        the generic Nordic DFU UUID should still match via its product name."""
         registry = _make_registry()
         ad = _make_ad(service_uuids=["18f0"], local_name="GLI1050.I")
         assert len(registry.match(ad)) >= 1

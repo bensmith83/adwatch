@@ -17,10 +17,11 @@ import hashlib
 import re
 
 from adwatch.models import RawAdvertisement, ParseResult
-from adwatch.registry import register_parser
+from adwatch.registry import register_parser, _normalize_uuid
 
 
 ILET_SERVICE_UUID = "a0090101-0605-0403-0201-f0e0d0c0b0a0"
+_ILET_SERVICE_UUID_NORM = _normalize_uuid(ILET_SERVICE_UUID)
 _NAME_RE = re.compile(r"^(iLet\d+)-([0-9A-Fa-f]{4})$")
 
 
@@ -35,10 +36,10 @@ _NAME_RE = re.compile(r"^(iLet\d+)-([0-9A-Fa-f]{4})$")
 class ILetParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         name = raw.local_name or ""
-        uuids = [u.lower() for u in (raw.service_uuids or [])]
+        uuids = {_normalize_uuid(u) for u in (raw.service_uuids or [])}
 
         name_match = _NAME_RE.match(name)
-        has_uuid = ILET_SERVICE_UUID in uuids
+        has_uuid = _ILET_SERVICE_UUID_NORM in uuids
 
         if not name_match and not has_uuid:
             return None
@@ -61,6 +62,6 @@ class ILetParser:
             beacon_type="ilet",
             device_class="medical_device",
             identifier_hash=id_hash,
-            raw_payload_hex="",
+            raw_payload_hex=raw.manufacturer_data.hex() if raw.manufacturer_data else "",
             metadata=metadata,
         )

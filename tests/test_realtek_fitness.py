@@ -1,9 +1,5 @@
 """Tests for the generic Realtek/chipset OEM fitness-band parser (0AF0)."""
 
-import hashlib
-
-import pytest
-
 from adwatch.models import RawAdvertisement
 from adwatch.registry import ParserRegistry, register_parser
 
