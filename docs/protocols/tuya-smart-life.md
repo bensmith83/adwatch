@@ -35,13 +35,38 @@ Offset  Length  Field           Description
 | Smart Bulb | Various | BLE for provisioning only |
 | Motion Sensor | Various | Event-based BLE advertising |
 
+### Cheap-Clone Pairing-Mode Name (no SIG-correct CID)
+
+A large fraction of cheap WiFi+BLE smart plugs / bulbs sold on Amazon and
+AliExpress use a Tuya-compatible firmware fork but **don't bother
+emitting the SIG-registered Tuya company ID** — they advertise an
+unregistered or arbitrary CID with malformed manufacturer data while
+broadcasting a stable pairing-mode local name:
+
+```
+^Smart\.[A-Z0-9]{2}\.WIFI$
+```
+
+Observed example: `Smart.A5.WIFI` with mfr-data `<56 45 52 15>` (ASCII
+`"VER\x15"` — clearly not a real CID payload). The two-character segment
+varies per device.
+
+Behaviorally these are Tuya pairing beacons, so the parser claims them
+under the same name with `match_source="name_regex"` and
+`pairing_mode_clone=True` so they're distinguishable from CID-path
+matches in downstream queries.
+
 ### Parser Scope
 
 The parser extracts:
-- Protocol version from manufacturer data
-- Device flags (pairing state)
-- Product identifier if present
+- Protocol version from manufacturer data (CID path)
+- Device flags (pairing state) (CID path)
+- Product identifier if present (CID path)
 - Presence detection
+- Pairing-mode-clone tagging (name-regex path) — stamps
+  `match_source="name_regex"`, `pairing_mode_clone=True`,
+  `pairing=True` so a clone in pairing mode is still surfaced as a
+  smart-home device
 
 Note: Many Tuya devices only advertise BLE during setup/pairing. Sensor devices (thermometers, door sensors) may continuously broadcast.
 

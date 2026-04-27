@@ -1,17 +1,27 @@
 """iRobot Roomba / Braava BLE advertisement parser.
 
-Per apk-ble-hunting/reports/irobot-home_passive.md. Detection via name match,
-service UUID `0bd51777-…`, or manufacturer-data magic byte pattern.
+Per apk-ble-hunting/reports/irobot-home_passive.md plus a live capture
+adding the alternate `c74edd21-…` service UUID (Robot Control Command —
+seen on a Roomba in the wild, and present in the iRobot Home APK's
+`libcore_jni.so` strings adjacent to the c74e0001-c74e001d characteristic
+family).
+
+Detection via name match, either of two service UUIDs, or manufacturer-data
+magic byte pattern.
 """
 
 import hashlib
 import re
 
 from adwatch.models import RawAdvertisement, ParseResult
-from adwatch.registry import register_parser
+from adwatch.registry import _normalize_uuid, register_parser
 
 
 IROBOT_SERVICE_UUID = "0bd51777-e7cb-469b-8e4d-2742f1ba77cc"
+IROBOT_ALT_SERVICE_UUID = "c74edd21-763c-4e54-85a8-43bb75035d75"
+_IROBOT_UUID_SET = frozenset(
+    _normalize_uuid(u) for u in (IROBOT_SERVICE_UUID, IROBOT_ALT_SERVICE_UUID)
+)
 
 # Magic mfr-data signature per passive report: `A8 01 ?? 31 10` (bytes 0-4 of
 # raw mfr data including company_id; company_id here is 0x01A8 = 424 dec).
@@ -24,17 +34,20 @@ _IROBOT_NAME_RE = re.compile(r"^(Altadena|iRobot Braav|iRobot Braava|Roomba)")
 @register_parser(
     name="irobot",
     company_id=_IROBOT_MFR_COMPANY_ID,
-    service_uuid=IROBOT_SERVICE_UUID,
+    service_uuid=(IROBOT_SERVICE_UUID, IROBOT_ALT_SERVICE_UUID),
     local_name_pattern=_IROBOT_NAME_RE.pattern,
     description="iRobot Roomba and Braava robots",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class IRobotParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         name = raw.local_name or ""
         name_match = bool(_IROBOT_NAME_RE.match(name))
-        has_uuid = IROBOT_SERVICE_UUID in [u.lower() for u in (raw.service_uuids or [])]
+        has_uuid = any(
+            _normalize_uuid(u) in _IROBOT_UUID_SET
+            for u in (raw.service_uuids or [])
+        )
 
         has_mfr_magic = False
         if raw.manufacturer_data and len(raw.manufacturer_data) >= 5:
