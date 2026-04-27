@@ -32,9 +32,6 @@ class TuyaParser:
             company_id = int.from_bytes(raw.manufacturer_data[:2], "little")
             if company_id == TUYA_COMPANY_ID:
                 payload = raw.manufacturer_data[2:]
-                if len(payload) < 2:
-                    return None
-
                 protocol_version = payload[0]
                 flags = payload[1]
                 pairing = bool(flags & 0x01)

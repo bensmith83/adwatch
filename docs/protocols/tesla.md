@@ -68,8 +68,10 @@ body. Working hypotheses (not confirmed):
 - Tesla Wall Connector (Gen 3 / Gen 4) — public-charger discoverability
 - A vehicle accessory we haven't reverse-engineered
 
-The parser tags this path as `device_class="tesla_product"` with
-`product_kind="non_vehicle"` until further captures distinguish them.
+The parser tags this path as `device_class="energy"` (Powerwall and Wall
+Connector are both energy products — closest fit in our shared device-class
+vocabulary) with `product_kind="non_vehicle"` in metadata until further
+captures distinguish them.
 
 ## Parsing Strategy
 
@@ -78,8 +80,8 @@ The parser tags this path as `device_class="tesla_product"` with
 2. Vehicle path (UUID or name regex) takes precedence — a Tesla vehicle
    that one day starts emitting mfr-data is still a vehicle
 3. Stable identity from VIN-hash tail when available; fall back to MAC
-4. Tag `device_class="vehicle"` for the vehicle path, `tesla_product`
-   for the CID-only path
+4. Tag `device_class="vehicle"` for the vehicle path, `"energy"`
+   (with `product_kind="non_vehicle"` metadata) for the CID-only path
 
 ## Identity Hashing
 

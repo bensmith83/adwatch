@@ -264,8 +264,9 @@ def test_irobot_alt_service_uuid():
 def test_tesla_company_id_non_vehicle():
     from adwatch.plugins.tesla import TeslaParser, TESLA_COMPANY_ID
     # Capture: 2B 02 01 FE 03 — CID 0x022B + 3-byte payload starting 01 FE 03.
+    # Non-vehicle Tesla product → "energy" (Powerwall / Wall Connector candidate).
     result = TeslaParser().parse(_make_ad(manufacturer_data=_mfr(TESLA_COMPANY_ID, bytes([0x01, 0xFE, 0x03]))))
-    assert result and result.device_class == "tesla_product"
+    assert result and result.device_class == "energy"
     assert result.metadata["product_kind"] == "non_vehicle"
 
 

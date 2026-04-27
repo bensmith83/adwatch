@@ -9,8 +9,9 @@ Two paths:
 2. **Non-vehicle Tesla product**: SIG company ID `0x022B` (Tesla, Inc.) in
    manufacturer data. The vehicle keys do NOT use mfr-data, so a CID match
    means a different Tesla product — Powerwall, Wall Connector, or another
-   accessory. The exact product is not yet pinned down; we tag it as
-   `non_vehicle` until further captures distinguish them.
+   accessory. We tag `device_class="energy"` (Powerwall / Wall Connector are
+   both energy products; closest fit) and stash `product_kind="non_vehicle"`
+   in metadata until further captures pin it down.
 """
 
 import hashlib
@@ -100,7 +101,7 @@ class TeslaParser:
         return ParseResult(
             parser_name="tesla",
             beacon_type="tesla",
-            device_class="vehicle" if is_vehicle else "tesla_product",
+            device_class="vehicle" if is_vehicle else "energy",
             identifier_hash=id_hash,
             raw_payload_hex=(raw.manufacturer_payload or b"").hex() if has_company else "",
             metadata=metadata,
