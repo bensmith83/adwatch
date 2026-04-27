@@ -201,3 +201,154 @@ def test_volvo_name_alone_does_not_classify():
     # classify as a Volvo vehicle — UUID is the primary signal.
     from adwatch.plugins.volvo import VolvoParser
     assert VolvoParser().parse(_make_ad(local_name="Volvo XC40")) is None
+
+
+# ---- Owlet (baby HR/SpO2 monitor) -----------------------------------------
+
+def test_owlet_company_id():
+    from adwatch.plugins.owlet import OwletParser, OWLET_COMPANY_ID
+    result = OwletParser().parse(_make_ad(manufacturer_data=_mfr(OWLET_COMPANY_ID, b"\x00\x00")))
+    assert result and result.device_class == "medical"
+
+
+def test_owlet_service_uuid():
+    from adwatch.plugins.owlet import OwletParser, OWLET_SERVICE_UUID
+    result = OwletParser().parse(_make_ad(service_uuids=[OWLET_SERVICE_UUID]))
+    assert result is not None
+    assert result.metadata["has_owlet_service"] is True
+
+
+def test_owlet_name_ob_alone_does_not_classify():
+    # "OB" is short and could collide with other devices; require UUID or CID.
+    from adwatch.plugins.owlet import OwletParser
+    assert OwletParser().parse(_make_ad(local_name="OB")) is None
+
+
+def test_owlet_full_signature():
+    from adwatch.plugins.owlet import OwletParser, OWLET_COMPANY_ID, OWLET_SERVICE_UUID
+    result = OwletParser().parse(_make_ad(
+        local_name="OB",
+        manufacturer_data=_mfr(OWLET_COMPANY_ID, bytes([0x00, 0x00])),
+        service_uuids=[OWLET_SERVICE_UUID],
+    ))
+    assert result.metadata["device_name"] == "OB"
+    assert result.metadata["has_owlet_service"] is True
+
+
+# ---- Trackonomy Systems (asset tracker) -----------------------------------
+
+def test_trackonomy_company_id():
+    from adwatch.plugins.trackonomy import TrackonomyParser, TRACKONOMY_COMPANY_ID
+    payload = bytes.fromhex("4956e29f84211e44ffb51e")
+    result = TrackonomyParser().parse(_make_ad(manufacturer_data=_mfr(TRACKONOMY_COMPANY_ID, payload)))
+    assert result and result.device_class == "asset_tracker"
+    assert result.metadata["company_id_hex"] == "0x0EF7"
+
+
+def test_trackonomy_rejects_other_company_id():
+    from adwatch.plugins.trackonomy import TrackonomyParser
+    assert TrackonomyParser().parse(_make_ad(manufacturer_data=_mfr(0x004C, b"\x00"))) is None
+
+
+# ---- iRobot: second service UUID (Robot Control) --------------------------
+
+def test_irobot_alt_service_uuid():
+    from adwatch.plugins.irobot import IRobotParser, IROBOT_ALT_SERVICE_UUID
+    result = IRobotParser().parse(_make_ad(service_uuids=[IROBOT_ALT_SERVICE_UUID]))
+    assert result and result.device_class == "vacuum"
+    assert result.metadata["has_irobot_service"] is True
+
+
+# ---- Tesla: non-vehicle product (CID 0x022B mfr-data) ---------------------
+
+def test_tesla_company_id_non_vehicle():
+    from adwatch.plugins.tesla import TeslaParser, TESLA_COMPANY_ID
+    # Capture: 2B 02 01 FE 03 — CID 0x022B + 3-byte payload starting 01 FE 03.
+    result = TeslaParser().parse(_make_ad(manufacturer_data=_mfr(TESLA_COMPANY_ID, bytes([0x01, 0xFE, 0x03]))))
+    assert result and result.device_class == "tesla_product"
+    assert result.metadata["product_kind"] == "non_vehicle"
+
+
+def test_tesla_vehicle_via_service_uuid_still_works():
+    # Existing path must not regress.
+    from adwatch.plugins.tesla import TeslaParser, TESLA_SERVICE_UUID
+    result = TeslaParser().parse(_make_ad(service_uuids=[TESLA_SERVICE_UUID]))
+    assert result and result.device_class == "vehicle"
+
+
+# ---- Cold-chain beacon (UUID 56D63956 — unidentified vendor) -------------
+
+def test_cold_chain_56d6_extracts_sensor_id():
+    from adwatch.plugins.cold_chain_56d6 import (
+        ColdChain56d6Parser,
+        COLD_CHAIN_56D6_UUID,
+    )
+    # 7-byte service-data: 0x00 + 6 ASCII chars (observed: "SSFYV3", "1ZNQGY", "LYHR3S")
+    svc = {COLD_CHAIN_56D6_UUID: bytes([0x00]) + b"SSFYV3"}
+    result = ColdChain56d6Parser().parse(_make_ad(service_data=svc))
+    assert result and result.device_class == "sensor"
+    assert result.metadata["sensor_id"] == "SSFYV3"
+
+
+def test_cold_chain_56d6_identity_uses_sensor_id():
+    # sensor_id appears stable per-device; identity should derive from it,
+    # not from the (likely-rotating) MAC.
+    import hashlib
+    from adwatch.plugins.cold_chain_56d6 import (
+        ColdChain56d6Parser,
+        COLD_CHAIN_56D6_UUID,
+    )
+    svc = {COLD_CHAIN_56D6_UUID: bytes([0x00]) + b"1ZNQGY"}
+    result = ColdChain56d6Parser().parse(_make_ad(service_data=svc))
+    expected = hashlib.sha256(b"cold_chain_56d6:1ZNQGY").hexdigest()[:16]
+    assert result.identifier_hash == expected
+
+
+def test_cold_chain_56d6_rejects_other_uuid():
+    from adwatch.plugins.cold_chain_56d6 import ColdChain56d6Parser
+    svc = {"0000feed-0000-1000-8000-00805f9b34fb": bytes([0x00]) + b"ABCDEF"}
+    assert ColdChain56d6Parser().parse(_make_ad(service_data=svc)) is None
+
+
+def test_cold_chain_56d6_rejects_wrong_payload_shape():
+    # Wrong leading byte or wrong length should fall through.
+    from adwatch.plugins.cold_chain_56d6 import (
+        ColdChain56d6Parser,
+        COLD_CHAIN_56D6_UUID,
+    )
+    svc_bad_lead = {COLD_CHAIN_56D6_UUID: bytes([0xFF]) + b"SSFYV3"}
+    assert ColdChain56d6Parser().parse(_make_ad(service_data=svc_bad_lead)) is None
+
+    svc_short = {COLD_CHAIN_56D6_UUID: bytes([0x00, 0x41, 0x42])}
+    assert ColdChain56d6Parser().parse(_make_ad(service_data=svc_short)) is None
+
+
+# ---- Tuya: Smart.XX.WIFI pairing-mode clone --------------------------------
+
+def test_tuya_clone_pairing_name_matches():
+    from adwatch.plugins.tuya import TuyaParser
+    # Cheap Tuya-clone WiFi smart-plug in pairing mode — name only, no
+    # SIG-correct mfr-data.
+    result = TuyaParser().parse(_make_ad(local_name="Smart.A5.WIFI"))
+    assert result is not None
+    assert result.device_class == "smart_home"
+    assert result.metadata["match_source"] == "name_regex"
+    assert result.metadata["pairing_mode_clone"] is True
+
+
+def test_tuya_clone_pairing_name_rejects_wrong_shape():
+    from adwatch.plugins.tuya import TuyaParser
+    assert TuyaParser().parse(_make_ad(local_name="Smart.WIFI")) is None
+    assert TuyaParser().parse(_make_ad(local_name="Smart.A5.WIFI.extra")) is None
+    # Lowercase chars in the middle should not match (observed pattern is uppercase/digit).
+    assert TuyaParser().parse(_make_ad(local_name="Smart.ab.WIFI")) is None
+
+
+def test_tuya_cid_path_still_works():
+    # Existing CID path must not regress.
+    from adwatch.plugins.tuya import TuyaParser, TUYA_COMPANY_ID
+    mfr = TUYA_COMPANY_ID.to_bytes(2, "little") + bytes([0x03, 0x01])
+    result = TuyaParser().parse(_make_ad(manufacturer_data=mfr))
+    assert result is not None
+    assert result.metadata.get("match_source") != "name_regex"
+    assert result.metadata["pairing"] is True
