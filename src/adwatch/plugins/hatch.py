@@ -1,4 +1,7 @@
-"""Hatch baby sound machine / night light BLE advertisement parser."""
+"""Hatch baby sound machine / night light BLE advertisement parser.
+
+Service UUIDs added per apk-ble-hunting/reports/hatchbaby-rest_passive.md.
+"""
 
 import hashlib
 
@@ -6,25 +9,42 @@ from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, Widget
 from adwatch.registry import register_parser
 
 
+# Vendor 128-bit service UUIDs per the passive report.
+HATCH_GEN1_SERVICE_UUID = "02240000-5efd-47eb-9c1a-de53f7a2b232"
+HATCH_GEN2_SERVICE_UUID = "02260000-5efd-47eb-9c1a-de53f7a2b232"
+NORDIC_LEGACY_DFU_UUID = "00001530-1212-efde-1523-785feabcd123"
+
+
 @register_parser(
     name="hatch",
     company_id=0x0434,
-    local_name_pattern=r"Hatch",
+    service_uuid=(HATCH_GEN1_SERVICE_UUID, HATCH_GEN2_SERVICE_UUID),
+    local_name_pattern=r"^Hatch ",
     description="Hatch Rest/Restore baby sound machines and night lights",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class HatchParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.manufacturer_data or len(raw.manufacturer_data) < 2:
+        # The parser used to require manufacturer_data with CID 0x0434, but per
+        # the passive report Hatch devices may advertise via vendor service UUID
+        # alone. Accept either signal.
+        normalized_uuids = [u.lower() for u in (raw.service_uuids or [])]
+        uuid_hit = any(
+            u == HATCH_GEN1_SERVICE_UUID or u == HATCH_GEN2_SERVICE_UUID
+            for u in normalized_uuids
+        )
+        cid_hit = raw.company_id == 0x0434
+        name_hit = bool(raw.local_name and raw.local_name.startswith("Hatch "))
+
+        if not (uuid_hit or cid_hit or name_hit):
             return None
 
-        if raw.company_id != 0x0434:
+        # CID-only match with no payload is not useful — preserve legacy guard.
+        if cid_hit and not uuid_hit and not name_hit and not raw.manufacturer_payload:
             return None
 
-        payload = raw.manufacturer_payload
-        if not payload:
-            return None
+        payload = raw.manufacturer_payload or b""
 
         id_hash = hashlib.sha256(raw.mac_address.encode()).hexdigest()[:16]
 
@@ -32,6 +52,15 @@ class HatchParser:
             "payload_hex": payload.hex(),
             "payload_length": len(payload),
         }
+
+        # Generation tag from vendor service UUID.
+        if HATCH_GEN1_SERVICE_UUID in normalized_uuids:
+            metadata["generation"] = "gen1"
+        elif HATCH_GEN2_SERVICE_UUID in normalized_uuids:
+            metadata["generation"] = "gen2"
+
+        if NORDIC_LEGACY_DFU_UUID in normalized_uuids:
+            metadata["dfu_mode"] = True
 
         # Battery level from standard Battery Service (UUID 180f)
         if raw.service_data and "180f" in raw.service_data:

@@ -1,4 +1,12 @@
-"""Weber iGrill BLE thermometer plugin."""
+"""Weber iGrill / Kitchen Thermometer / Pulse plugin.
+
+Name prefixes, model mapping, and per-model service UUIDs per
+apk-ble-hunting/reports/weber-igrill_passive.md.
+
+Weber's BLE SIG company ID is 0x043F (1087, "Weber-Stephen Products").
+Telemetry (probe temperatures, battery) requires GATT — advertisement
+carries only model identification.
+"""
 
 import hashlib
 import re
@@ -7,47 +15,95 @@ from adwatch.models import RawAdvertisement, ParseResult
 from adwatch.registry import register_parser
 
 
+WEBER_COMPANY_ID = 0x043F
+
+# Per-model 128-bit service UUIDs (from the Weber app prefix table).
+WEBER_SERVICE_UUIDS = (
+    "38e70000-de63-4b00-9d76-9b2e6e6c5a8f",  # Kitchen Thermometer Mini
+    "19450000-de63-4b00-9d76-9b2e6e6c5a8f",  # Kitchen Thermometer
+    "6e910000-de63-4b00-9d76-9b2e6e6c5a8f",  # iGrill_Mini v1
+    "ada7590f-de63-4b00-9d76-9b2e6e6c5a8f",  # iGrill_Mini v2
+    "9d610c43-de63-4b00-9d76-9b2e6e6c5a8f",  # iGrill_v2 / B2 model
+    "6c910000-de63-4b00-9d76-9b2e6e6c5a8f",  # Pulse
+)
+
+# Longest-first per the Weber app's prefix dispatch.
+_PREFIX_MODEL = [
+    ("igrill_mini_2", "iGrill Mini v2"),
+    ("igrill_mini02", "iGrill Mini v2"),
+    ("igrill_mini", "iGrill Mini"),
+    ("igrill_v2_2", "iGrill v2 (B2)"),
+    ("igrill_v2", "iGrill v2"),
+    ("igrill_v3", "iGrill v3"),
+    ("igrill2", "iGrill 2"),
+    ("igrill3", "iGrill 3"),
+    ("kt_mini", "Kitchen Thermometer Mini"),
+    ("kt", "Kitchen Thermometer"),
+    ("pulse 2000", "Pulse 2000"),
+    ("pulse 1000", "Pulse 1000"),
+    # Generic fallback last
+    ("igrill", "iGrill Unknown"),
+]
+
+# Heuristic probe-count by model family.
+_PROBE_COUNTS = {
+    "iGrill Mini": 1,
+    "iGrill Mini v2": 1,
+    "Kitchen Thermometer Mini": 1,
+    "Kitchen Thermometer": 2,
+    "iGrill 2": 4,
+    "iGrill 3": 4,
+    "iGrill v2": 4,
+    "iGrill v2 (B2)": 4,
+    "iGrill v3": 4,
+    "Pulse 1000": 4,
+    "Pulse 2000": 4,
+}
+
+_NAME_RE = re.compile(r"(?i)^(igrill|kt_|kt$|pulse \d+)")
+
+
 @register_parser(
     name="weber_igrill",
-    local_name_pattern=r"(?i)^igrill",
-    description="Weber iGrill thermometer advertisements",
-    version="1.0.0",
+    company_id=WEBER_COMPANY_ID,
+    service_uuid=WEBER_SERVICE_UUIDS,
+    local_name_pattern=r"(?i)^(igrill|kt_|kt$|pulse \d+)",
+    description="Weber iGrill / Kitchen Thermometer / Pulse",
+    version="1.1.0",
     core=False,
 )
 class WeberIGrillParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        local_name = getattr(raw, "local_name", None)
-        if not local_name or not re.match(r"igrill", local_name, re.IGNORECASE):
+        local_name = raw.local_name or ""
+        name_lower = local_name.lower()
+        name_hit = bool(_NAME_RE.match(local_name)) if local_name else False
+
+        cid_hit = raw.company_id == WEBER_COMPANY_ID
+        uuid_hit = any(u.lower() in WEBER_SERVICE_UUIDS for u in (raw.service_uuids or []))
+
+        if not (name_hit or cid_hit or uuid_hit):
             return None
 
-        # Model detection
-        name_lower = local_name.lower()
-        if "mini" in name_lower:
-            model = "iGrill Mini"
-            probes = 1
-        elif "2" in name_lower:
-            model = "iGrill 2"
-            probes = 4
-        elif "3" in name_lower:
-            model = "iGrill 3"
-            probes = 4
-        else:
-            model = "iGrill Unknown"
-            probes = 4
+        model = "iGrill Unknown"
+        for prefix, mapped in _PREFIX_MODEL:
+            if name_lower.startswith(prefix):
+                model = mapped
+                break
 
-        # Device ID: suffix after last underscore
+        probes = _PROBE_COUNTS.get(model, 4)
+
         device_id = None
         if "_" in local_name:
             suffix = local_name.rsplit("_", 1)[1]
-            # Only set device_id if suffix looks like a model variant won't confuse it
-            if suffix and suffix.lower() not in ("mini", "unknown"):
+            if suffix and suffix.lower() not in ("mini", "v2", "v3", "2", "unknown"):
                 device_id = suffix
 
-        metadata = {
+        metadata: dict = {
             "model": model,
             "probes": probes,
-            "local_name": local_name,
         }
+        if local_name:
+            metadata["local_name"] = local_name
         if device_id is not None:
             metadata["device_id"] = device_id
 

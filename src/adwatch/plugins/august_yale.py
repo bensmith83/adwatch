@@ -60,6 +60,18 @@ class AugustYaleParser:
         if lock_id:
             metadata["lock_id"] = lock_id
 
+        # Yale Connect (LatAm) 3-byte mfr-data: [version, joined, encrypted].
+        # Only decode when CID is 0x012E AND we did NOT find a LockID
+        # (different product family, mutually-exclusive payload shape).
+        if (company == 0x012E and not lock_id and payload
+                and len(payload) >= 3
+                and payload[1] in (0, 1) and payload[2] in (0, 1)):
+            v = payload[0]
+            metadata["yale_connect"] = True
+            metadata["ble_protocol_version"] = f"{(v >> 4) & 0x0F}.{v & 0x0F}"
+            metadata["joined"] = bool(payload[1])
+            metadata["encrypted"] = bool(payload[2])
+
         generation = self._detect_generation(raw)
         if generation:
             metadata["generation"] = generation

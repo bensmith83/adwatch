@@ -18,6 +18,9 @@ SPHERO_SERVICE_UUID_V1 = "22bb746f-2ba0-7554-2d6f-726568705327"
 SPHERO_SERVICE_UUID_V2 = "00010001-574f-4f20-5370-6865726f2121"
 # v2 Initializer / AntiDoS service.
 SPHERO_SERVICE_UUID_V2_INIT = "00020001-574f-4f20-5370-6865726f2121"
+# Sphero Mini primary service (Nordic nRF52 SoC), per
+# apk-ble-hunting/reports/sphero-spheromini_passive.md.
+SPHERO_MINI_SERVICE_UUID = "258eafa5-e914-47da-95ca-c5ab0dc85b11"
 
 # Backward-compatible alias (was the only UUID in v1.0.0 of this plugin).
 SPHERO_SERVICE_UUID = SPHERO_SERVICE_UUID_V2
@@ -40,17 +43,23 @@ SPHERO_NAME_RE = re.compile(r"^(BB|GB|SK|SB|SM|RV)-([A-Z0-9]{4})$")
         SPHERO_SERVICE_UUID_V1,
         SPHERO_SERVICE_UUID_V2,
         SPHERO_SERVICE_UUID_V2_INIT,
+        SPHERO_MINI_SERVICE_UUID,
     ],
     local_name_pattern=SPHERO_NAME_RE.pattern,
     description="Sphero robot advertisements",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class SpherParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         uuid_match = any(
             u in (raw.service_uuids or [])
-            for u in (SPHERO_SERVICE_UUID_V1, SPHERO_SERVICE_UUID_V2, SPHERO_SERVICE_UUID_V2_INIT)
+            for u in (
+                SPHERO_SERVICE_UUID_V1,
+                SPHERO_SERVICE_UUID_V2,
+                SPHERO_SERVICE_UUID_V2_INIT,
+                SPHERO_MINI_SERVICE_UUID,
+            )
         )
         name_match = raw.local_name and SPHERO_NAME_RE.match(raw.local_name)
 
@@ -63,9 +72,12 @@ class SpherParser:
             metadata["model"] = PREFIX_TO_MODEL.get(prefix, prefix)
             metadata["device_id"] = name_match.group(2)
             metadata["device_name"] = raw.local_name
+        elif SPHERO_MINI_SERVICE_UUID in (raw.service_uuids or []):
+            # Mini-specific UUID is a strong model signal even without name.
+            metadata["model"] = "Mini"
         else:
-            # UUID-only match; specific model unknown from just UUID (the v2
-            # UUID covers BOLT/RVR/modern toys — don't guess one).
+            # UUID-only match on v1/v2: specific model unknown from just UUID
+            # (the v2 UUID covers BOLT/RVR/modern toys — don't guess one).
             metadata["model"] = "unknown"
 
         if name_match:
