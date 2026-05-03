@@ -1,6 +1,7 @@
 """Bose audio device BLE advertisement parser.
 
-Identifiers per apk-ble-hunting/reports/bose-bosemusic_passive.md.
+Identifiers per apk-ble-hunting/reports/bose-bosemusic_passive.md and
+apk-ble-hunting/reports/bose-monet_passive.md.
 """
 
 import hashlib
@@ -19,13 +20,24 @@ from adwatch.registry import register_parser
 # Bluetooth SIG company ID for Bose Corporation.
 BOSE_COMPANY_ID = 0x009E
 
-# Primary SIG-assigned service UUID (Bose). Carries product-ID service data on
-# some product lines.
-BOSE_SERVICE_UUID_FEBE = "febe"
+# SIG-assigned service UUIDs.
+BOSE_SERVICE_UUID_FEBE = "febe"  # primary
+BOSE_SERVICE_UUID_FDD2 = "fdd2"  # secondary (Bose Monet path)
 
-# Bose BMAP primary 128-bit service. Advertised by some BMAP-era products
-# alongside (or instead of) the 16-bit FEBE.
+# Bose BMAP primary 128-bit service.
 BOSE_BMAP_SERVICE_UUID = "d417c028-9818-4354-99d1-2ac09d074591"
+# Additional Bose 128-bit vendor UUID (Monet path).
+BOSE_VENDOR_UUID = "f4c93a79-d04f-4565-b05e-79f7ead9df8e"
+
+# Mfr-data variant byte → parser family name.
+VARIANT_PARSERS = {
+    0x9E: "120-series",
+    0x03: "104-series",
+    0x10: "legacy",
+    0x00: "legacy",
+    0x01: "legacy",
+    0x41: "bragi",
+}
 
 _BOSE_NAME_RE = re.compile(r"^Bose (.+)$")
 
@@ -33,10 +45,15 @@ _BOSE_NAME_RE = re.compile(r"^Bose (.+)$")
 @register_parser(
     name="bose",
     company_id=BOSE_COMPANY_ID,
-    service_uuid=[BOSE_SERVICE_UUID_FEBE, BOSE_BMAP_SERVICE_UUID],
+    service_uuid=[
+        BOSE_SERVICE_UUID_FEBE,
+        BOSE_SERVICE_UUID_FDD2,
+        BOSE_BMAP_SERVICE_UUID,
+        BOSE_VENDOR_UUID,
+    ],
     local_name_pattern=_BOSE_NAME_RE.pattern,
     description="Bose audio device advertisements",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class BoseParser:
@@ -44,15 +61,30 @@ class BoseParser:
         metadata: dict = {}
         matched = False
 
+        mac_hash_hex = None
+
         if raw.manufacturer_data and raw.company_id == BOSE_COMPANY_ID:
             payload = raw.manufacturer_payload
             if payload:
                 metadata["payload_hex"] = payload.hex()
                 metadata["payload_length"] = len(payload)
                 matched = True
+                # Variant discriminator (per Bose Monet report).
+                if len(payload) >= 1:
+                    variant_byte = payload[0]
+                    metadata["variant_byte"] = variant_byte
+                    metadata["variant_family"] = VARIANT_PARSERS.get(
+                        variant_byte, f"unknown_{variant_byte:02x}"
+                    )
+                # 5-byte partial MAC hash at offsets 4-8 — stable per device,
+                # used as identity basis to survive BLE address rotation.
+                if len(payload) >= 9:
+                    mac_hash_hex = payload[4:9].hex()
+                    metadata["mac_hash_5b_hex"] = mac_hash_hex
 
         if raw.service_data:
-            for uuid in (BOSE_SERVICE_UUID_FEBE, BOSE_BMAP_SERVICE_UUID):
+            for uuid in (BOSE_SERVICE_UUID_FEBE, BOSE_SERVICE_UUID_FDD2,
+                         BOSE_BMAP_SERVICE_UUID, BOSE_VENDOR_UUID):
                 svc = raw.service_data.get(uuid)
                 if svc:
                     metadata["service_payload_hex"] = svc.hex()
@@ -63,7 +95,8 @@ class BoseParser:
         if raw.service_uuids:
             for uuid in raw.service_uuids:
                 u = uuid.lower()
-                if u == BOSE_SERVICE_UUID_FEBE or u == BOSE_BMAP_SERVICE_UUID:
+                if u in (BOSE_SERVICE_UUID_FEBE, BOSE_SERVICE_UUID_FDD2,
+                         BOSE_BMAP_SERVICE_UUID, BOSE_VENDOR_UUID):
                     matched = True
                     break
 
@@ -75,7 +108,13 @@ class BoseParser:
         if not matched:
             return None
 
-        id_hash = hashlib.sha256(raw.mac_address.encode()).hexdigest()[:16]
+        # Identity prefers the in-payload MAC hash (stable across BLE address
+        # rotation) per the Monet passive report.
+        if mac_hash_hex:
+            id_basis = f"bose:{mac_hash_hex}"
+        else:
+            id_basis = raw.mac_address
+        id_hash = hashlib.sha256(id_basis.encode()).hexdigest()[:16]
         raw_hex = raw.manufacturer_payload.hex() if raw.manufacturer_payload else ""
 
         return ParseResult(

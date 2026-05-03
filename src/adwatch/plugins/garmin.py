@@ -16,6 +16,9 @@ from adwatch.registry import register_parser
 GARMIN_COMPANY_ID = 0x0087
 GARMIN_SERVICE_UUID_MODERN = "fe1f"
 GARMIN_SERVICE_UUID_LEGACY = "00001001-7791-11e2-9452-f23c91aec05e"
+# GFDI control service — exposed once a watch is paired to Connect; per
+# apk-ble-hunting/reports/garmin-connect_passive.md.
+GARMIN_SERVICE_UUID_GFDI = "6a4e4350-667b-11e3-949a-0800200c9a66"
 
 # Known Garmin product families per passive report (scanner implementation
 # notes). Case-sensitive prefix match.
@@ -50,10 +53,10 @@ def _device_class_from_name(local_name: str) -> str:
 @register_parser(
     name="garmin",
     company_id=GARMIN_COMPANY_ID,
-    service_uuid=[GARMIN_SERVICE_UUID_MODERN, GARMIN_SERVICE_UUID_LEGACY],
+    service_uuid=[GARMIN_SERVICE_UUID_MODERN, GARMIN_SERVICE_UUID_LEGACY, GARMIN_SERVICE_UUID_GFDI],
     local_name_pattern=_GARMIN_NAME_RE.pattern,
     description="Garmin wearable advertisements",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class GarminParser:
@@ -66,7 +69,11 @@ class GarminParser:
             and int.from_bytes(raw.manufacturer_data[:2], "little") == GARMIN_COMPANY_ID
         )
         has_uuid = any(
-            u.lower() in (GARMIN_SERVICE_UUID_MODERN, GARMIN_SERVICE_UUID_LEGACY)
+            u.lower() in (
+                GARMIN_SERVICE_UUID_MODERN,
+                GARMIN_SERVICE_UUID_LEGACY,
+                GARMIN_SERVICE_UUID_GFDI,
+            )
             for u in (raw.service_uuids or [])
         )
         name_match = bool(local_name and _GARMIN_NAME_RE.match(local_name))

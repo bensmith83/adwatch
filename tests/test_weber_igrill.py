@@ -207,3 +207,56 @@ class TestWeberIGrillParser:
         assert result is None, (
             "Parser should not match 'igrill' embedded in unrelated device names"
         )
+
+
+class TestWeberNewPrefixes:
+    """Coverage for kt / kt_mini / pulse prefixes added per the passive report."""
+
+    def test_kt_prefix(self):
+        parser = WeberIGrillParser()
+        ad = _make_ad(local_name="kt_12345")
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["model"] == "Kitchen Thermometer"
+        assert result.metadata["probes"] == 2
+
+    def test_kt_mini_prefix(self):
+        parser = WeberIGrillParser()
+        ad = _make_ad(local_name="kt_mini_12345")
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["model"] == "Kitchen Thermometer Mini"
+        assert result.metadata["probes"] == 1
+
+    def test_pulse_2000_prefix(self):
+        parser = WeberIGrillParser()
+        ad = _make_ad(local_name="pulse 2000-ABC")
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["model"] == "Pulse 2000"
+
+    def test_kt_does_not_match_substring(self):
+        """'ktone' must not match — kt prefix requires _ or end-of-string."""
+        parser = WeberIGrillParser()
+        ad = _make_ad(local_name="ktone_device")
+        result = parser.parse(ad)
+        assert result is None
+
+
+class TestWeberCompanyId:
+    def test_matches_on_weber_company_id_alone(self):
+        from adwatch.plugins.weber_igrill import WEBER_COMPANY_ID
+        parser = WeberIGrillParser()
+        # Company ID 0x043F LE = 3F 04
+        ad = _make_ad(manufacturer_data=b"\x3f\x04\x00\x01\x02")
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["model"] == "iGrill Unknown"
+
+
+class TestWeberServiceUuid:
+    def test_matches_on_pulse_service_uuid(self):
+        parser = WeberIGrillParser()
+        ad = _make_ad(service_uuids=["6c910000-de63-4b00-9d76-9b2e6e6c5a8f"])
+        result = parser.parse(ad)
+        assert result is not None
