@@ -1,41 +1,76 @@
-"""Sonos speaker BLE advertisement parser."""
+"""Sonos speaker BLE advertisement parser.
+
+Per apk-ble-hunting/reports/sonos-acr2_passive.md: discovery is by
+SIG-assigned 16-bit service UUID ``0xFE07`` (Sonos, Inc.) — covers
+speakers, soundbars, headphones, and portables. The companion app's only
+``ScanFilter`` is on this UUID; CID ``0x05A7`` is Sonos's company ID and
+appears in mfr-data on some product/firmware combinations.
+
+Privacy note from the report: the advertised name is the user-set room
+label (``Master Bedroom``, ``Kids Room``, ...). We surface it but
+recommend downstream operators avoid uploading it.
+"""
 
 import hashlib
+import re
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
 from adwatch.registry import register_parser
 
 SONOS_COMPANY_ID = 0x05A7
+SONOS_SERVICE_UUID = "fe07"
+
+_NAME_RE = re.compile(r"^Sonos ")
 
 
 @register_parser(
     name="sonos",
     company_id=SONOS_COMPANY_ID,
-    description="Sonos speaker advertisements",
-    version="1.0.0",
+    service_uuid=SONOS_SERVICE_UUID,
+    local_name_pattern=r"^Sonos ",
+    description="Sonos speakers / soundbars / headphones",
+    version="1.1.0",
     core=False,
 )
 class SonosParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if raw.company_id != SONOS_COMPANY_ID:
-            return None
+        cid_hit = raw.company_id == SONOS_COMPANY_ID
+        # CID-only match requires a non-empty payload; otherwise it's just
+        # an empty SIG-CID record with nothing to parse.
+        payload_present = bool(raw.manufacturer_payload)
+        cid_with_payload = cid_hit and payload_present
 
-        data = raw.manufacturer_payload
-        if not data:
+        normalized = [u.lower() for u in (raw.service_uuids or [])]
+        uuid_hit = (
+            SONOS_SERVICE_UUID in normalized
+            or any(u.endswith("0000fe07-0000-1000-8000-00805f9b34fb") for u in normalized)
+        )
+        local_name = raw.local_name or ""
+        name_hit = bool(_NAME_RE.match(local_name))
+
+        if not (cid_with_payload or uuid_hit or name_hit):
             return None
 
         id_hash = hashlib.sha256(raw.mac_address.encode()).hexdigest()[:16]
+
+        metadata: dict = {}
+        data = raw.manufacturer_payload or b""
+        if cid_hit and data:
+            metadata["payload_hex"] = data.hex()
+            metadata["payload_length"] = len(data)
+        if uuid_hit and "payload_length" not in metadata:
+            metadata["match_source"] = "service_uuid"
+            metadata["payload_length"] = 0
+        if name_hit:
+            metadata["device_name"] = local_name
 
         return ParseResult(
             parser_name="sonos",
             beacon_type="sonos",
             device_class="speaker",
             identifier_hash=id_hash,
-            raw_payload_hex=data.hex(),
-            metadata={
-                "payload_hex": data.hex(),
-                "payload_length": len(data),
-            },
+            raw_payload_hex=data.hex() if data else "",
+            metadata=metadata,
         )
 
     def storage_schema(self):

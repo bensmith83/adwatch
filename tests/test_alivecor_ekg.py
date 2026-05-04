@@ -94,11 +94,20 @@ class TestAliveCorEkgParser:
         result = parser.parse(ad)
         assert result.metadata["local_name"] == "EKG-99-23-4c"
 
-    def test_identity_hash(self):
-        """Identity hash is SHA256(mac_address:alivecor_ekg)[:16]."""
+    def test_identity_hash_uses_device_id(self):
+        """v1.1.0: identity prefers device_id (survives MAC rotation)."""
         mac = "11:22:33:44:55:66"
         parser = AliveCorEkgParser()
         ad = _make_ad(local_name="EKG-99-23-4c", mac_address=mac)
+        result = parser.parse(ad)
+        expected = hashlib.sha256(b"alivecor_ekg:99-23-4c").hexdigest()[:16]
+        assert result.identifier_hash == expected
+
+    def test_identity_hash_falls_back_to_mac(self):
+        """No device_id => SHA256(mac:alivecor_ekg)[:16]."""
+        mac = "11:22:33:44:55:66"
+        parser = AliveCorEkgParser()
+        ad = _make_ad(service_uuids=[ALIVECOR_SERVICE_UUID], mac_address=mac)
         result = parser.parse(ad)
         expected = hashlib.sha256(f"{mac}:alivecor_ekg".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
@@ -160,3 +169,44 @@ class TestAliveCorEkgParser:
         # device_id should be "" or absent
         device_id = result.metadata.get("device_id")
         assert device_id == "" or device_id is None
+
+
+class TestAliveCorKardiaModern:
+    """v1.1.0: KardiaMobile 6L + KardiaCard support."""
+
+    def test_kardia_6l_uuid(self):
+        from adwatch.plugins.alivecor_ekg import KARDIA_6L_UUID
+        parser = AliveCorEkgParser()
+        ad = _make_ad(service_uuids=[KARDIA_6L_UUID])
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["product_family"] == "KardiaMobile 6L"
+
+    def test_kardia_card_uuid(self):
+        from adwatch.plugins.alivecor_ekg import KARDIACARD_UUID
+        parser = AliveCorEkgParser()
+        ad = _make_ad(service_uuids=[KARDIACARD_UUID])
+        result = parser.parse(ad)
+        assert result.metadata["product_family"] == "KardiaCard"
+
+    def test_kardiamobile_6l_name_with_serial(self):
+        parser = AliveCorEkgParser()
+        ad = _make_ad(local_name="KardiaMobile_6L_ABC123")
+        result = parser.parse(ad)
+        assert result.metadata["product_family"] == "KardiaMobile 6L"
+        assert result.metadata["device_id"] == "ABC123"
+
+    def test_kardiacard_name_with_serial(self):
+        parser = AliveCorEkgParser()
+        ad = _make_ad(local_name="KardiaCard_DEF456")
+        result = parser.parse(ad)
+        assert result.metadata["product_family"] == "KardiaCard"
+        assert result.metadata["device_id"] == "DEF456"
+
+    def test_identity_uses_kardia_serial(self):
+        parser = AliveCorEkgParser()
+        ad = _make_ad(local_name="KardiaMobile_6L_ABC123",
+                      mac_address="11:22:33:44:55:66")
+        result = parser.parse(ad)
+        expected = hashlib.sha256(b"alivecor_ekg:ABC123").hexdigest()[:16]
+        assert result.identifier_hash == expected

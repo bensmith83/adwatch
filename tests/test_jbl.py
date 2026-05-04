@@ -155,3 +155,62 @@ class TestJblParsing:
         )
         result = parser.parse(ad)
         assert result is not None
+
+
+class TestJblPidAndBdAddr:
+    """PID + BD_ADDR extraction per passive report (mfr-id 0x0ECB / FDDF same layout)."""
+
+    def test_pid_extracted_from_mfr_data(self):
+        """PID is big-endian uint16 at offset 0-1 of payload."""
+        parser = JblParser()
+        # CID 0x0ECB LE = CB 0E, then PID big-endian 01 1C, then 6-byte BD_ADDR.
+        mfr = bytes.fromhex("cb0e011caabbccddeeff")
+        ad = _make_ad(
+            local_name="JBL Live 660NC",
+            manufacturer_data=mfr,
+        )
+        result = parser.parse(ad)
+        assert result.metadata["product_id"] == "011C"
+        assert result.metadata["bd_addr"] == "AA:BB:CC:DD:EE:FF"
+
+    def test_pid_extracted_from_fddf_service_data(self):
+        parser = JblParser()
+        # PID 0x044B + BD_ADDR
+        sd = bytes.fromhex("044b112233445566")
+        ad = _make_ad(service_data={"fddf": sd})
+        result = parser.parse(ad)
+        assert result.metadata["product_id"] == "044B"
+        assert result.metadata["bd_addr"] == "11:22:33:44:55:66"
+
+    def test_identity_uses_bd_addr_when_present(self):
+        """When BD_ADDR is in payload, identity hash uses it (not the volatile BLE MAC)."""
+        parser = JblParser()
+        mfr = bytes.fromhex("cb0e011caabbccddeeff")
+        ad = _make_ad(
+            local_name="JBL Live 660NC",
+            manufacturer_data=mfr,
+            mac_address="FF:FF:FF:FF:FF:FF",  # different from BD_ADDR
+        )
+        result = parser.parse(ad)
+        expected = hashlib.sha256("jbl:AA:BB:CC:DD:EE:FF".encode()).hexdigest()[:16]
+        assert result.identifier_hash == expected
+
+
+class TestJblAvnera:
+    def test_matches_avnera_service_uuid(self):
+        from adwatch.plugins.jbl import AVNERA_SERVICE_UUID
+        parser = JblParser()
+        ad = _make_ad(service_uuids=[AVNERA_SERVICE_UUID])
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["avnera_silicon"] is True
+
+
+class TestJblHarmanCompanyId:
+    def test_matches_on_harman_cid_alone(self):
+        parser = JblParser()
+        # Bare 2-byte CID with no payload — should still match (no PID/BD_ADDR)
+        ad = _make_ad(manufacturer_data=b"\xcb\x0e")
+        result = parser.parse(ad)
+        assert result is not None
+        assert "product_id" not in result.metadata

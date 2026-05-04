@@ -267,3 +267,22 @@ class TestGarminParser:
         result = parser.parse(ad)
         assert result is not None
         assert result.metadata["message_type"] == 0x42
+
+
+class TestGarminGFDI:
+    """v1.2.0: GFDI control UUID for post-paired sightings."""
+
+    def _parse(self, **kwargs):
+        from adwatch.plugins.garmin import GarminParser
+        defaults = {"timestamp": "2025-01-01T00:00:00Z",
+                    "mac_address": "AA:BB:CC:DD:EE:FF",
+                    "address_type": "random",
+                    "manufacturer_data": None, "service_data": None}
+        defaults.update(kwargs)
+        return GarminParser().parse(RawAdvertisement(**defaults))
+
+    def test_match_gfdi_uuid(self):
+        from adwatch.plugins.garmin import GARMIN_SERVICE_UUID_GFDI
+        result = self._parse(service_uuids=[GARMIN_SERVICE_UUID_GFDI])
+        assert result is not None
+        assert result.metadata["has_garmin_service_uuid"] is True

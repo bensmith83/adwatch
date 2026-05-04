@@ -145,3 +145,29 @@ class TestSonosMalformed:
         r1 = parser.parse(raw1)
         r2 = parser.parse(raw2)
         assert r1.identifier_hash != r2.identifier_hash
+
+
+class TestSonosEnrichedMatching:
+    """v1.1.0: service UUID 0xFE07 + ^Sonos name pattern."""
+
+    def test_match_service_uuid_short(self, parser):
+        raw = make_raw(service_uuids=["fe07"])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata.get("match_source") == "service_uuid"
+
+    def test_match_service_uuid_full(self, parser):
+        raw = make_raw(service_uuids=["0000fe07-0000-1000-8000-00805f9b34fb"])
+        result = parser.parse(raw)
+        assert result is not None
+
+    def test_match_sonos_name_prefix(self, parser):
+        raw = make_raw(local_name="Sonos Era 100")
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["device_name"] == "Sonos Era 100"
+
+    def test_uuid_match_no_payload_still_works(self, parser):
+        raw = make_raw(service_uuids=["fe07"], manufacturer_data=None)
+        result = parser.parse(raw)
+        assert result is not None

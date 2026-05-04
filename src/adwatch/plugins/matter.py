@@ -25,8 +25,11 @@ class MatterParser:
             return None
 
         opcode = data[0]
-        if opcode != 0x01:
+        # 0x00 = Commissionable (canonical, most common per Matter spec).
+        # 0x01 = Extended Commissionable (reserved/rare, but observed).
+        if opcode not in (0x00, 0x01):
             return None
+        opcode_label = "commissionable" if opcode == 0x00 else "extended_commissionable"
 
         raw_disc = int.from_bytes(data[1:3], "little")
         discriminator = raw_disc & 0xFFF
@@ -45,6 +48,8 @@ class MatterParser:
             identifier_hash=id_hash,
             raw_payload_hex=data.hex(),
             metadata={
+                "opcode": opcode,
+                "opcode_label": opcode_label,
                 "discriminator": discriminator,
                 "vendor_id": vendor_id,
                 "product_id": product_id,

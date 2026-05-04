@@ -214,3 +214,37 @@ class TestAcaiaScaleParser:
         assert result is not None
         assert result.parser_name == "acaia_scale"
         assert result.metadata["model"] == "Lunar"
+
+
+class TestAcaiaScaleBBSentinel:
+    """0x4242 'BB' sentinel CID path (per breville-connectedcoffee report)."""
+
+    def test_matches_cid_4242_without_name(self):
+        from adwatch.plugins.acaia_scale import ACAIA_BB_SENTINEL
+        registry = ParserRegistry()
+
+        @register_parser(name="acaia_scale", company_id=ACAIA_BB_SENTINEL,
+                         local_name_pattern=r"(?i)^(ACAIA|LUNAR|PEARL|PYXIS|CINCO)",
+                         description="A", version="1.1.0", core=False, registry=registry)
+        class TP(AcaiaScaleParser):
+            pass
+
+        ad = _make_ad(manufacturer_data=b"\x42\x42\x00\x01")
+        assert len(registry.match(ad)) >= 1
+
+    def test_parses_cid_only_no_name(self):
+        parser = AcaiaScaleParser()
+        ad = _make_ad(manufacturer_data=b"\x42\x42\x00\x01")
+        result = parser.parse(ad)
+        assert result is not None
+        assert result.metadata["bb_sentinel"] is True
+        assert result.metadata["model"] == "Acaia"
+
+    def test_cid_path_with_name_extracts_serial(self):
+        parser = AcaiaScaleParser()
+        ad = _make_ad(manufacturer_data=b"\x42\x42",
+                      local_name="LUNAR_ABC123")
+        result = parser.parse(ad)
+        assert result.metadata["model"] == "Lunar"
+        assert result.metadata["device_id"] == "ABC123"
+        assert result.metadata["bb_sentinel"] is True

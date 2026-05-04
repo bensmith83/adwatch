@@ -135,3 +135,55 @@ class TestDreameParsing:
         ad = _make_ad()
         result = parser.parse(ad)
         assert result is None
+
+
+class TestDreameMiIO:
+    """v1.1.0: Mi/MiIO service-UUID + dreame/mova service-data prefix."""
+
+    def _parse(self, **kwargs):
+        from adwatch.plugins.dreame import DreameParser
+        defaults = {"timestamp": "2025-01-01T00:00:00Z",
+                    "mac_address": "AA:BB:CC:DD:EE:FF",
+                    "address_type": "random",
+                    "manufacturer_data": None, "service_data": None}
+        defaults.update(kwargs)
+        return DreameParser().parse(RawAdvertisement(**defaults))
+
+    def test_dreame_miio_service_data(self):
+        result = self._parse(
+            service_uuids=["fe98"],
+            service_data={"fe98": b"dreame-L10"},
+        )
+        assert result is not None
+        assert result.metadata["brand"] == "dreame"
+        assert result.metadata["product_path"] == "miio_provisioning"
+        assert result.metadata["provisioning_mode"] is True
+
+    def test_mova_miio_service_data(self):
+        result = self._parse(
+            service_uuids=["fe98"],
+            service_data={"fe98": b"mova-K20"},
+        )
+        assert result is not None
+        assert result.metadata["brand"] == "mova"
+        assert result.device_class == "lawn_mower"
+
+    def test_miio_uuid_without_brand_prefix_returns_none(self):
+        # FE98 + non-Dreame ASCII → not Dreame.
+        result = self._parse(
+            service_uuids=["fe98"],
+            service_data={"fe98": b"xiaomi-band"},
+        )
+        assert result is None
+
+    def test_miio_uuid_with_no_service_data_returns_none(self):
+        result = self._parse(service_uuids=["fe98"])
+        assert result is None
+
+    def test_case_insensitive_prefix(self):
+        result = self._parse(
+            service_uuids=["fe98"],
+            service_data={"fe98": b"DREAME-X11"},
+        )
+        assert result is not None
+        assert result.metadata["brand"] == "dreame"

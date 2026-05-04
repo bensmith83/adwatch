@@ -137,3 +137,66 @@ class TestResmedRegistration:
         raw = _make_raw(local_name="SomeDevice")
         result = parser.parse(raw)
         assert result is None
+
+
+class TestResmedAirFamily:
+    """AirMini / AS11 / AirCurve 11 (per myAir report)."""
+
+    def test_airmini_serial_extracted(self):
+        parser = ResmedParser()
+        raw = _make_raw(local_name="AirMini-1234567890")
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["product_family"] == "AirMini"
+        assert result.metadata["serial"] == "1234567890"
+
+    def test_as11_family_match(self):
+        parser = ResmedParser()
+        raw = _make_raw(local_name="AS11-ABCDEFGHIJ")
+        result = parser.parse(raw)
+        assert result.metadata["product_family"] == "AS11"
+        assert result.metadata["serial"] == "ABCDEFGHIJ"
+
+    def test_aircurve_family_match(self):
+        parser = ResmedParser()
+        raw = _make_raw(local_name="AirCurve-XYZ123ABC456")
+        result = parser.parse(raw)
+        assert result.metadata["product_family"] == "AirCurve"
+
+    def test_identity_uses_serial(self):
+        import hashlib
+        parser = ResmedParser()
+        raw = _make_raw(local_name="AirMini-1234567890",
+                        mac="11:22:33:44:55:66")
+        result = parser.parse(raw)
+        expected = hashlib.sha256(b"resmed:1234567890").hexdigest()[:16]
+        assert result.identifier_hash == expected
+
+
+class TestResmedNightOwl:
+    def test_nightowl_uuid_match(self):
+        from adwatch.plugins.resmed import NIGHTOWL_SERVICE_UUID
+        parser = ResmedParser()
+        raw = _make_raw(service_uuids=[NIGHTOWL_SERVICE_UUID])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["product_family"] == "NightOwl"
+        assert result.device_class == "sleep_test"
+
+    def test_nightowl_name_match(self):
+        parser = ResmedParser()
+        raw = _make_raw(local_name="NightOwl-123")
+        result = parser.parse(raw)
+        assert result.metadata["product_family"] == "NightOwl"
+        assert result.device_class == "sleep_test"
+
+
+class TestResmedPOC:
+    def test_poc_uuid_match(self):
+        from adwatch.plugins.resmed import POC_SERVICE_UUID
+        parser = ResmedParser()
+        raw = _make_raw(service_uuids=[POC_SERVICE_UUID])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["product_family"] == "POC"
+        assert result.device_class == "oxygen_concentrator"

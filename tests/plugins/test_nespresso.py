@@ -157,20 +157,35 @@ class TestNespressoParsing:
 
 
 class TestNespressoMalformed:
-    def test_returns_none_no_mfr_data(self, parser):
+    """v1.1.0: UUID-only matches now succeed (per nespresso-activities report)."""
+
+    def test_uuid_only_no_mfr_data_now_succeeds(self, parser):
+        # Was: returns None. Per the report, the app filters on UUID alone
+        # and doesn't parse mfr-data — UUID match is the canonical signal.
         raw = make_raw(service_uuids=[NESPRESSO_UUID])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["product_class"] == "coffee_machine"
+
+    def test_returns_none_unrelated(self, parser):
+        raw = make_raw(manufacturer_data=bytes.fromhex("4c00408900000000"))
         assert parser.parse(raw) is None
 
-    def test_returns_none_wrong_company_id(self, parser):
-        raw = make_raw(
-            manufacturer_data=bytes.fromhex("4c00408900000000"),
-            service_uuids=[NESPRESSO_UUID],
-        )
-        assert parser.parse(raw) is None
 
-    def test_returns_none_too_short(self, parser):
-        raw = make_raw(manufacturer_data=bytes.fromhex("0225"))
-        assert parser.parse(raw) is None
+class TestNespressoAeroccino:
+    """v1.1.0: Aeroccino milk frother detection."""
+
+    def test_aeroccino_uuid(self, parser):
+        from adwatch.plugins.nespresso import AEROCCINO_SERVICE_UUID
+        raw = make_raw(service_uuids=[AEROCCINO_SERVICE_UUID])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["product_class"] == "aeroccino"
+
+    def test_machine_uuid_classified_as_machine(self, parser):
+        raw = make_raw(service_uuids=[NESPRESSO_UUID])
+        result = parser.parse(raw)
+        assert result.metadata["product_class"] == "coffee_machine"
 
 
 class TestNespressoPluginMeta:

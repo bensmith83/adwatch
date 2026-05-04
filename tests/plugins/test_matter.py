@@ -119,3 +119,27 @@ class TestMatterMalformed:
     def test_returns_none_empty_data(self, parser):
         raw = make_raw(service_data={"fff6": b""})
         assert parser.parse(raw) is None
+
+
+class TestMatterOpcode00Commissionable:
+    """Per Matter Core Spec § 5.4.2.5.6, opcode 0x00 = canonical 'Commissionable'.
+
+    Bug fix 2026-04-28: previously the parser only accepted opcode 0x01
+    (extended/reserved) and rejected the canonical 0x00 — meaning real Matter
+    commissioning advertisements (TP-Link Tapo, etc.) were not being parsed.
+    """
+
+    def test_canonical_opcode_accepted(self, parser):
+        data = bytes([0x00, 0x23, 0x01, 0x5F, 0x13, 0x42, 0x00, 0x00])
+        raw = make_raw(service_data={"fff6": data})
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["opcode"] == 0x00
+        assert result.metadata["opcode_label"] == "commissionable"
+
+    def test_extended_opcode_still_accepted(self, parser):
+        data = bytes([0x01, 0x23, 0x01, 0x01, 0x10, 0x42, 0x00, 0x00])
+        raw = make_raw(service_data={"fff6": data})
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["opcode_label"] == "extended_commissionable"

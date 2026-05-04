@@ -244,3 +244,47 @@ class TestAugustYaleParsing:
             local_name="A112345",
         )
         assert result.beacon_type == "august_yale"
+
+
+class TestYaleConnectDecode:
+    """v1.2.0: Yale Connect (LatAm) 3-byte mfr-data decode."""
+
+    def _parse(self, **kwargs):
+        from adwatch.plugins.august_yale import AugustYaleParser
+        ad = _make_ad(**kwargs)
+        return AugustYaleParser().parse(ad)
+
+    def test_protocol_version_decoded(self):
+        # 0x10 = major 1, minor 0
+        result = self._parse(manufacturer_data=_build_mfr_data(0x012E, bytes([0x10, 0x01, 0x01])))
+        assert result.metadata["ble_protocol_version"] == "1.0"
+
+    def test_protocol_version_2_3(self):
+        result = self._parse(manufacturer_data=_build_mfr_data(0x012E, bytes([0x23, 0x01, 0x00])))
+        assert result.metadata["ble_protocol_version"] == "2.3"
+
+    def test_joined_flag(self):
+        result = self._parse(manufacturer_data=_build_mfr_data(0x012E, bytes([0x10, 0x01, 0x00])))
+        assert result.metadata["joined"] is True
+        assert result.metadata["encrypted"] is False
+
+    def test_encrypted_flag(self):
+        result = self._parse(manufacturer_data=_build_mfr_data(0x012E, bytes([0x10, 0x00, 0x01])))
+        assert result.metadata["encrypted"] is True
+        assert result.metadata["joined"] is False
+
+    def test_yale_connect_marker(self):
+        result = self._parse(manufacturer_data=_build_mfr_data(0x012E, bytes([0x10, 0x01, 0x01])))
+        assert result.metadata["yale_connect"] is True
+
+    def test_yale_connect_skipped_when_lockid_present(self):
+        # 18-byte payload triggers LockID extraction; yale-connect should NOT
+        # double-up.
+        payload = bytes([0x00, 0x00]) + bytes(range(16))
+        result = self._parse(manufacturer_data=_build_mfr_data(0x012E, payload))
+        assert "lock_id" in result.metadata
+        assert "yale_connect" not in result.metadata
+
+    def test_non_yaleconnect_cid_not_decoded(self):
+        result = self._parse(manufacturer_data=_build_mfr_data(0x0016, bytes([0x10, 0x01, 0x01])))
+        assert "yale_connect" not in result.metadata
