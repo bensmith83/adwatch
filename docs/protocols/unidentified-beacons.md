@@ -64,6 +64,65 @@ and may not repeat.
 **Action:** if re-observed at close range, attempt a GATT connect to read the
 Device Information service (0x180A) for manufacturer / model strings.
 
+## `uac088` — Company ID `0x5654` (unassigned)
+
+Observed continuously through May 2026 (186 capture entries, 292 total
+sightings).
+
+| Field | Value |
+|-------|-------|
+| `local_name` | `uac088` (sometimes blank) |
+| `manufacturer_data` | 9 bytes total — company ID `5456` LE + 7-byte payload |
+| `service_uuids` | *(empty)* |
+| `service_data` | *(empty)* |
+| RSSI max | −86 to −94 dBm (single far-field device) |
+| Distinct deviceIdentifiers | **1** (every capture is the same physical device) |
+
+Bluetooth-SIG company ID `0x5654` is **not assigned** to any vendor in
+the public registry, so this is either a private-use ID an
+indie/hobbyist project picked off the shelf, or a manufacturer
+shipping with a placeholder ID never properly registered. The two
+bytes `54 56` are also the ASCII letters `"TV"`, which is mildly
+suggestive of a television-adjacent product but proves nothing.
+
+The string `uac088` shows up in a few places online attached to
+generic ESP-Now / nRF-based BLE evaluation boards and to some
+chinese-OEM HID dongles, but no canonical attribution.
+
+### Payload Shape
+
+Across 186 captures from the same device, the 7-byte payload contains:
+
+```
+byte 0:    0x02            constant on every capture
+byte 1:    0x6A-0x88        small range (~30 distinct values)
+byte 2:    0x5A-0x79        small range; `0x61` is by far the most common
+byte 3:    0x5A-0x7A        small range; `0x5A` dominates
+byte 4-6:  high entropy     looks essentially random across captures
+```
+
+The first three payload bytes vary smoothly over time (consistent with
+a rolling counter, scaled sensor reading, or short rolling-code
+window). The trailing 3 bytes have very high entropy with very few
+exact-byte repeats — consistent with a per-broadcast nonce, MAC, or
+encryption output. **184 of the 186 captures have a unique 9-byte
+manufacturer-data string** despite all coming from one device.
+
+That high churn rate (a new payload roughly every BLE advertisement
+interval) plus the lack of a stable identity beyond the local name
+makes this look like a privacy-conscious beacon (rolling identifier)
+or simply an encrypted telemetry stream where the cleartext device
+identity is the local name only.
+
+### Action
+
+- Treat `0x5654` + `uac088` as a single device fingerprint for now.
+- No parser implemented — the payload structure does not yield to
+  shape-fitting without a key.
+- If anyone recognizes this signature, please open an issue with a
+  vendor / SKU pointer and we'll migrate the entry into its own
+  protocol file.
+
 ## Tracking
 
 When new identifications emerge for any of the above, migrate the entry out

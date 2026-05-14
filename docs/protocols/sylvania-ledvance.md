@@ -1,6 +1,21 @@
-# Sylvania/LEDVANCE Smart Light BLE Protocol
+# Sylvania / LEDVANCE Smart Light BLE Protocol
 
-## Overview
+> **⚠️ Status: retracted.** Earlier captures attributed company ID
+> `0x0819` and the `SIL:` / `DUE:` local-name prefixes to Sylvania /
+> LEDVANCE smart lights. That attribution was **wrong** — `0x0819` is
+> registered to Hunter Douglas Inc., and `SIL:` / `DUE:` are the
+> Silhouette and Duette shade product lines. See
+> [hunter-douglas-powerview.md](hunter-douglas-powerview.md) for the
+> correct decoder.
+>
+> The `SylvaniaParser` Swift source remains in the codebase as a
+> placeholder for future identification of a *genuine* Sylvania /
+> LEDVANCE BLE signal — but it is no longer wired up to any
+> advertisement match criteria. The example payloads below are
+> Hunter Douglas captures mis-classified by the original parser, kept
+> here only so the misattribution is searchable.
+
+## Overview (deprecated — see retraction above)
 
 Sylvania and LEDVANCE smart lights advertise via BLE using the assigned service UUID FDC1 and company ID 0x0819. Sylvania devices use the local name prefix `SIL:` while LEDVANCE devices use `DUE:`, each followed by a 4-character hex device identifier.
 

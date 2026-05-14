@@ -66,10 +66,35 @@ sanity check during forensic review.
 
 ### Counter Behavior
 
-`0x2119` increments roughly once per second across consecutive
-captures of the same AP. Two captures of the same physical AP a few
-seconds apart will show a small positive delta; an unexpectedly
-large jump (or a reset to a small value) suggests the AP rebooted.
+`0x2119` increments roughly once per second — i.e. the value reads
+as **seconds since the AP last booted**. Reference points from the
+2026 adwatch capture, all from one U6-LR over a single afternoon:
+
+```
+2119 hex     decimal      Δ from prior
+00 0c 18 dd   793309       —
+00 0c 24 c7   796327       +3018 s (~50 min later)
+00 0c 24 e5   796357       +30 s
+00 0c 24 ef   796367       +10 s
+00 0c 24 f9   796377       +10 s
+00 0c 25 03   796387       +10 s
+00 0c 25 0d   796397       +10 s
+00 0c 25 17   796407       +10 s
+00 0c 25 2b   796427       +20 s
+```
+
+The increments line up with wall-clock time at 1 Hz. A
+0x000c252b reading (≈796 k seconds) translates to **~9 days 5 h
+uptime** — consistent with a domestic AP that has been on since the
+last UniFi controller-driven firmware push. A sudden reset to a
+small value is a reliable signal that the AP just rebooted.
+
+Two captures of the same physical AP a few seconds apart will show
+a small positive delta; an unexpectedly large jump (or a reset to a
+small value) suggests the AP rebooted. adwatch does not currently
+expose `uptime_seconds_estimate` derived from this counter — the
+raw `uptime_counter` is in metadata and consumers are free to
+divide by 1.
 
 ### No Telemetry
 
