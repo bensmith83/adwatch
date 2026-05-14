@@ -2,9 +2,9 @@
 
 ## Overview
 
-Chamberlain and LiftMaster MyQ garage door openers broadcast BLE advertisements for proximity-based control via the MyQ app. MyQ is Chamberlain Group's smart garage platform, encompassing devices sold under the Chamberlain, LiftMaster, Craftsman, and Raynor brands. MyQ-enabled garage door openers and smart garage hubs (e.g. MYQ-G0401) use Wi-Fi for cloud connectivity and BLE for local device discovery and initial setup/commissioning.
+Chamberlain and LiftMaster MyQ garage door openers broadcast BLE advertisements for local device discovery and initial Wi-Fi commissioning by the MyQ mobile app. MyQ is Chamberlain Group's smart garage platform, encompassing devices sold under the Chamberlain, LiftMaster, Craftsman, and Raynor brands. MyQ-enabled garage door openers and smart garage hubs (e.g. MYQ-G0401) use Wi-Fi for cloud connectivity; BLE is used during setup and continues advertising afterward (purpose unconfirmed).
 
-The BLE advertisement serves primarily as a **local discovery and commissioning beacon**. The MyQ app uses BLE to find nearby MyQ devices during initial setup, then transitions to Wi-Fi for ongoing cloud-based control. BLE may also be used for proximity-based features (e.g. auto-open when arriving home) when the phone is within ~20 feet of the opener.
+The BLE advertisement serves primarily as a **local discovery and commissioning beacon**. The MyQ app uses BLE to find nearby MyQ devices during initial setup, then transitions to Wi-Fi for ongoing cloud-based control. Note: MyQ's "auto-open on arrival" / Connected Garage features use **GPS geofencing through the cloud** (often via vehicle infotainment integrations such as Tesla, Nissan, INFINITI), not BLE proximity. The continuous BLE advertising observed post-commissioning therefore appears to be for re-discovery/re-pairing, not active proximity control.
 
 Actual garage door control is handled through:
 1. **Cloud API** (myQ API v6, OAuth-based) — primary control path
@@ -19,7 +19,7 @@ The BLE advertisement itself does **not** expose door state, and passive observa
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `MyQ-XXX` pattern | 3-char hex suffix (e.g. `MyQ-017`, `MyQ-75D`, `MyQ-EF0`) |
+| Local name | `MyQ-XXX` pattern | 3-char alphanumeric suffix = last 3 chars of hub serial (e.g. `MyQ-017`, `MyQ-75D`, `MyQ-EF0`) |
 | Service UUID | `26D91A37-C279-4D0F-96A1-532CE41CE0F6` | 128-bit custom UUID, not registered with Bluetooth SIG |
 | Manufacturer data prefix | `7808` | Company ID `0x0878` (The Chamberlain Group, Inc.) |
 | Company ID | `0x0878` (decimal 2168) | Registered to The Chamberlain Group, Inc. by Bluetooth SIG |
@@ -29,10 +29,10 @@ The BLE advertisement itself does **not** expose door state, and passive observa
 | Offset | Length | Field | Notes |
 |--------|--------|-------|-------|
 | 0-1 | 2 bytes | Company ID | `0x0878` — Chamberlain Group (little-endian: `7808`) |
-| 2 | 1 byte | Unknown | `0x2B` or `0x2E` observed — possibly protocol version or flags |
-| 3 | 1 byte | Unknown | `0x00` — possibly status flags or padding |
+| 2 | 1 byte | Unknown | `0x2B` or `0x2E` observed — possibly protocol version, firmware revision, model variant, or status flags. No public reverse-engineering documents the semantics. |
+| 3 | 1 byte | Unknown | `0x00` observed consistently — likely padding or reserved. |
 
-The manufacturer data payload is minimal (only 2 bytes after company ID). The observed values `0x2B` and `0x2E` at offset 2 may indicate firmware version, protocol revision, or device model variants.
+The manufacturer data payload is minimal (only 2 bytes after company ID). No publicly available reverse-engineering work (HomeAssistant `myq` integration, hjdhjd/myq, ratgdo, Konnected blaQ) documents the structure of these bytes — all of those projects target either the cloud HTTP API (hjdhjd/myq) or the wired Security+ 2.0 bus (ratgdo, blaQ), not the BLE advertisement. Treat the offset-2 byte as opaque until a sniffer-level study is published.
 
 ### Service UUID
 
@@ -62,7 +62,7 @@ MyQ-{device_id}
 
 Examples: `MyQ-75D`, `MyQ-017`, `MyQ-EF0`
 
-The suffix is a short hex-like device identifier, typically 3 characters. This likely corresponds to the last 3 hex digits of an internal device serial or MAC-derived identifier.
+Per Chamberlain/LiftMaster setup documentation, the suffix is the **last three characters of the hub's serial number**. The same pattern is used as the SoftAP Wi-Fi SSID during fallback web-based provisioning (`setup.myqdevice.com`). MyQ serial numbers are alphanumeric (10–12 chars, mixed letters and digits), so the suffix may contain any alphanumeric characters — observed examples happen to be hex-compatible but the parser should not assume hex validity.
 
 ## Device Class
 
@@ -80,14 +80,18 @@ identifier = SHA256("{mac}:{local_name}")[:16]
 
 ### BLE Role
 
-MyQ devices act as **BLE peripherals** (advertisers). The MyQ mobile app acts as the central. The BLE interaction flow is most likely:
+MyQ devices act as **BLE peripherals** (advertisers). The MyQ mobile app acts as the central. The BLE interaction flow during commissioning is most likely:
 
 1. Device broadcasts advertisement with local name `MyQ-XXX` and custom service UUID
 2. App discovers device via BLE scan (filtered by local name pattern or service UUID)
 3. App connects and discovers GATT services
 4. App writes Wi-Fi credentials (SSID/password) to a GATT characteristic under the custom service
 5. Device connects to Wi-Fi and registers with myQ cloud
-6. BLE connection is dropped; all further control goes through the cloud
+6. BLE connection is dropped; all further control goes through the cloud (HTTP/OAuth myQ API v6)
+
+A web-based fallback provisioning path also exists: the hub exposes a SoftAP Wi-Fi network named `MyQ-nnn`, and the user provides credentials via `setup.myqdevice.com`. This is independent of BLE, but uses the same `MyQ-nnn` naming convention.
+
+After commissioning, the device continues advertising indefinitely (we observe ongoing sightings — see "Observed in adwatch" below). The purpose of post-commissioning advertising is unclear; candidates include re-pairing/re-discovery, future feature support, or simply that the radio remains in advertising mode by firmware default. It is **not** the basis of MyQ's "auto-open on arrival" feature, which is GPS-geofence-based.
 
 ### GATT Services (Speculative)
 
@@ -117,7 +121,7 @@ The myQ cloud API uses OAuth-based authentication and provides door state, door 
 - Garage door opener — reveals the presence and proximity of a garage entry point
 - Security consideration: detecting garage door openers in BLE range identifies controllable physical access points
 - BLE range is limited, so detection implies close proximity to the garage
-- MyQ devices broadcast continuously for app-based convenience features
+- MyQ devices broadcast continuously after commissioning (exact purpose unconfirmed; not the basis of MyQ's GPS-geofenced auto-open)
 
 ## Observed in adwatch (April 2026 Export)
 
@@ -130,13 +134,15 @@ The myQ cloud API uses OAuth-based authentication and provides door state, door 
 | Sighting count | 124 over ~5 hours (MyQ-017) |
 | RSSI range | -84 to -100 dBm |
 
-All three devices advertise the same custom service UUID. The continuous advertisement pattern (124 sightings over 5 hours) indicates the BLE radio stays active after commissioning, likely for the MyQ app's proximity features. RSSI values suggest 10-30+ meters distance, consistent with garage-mounted devices.
+All three devices advertise the same custom service UUID. The continuous advertisement pattern (124 sightings over 5 hours) indicates the BLE radio stays active after commissioning. The exact reason is unconfirmed — likely re-discovery / re-pairing support, given that MyQ's "arrive home and open" feature itself uses GPS geofencing through the cloud, not BLE. RSSI values (-84 to -100 dBm) suggest 10-30+ meters distance, consistent with garage-mounted devices observed from inside an adjacent home.
 
 ## References
 
 - [MyQ App](https://www.myq.com/) — Chamberlain Group smart garage platform
 - [Chamberlain Group](https://www.chamberlaingroup.com/) — manufacturer (also LiftMaster, Craftsman)
-- [hjdhjd/myq](https://github.com/hjdhjd/myq) — Node.js implementation of the myQ cloud API
-- [PaulWieland/ratgdo](https://github.com/PaulWieland/ratgdo) — Open-source ESP board for Security+ 2.0
+- [hjdhjd/myq](https://github.com/hjdhjd/myq) — Node.js implementation of the myQ cloud API (HTTP only, no BLE)
+- [PaulWieland/ratgdo](https://github.com/PaulWieland/ratgdo) — Open-source ESP board for Security+ 2.0 (wired bus, not BLE)
 - [Konnected GDO blaQ](https://konnected.io/products/smart-garage-door-opener-blaq-myq-alternative) — Commercial local-control alternative
-- [Bluetooth SIG Assigned Numbers](https://www.bluetooth.com/specifications/assigned-numbers/) — Company ID `0x0878`
+- [Bluetooth SIG Assigned Numbers](https://www.bluetooth.com/specifications/assigned-numbers/) — Company ID `0x0878` = "The Chamberlain Group, Inc." (verified via Nordic-mirrored SIG database)
+- [LiftMaster MyQ Hub Wi-Fi setup (Fluent docs)](https://help.fluenthome.com/en_US/liftmaster-myq-smart-garage-hub/connect-a-liftmaster-myq-smart-garage-hub-to-a-wi-fi-network) — confirms `MyQ-nnn` = last 3 chars of hub serial
+- [myQ Connected Garage / vehicle integrations](https://www.myq.com/auto) — confirms proximity auto-open uses GPS geofencing, not BLE

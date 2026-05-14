@@ -38,7 +38,22 @@ Known department codes:
 
 ### Advertisement Payload
 
-The FE79 advertisements observed carry no service data payload — they function as presence beacons for Zebra's Device Tracker cloud service (indoor location/proximity tracking). The payload format is proprietary and undocumented.
+The FE79 advertisements observed carry no service-data payload — they
+function as presence beacons for Zebra's Device Tracker cloud service
+(indoor location / proximity tracking). The payload format is
+proprietary and undocumented.
+
+Shipping firmware most commonly advertises `0xFE79` in the bare
+`service_uuids` list and **omits** the matching service-data block.
+Earlier versions of the adwatch parser required a populated
+service-data block and so rejected every shipping handheld. The
+parser now accepts either source; the metadata field
+`advertised_signal` records which one was present
+(`service_data` or `service_uuid_only`).
+
+`fleet_id` metadata is set from the leading `_`-delimited segment
+of the local name (e.g. `096_CA_CAC` → `fleet_id = 096`) so
+multiple devices in the same store / fleet group together cleanly.
 
 ### Device Types
 

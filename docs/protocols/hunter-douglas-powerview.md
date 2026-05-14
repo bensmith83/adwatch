@@ -17,12 +17,22 @@ The shades use AES-CTR encryption with a 16-byte "home key" for GATT commands, b
 
 ### Known Local Name Prefixes
 
-| Prefix | Product Line | Type IDs | Description |
-|--------|-------------|----------|-------------|
+| Prefix | Product Line | Type IDs (observed) | Description |
+|--------|-------------|---------------------|-------------|
 | `SIL:` | Silhouette | 18, 23 | Horizontal sheer shading with tiltable vanes |
-| `DUE:` | Duette | 6, 8, 9, 10, 33 | Cellular/honeycomb shades |
+| `DUE:` | Duette     | 6, 8, 9, 10, 33 | Cellular / honeycomb shades |
+| `VIG:` | Vignette   | 33 | Modern Roman style |
+| `R31:` | Roller (31 series, tentative) | 5 | Single-band roller shades |
+| `PWW:` | PowerView Wand / Wireless (tentative) | 19 | Hand-held / wand-style controller |
+| `FAB:` | Fabric (Designer Roller, tentative) | 5 | Designer-fabric roller line |
 
-Other prefixes likely exist for Vignette, Sonnette, Venetian, Parkland, Roman, etc. but have not been observed.
+The `R31:`, `PWW:`, `FAB:` and `VIG:` prefixes were captured in the 2026
+adwatch export. `VIG:` matches Vignette in the public product
+catalogue; the other three are inferred by elimination — Hunter
+Douglas has not published a prefix table. **Treat names of the
+R31 / PWW / FAB rows as best-guess until corroborated by an HD-side
+source.** Their advertisement structure is identical to the documented
+shade format, so the parser decodes them the same way.
 
 ### Duette Type ID Variants
 
@@ -40,6 +50,11 @@ Each shade continuously broadcasts:
 
 1. **Local Name**: `XXX:YYYY` format (shortened local name)
 2. **Service UUID**: `0xFDC1` (Hunter Douglas shade service)
+   - **Note:** Shipping firmware advertises `FDC1` in the
+     **serviceUUIDs** list but leaves the corresponding
+     **serviceData** block empty. Early versions of the adwatch parser
+     required `serviceData["fdc1"]` to be populated and so rejected
+     every real shade. The parser now accepts either source.
 3. **Manufacturer Specific Data**: Company ID `0x0819` + 9 bytes payload
 
 ### Manufacturer Data Format (V2 Protocol)
@@ -159,3 +174,22 @@ Different home network from the Silhouette shades. Brief appearance (only 2 sigh
 **SIL shades**: `19 08 8a 6c 17 00 00 00 00 00 c2` — home_id=0x6C8A, type=23 (Silhouette), position=0%, tilt=0, battery=100%
 
 **DUE shade**: `19 08 11 60 09 40 0b 00 00 00 c2` — home_id=0x6011, type=9 (Duette DuoLite TDBU), position=72%, battery=100%
+
+**R31 roller (2026 export)**: `19 08 96 d7 05 a0 0f 00 00 00 c0` — home_id=0xD796, type=5, position=1000 (raw, ÷10 → 100%), battery=100%, motion=stopped. Eight distinct devices on the same home all carry the same `96 d7` home_id.
+
+**PWW wand (2026 export)**: `19 08 ff b3 13 a0 0f 00 00 00 e0` — home_id=0xB3FF, type=19, position=1000, battery=100%. Same payload bytes across three distinct PWW devices — the wand reports a fixed state when idle.
+
+**VIG Vignette (2026 export)**: `19 08 29 cf 21 00 00 fa 00 00 c0` — home_id=0xCF29, type=33, position=0 (closed), position2=0xFA, battery=100%.
+
+**FAB shade (2026 export)**: `19 08 3f 75 05 a0 0f 00 00 00 c2` — home_id=0x753F, type=5, position=1000, battery=100%.
+
+## Disambiguation: NOT Sylvania / LEDVANCE
+
+Earlier revisions of this codebase shipped a `SylvaniaParser` that
+matched company ID `0x0819` and the `SIL:` / `DUE:` local-name prefixes.
+That attribution was incorrect — `0x0819` is registered to Hunter
+Douglas Inc. (not Sylvania / LEDVANCE), and `SIL:` / `DUE:` are the
+Silhouette and Duette product prefixes documented above. The Sylvania
+parser has been deregistered from these signals; any future capture of
+a real Sylvania / LEDVANCE BLE device should be researched fresh and
+attached to its actual company ID.
