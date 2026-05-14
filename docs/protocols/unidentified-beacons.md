@@ -123,6 +123,130 @@ identity is the local name only.
   vendor / SKU pointer and we'll migrate the entry into its own
   protocol file.
 
+## Company ID `0x43AC` — 28-byte tag-and-nonce beacon
+
+Observed in the 2026 adwatch export: 49 capture entries from **4
+distinct devices**, every capture carrying a unique 29-byte
+manufacturer-data block (no two adverts share a full payload).
+
+| Field | Value |
+|-------|-------|
+| `companyID` | `0x43AC` — **not assigned** in the Bluetooth SIG registry |
+| Manufacturer data | 29 bytes total (2 cid + 27 payload) |
+| `local_name` | *(empty on every capture)* |
+| `service_uuids` | *(empty)* |
+| `service_data` | *(empty)* |
+| RSSI max | −81 to −100 dBm |
+
+### Payload Shape
+
+```
+Byte offset:  0 1 | 2 3 | 4 5 6 | 7 8 | 9 10 11 | 12 13 | 14 15 16 | 17 18 | 19 20 21 | 22 23 | 24 25 26 27 | 28
+              cid   var₁   TAG-A   var₂   TAG-B   var₃    TAG-C    var₄    TAG-D    00 00     TAG-E       nonce
+
+Constant tags (49 / 49 captures):
+  TAG-A:  92 07 f1
+  TAG-B:  50 65 cf
+  TAG-C:  84 fa 04
+  TAG-D:  16 44 2d
+  TAG-E:  86 2c fc 3a   (4 bytes)
+
+Variable pairs (always 2 bytes each):
+  var₁ (byte 2-3):  ~30 distinct values, byte 2 ∈ {01,02,03,04}
+  var₂ (byte 7-8):  similar
+  var₃ (byte 12-13): byte 12 ∈ {01,02,03,04}
+  var₄ (byte 17-18): similar
+
+Final byte (28) varies independently — looks like a per-broadcast nonce.
+```
+
+The shape — four 3-byte fixed tokens separated by 2-byte rolling
+values — is suggestive of:
+
+- a **truncated-MAC neighbour beacon**: each TAG could be a 24-bit
+  hash or partial BLE address of a nearby device, with the rolling
+  pair as RSSI / age. This is roughly the shape Apple FindMy and
+  some Tile / SmartTag bridges use for crowdsourced location.
+- a **mesh-network proxy header**: a Bluetooth-mesh GATT proxy
+  occasionally adverts a list of neighbour-hash tokens, although
+  the canonical mesh format does not match this layout.
+- a **vehicle Bluetooth Low Energy fingerprint broadcast**: some
+  automotive BLE keys (Tesla, Polestar, GM) include their neighbour
+  fingerprints to seed the relay-attack defence.
+
+One capture additionally **bundles a SmartThings second mfr-data
+block** in the same advert (`1102 1102 …`), pushing total length
+past 31 bytes. That bundling is a strong hint the broadcaster is a
+SmartThings-aware hub.
+
+### Action
+
+No parser yet. The structure is regular enough to decode once a
+vendor or sibling implementation is identified. Worth chasing if
+the 0x43AC company ID appears in a future SIG-registry update.
+
+## `Nrdic67380B` / Company ID `0xFACE`
+
+Observed: 11 capture entries from **a single device**.
+
+| Field | Value |
+|-------|-------|
+| `companyID` | `0xFACE` — placeholder / private-use, often used by hobby Nordic SDK projects |
+| `local_name` | `Nrdic67380B` (presumably a misspelled "Nordic" + 7-char serial) |
+| Manufacturer data | 18 – 21 bytes, structured payload |
+| Service data `F0C0` | `06 01 0b 38 67 e0 0b da 8f 01 68 00` (constant across captures) |
+
+### Payload Shape
+
+Byte 0 of the payload after `cefa` is a **packet type discriminator**:
+
+| Type byte | Observed body shape |
+|-----------|---------------------|
+| `0x04` | `c4 1b c4 b6 e9 17 00 01 b2 88 12 80 24 03 d5 01 …` (looks like sensor + tag bytes) |
+| `0x06` | shorter, `bc 41 8f 01 68 00 fd ff 06 01 67 00 19 00` |
+| `0x07` | `c4 88 12 80 24 03 d5 01 …` plus trailing zeros (looks like a status frame) |
+
+The 6-byte sub-sequence `88 12 80 24 03 d5` recurs across multiple
+packet types — almost certainly a fixed device identifier or vendor
+tag.
+
+`0xFACE` is **not a valid Bluetooth SIG company assignment** — it
+is a popular placeholder for hobbyist and Nordic SDK demo projects,
+and "Nrdic67380B" looks like an off-by-one Nordic-SDK default name.
+
+### Action
+
+Single device, hobbyist signature, custom protocol. No parser yet —
+this would only ever match the one device we saw it on.
+
+## `Lola's E.A5.WIFI` — Verifone-style POS terminal
+
+Observed: 2 captures, 1 device.
+
+| Field | Value |
+|-------|-------|
+| `companyID` | `0x5645` — **not assigned**; the bytes spell ASCII `"VE"` (Verifone?) |
+| `local_name` | `Lola's E.A5.WIFI` |
+| Manufacturer data (long) | `56 45 52 15 4c 6f 6c 61 27 73 20 45 75 72 6f 70 65 61 6e 20` — ASCII reads `"VER` + `0x15 Lola's European "` |
+| Manufacturer data (short) | `56 45 52 15` |
+
+The bytes after the 2-byte company ID decode as ASCII: a literal
+`"VER"` magic prefix, a `0x15` length / version byte, then a free-form
+business name (`"Lola's European "` — looks like the start of "Lola's
+European Cafe" or similar). One device, single location.
+
+`Lola's` was also observed paired separately with a `SA_TMS LUX_…`
+device on the same site (see below) — strongly suggesting a
+**Verifone TMS (Terminal Management System) BLE pairing beacon** at
+a coffee-shop POS counter.
+
+### Action
+
+Cool find but only one device. No parser yet — a single capture
+isn't enough to confirm Verifone attribution or define a stable
+schema. If a second site is captured, escalate to a real protocol
+doc.
+
 ## Tracking
 
 When new identifications emerge for any of the above, migrate the entry out

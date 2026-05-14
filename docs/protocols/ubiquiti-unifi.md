@@ -91,10 +91,21 @@ small value is a reliable signal that the AP just rebooted.
 
 Two captures of the same physical AP a few seconds apart will show
 a small positive delta; an unexpectedly large jump (or a reset to a
-small value) suggests the AP rebooted. adwatch does not currently
-expose `uptime_seconds_estimate` derived from this counter — the
-raw `uptime_counter` is in metadata and consumers are free to
-divide by 1.
+small value) suggests the AP rebooted.
+
+### Exposed metadata
+
+| Key              | Value                              |
+|------------------|------------------------------------|
+| `uptime_counter` | Raw 32-bit BE counter as observed  |
+| `uptime_seconds` | Same value (counter is 1 Hz)       |
+| `uptime_human`   | Friendly string, e.g. `9d 5h 5m`   |
+
+`uptime_human` uses the largest applicable unit: `Xd Yh Zm` once a
+day has elapsed, `Yh Zm` between 1 hour and 1 day, `Zm Ws` between
+1 minute and 1 hour, and `Ws` below a minute. UI surfaces should
+prefer `uptime_human`; analytics callers should use
+`uptime_seconds`.
 
 ### No Telemetry
 
