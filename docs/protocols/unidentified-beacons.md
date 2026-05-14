@@ -247,6 +247,92 @@ isn't enough to confirm Verifone attribution or define a stable
 schema. If a second site is captured, escalate to a real protocol
 doc.
 
+## Silicon-platform-only identifications
+
+These captures resolve to a **silicon vendor** (the chip on the board)
+but not a product vendor. Each carries enough fingerprint to recognize
+the firmware base, which is useful for incident triage even without a
+product attribution. None justify a dedicated parser yet — they would
+either over-claim a generic SDK or apply to too many unrelated SKUs —
+but we keep them documented so the silicon hint is searchable.
+
+### `D135-XXXXXXXXXX` — Microchip / ISSC BM77 / BM78 BLE-Serial module
+
+Two distinct devices observed, each 10-digit decimal serial suffix.
+
+| Field | Value |
+|-------|-------|
+| Service UUID | `49535343-FE7D-4AE5-8FA9-9FAFD205E455` — Microchip / ISSC proprietary BLE-UART service |
+| `local_name` | `D135-XXXXXXXXXX` |
+| Manufacturer data | *(none)* |
+
+The 49535343-FE7D-4AE5-… UUID is the **ISSC / Microchip BM77 + BM78
+proprietary BLE-Serial / UART service** (`ISSC Technologies / Microchip
+Technology Inc.`). It is **the same UUID Acaia coffee scales use** —
+Microchip licenses the BM77/78 dual-mode Bluetooth module to many
+unrelated downstream brands, so the UUID alone is insufficient to
+identify a product line. The `D135-` naming convention narrows the
+candidate pool to one product family but no public attribution has
+been confirmed; possibilities include a POS / industrial scale, a
+laser-distance meter, or a generic UART-over-BLE module shipped
+unbranded.
+
+References:
+- Microchip BM77: https://www.microchip.com/en-us/product/bm77
+- Microchip BM78: https://www.microchip.com/en-us/product/bm78
+
+### `N-Link` — ESP32 Arduino SDK example device
+
+One device observed, only ever advertising the standard Arduino-ESP32
+example service UUID.
+
+| Field | Value |
+|-------|-------|
+| `local_name` | `N-Link` |
+| Service UUID | `4FAFC201-1FB5-459E-8FCC-C5C9C331914B` |
+| Secondary UUID | `1FF8` (Apple Continuity overflow / accidental collision) |
+
+The 4FAFC201-1FB5-459E-8FCC-C5C9C331914B UUID is the **default example
+service UUID baked into the Arduino-ESP32 BLE library tutorials** and
+appears verbatim in every "ESP32 BLE Server" sample on the internet.
+"N-Link" is therefore almost certainly an ESP32 dev-kit running stock
+demo code — a hobby project rather than a shipped product. No parser
+written; a parser keyed on the example UUID would falsely attribute
+hundreds of unrelated tutorial projects.
+
+References:
+- Random Nerd Tutorials BLE example: https://randomnerdtutorials.com/esp32-bluetooth-low-energy-ble-arduino-ide/
+
+### `GuangJi2017` — Telink TLSR8 / TLSR9 silicon (Bluetooth-SIG 0x0211)
+
+Five distinct devices observed advertising the local name `GuangJi2017`
+with company-ID `0x0211`.
+
+| Field | Value |
+|-------|-------|
+| Company ID | `0x0211` — **Telink Semiconductor Co. Ltd** (Bluetooth SIG) |
+| `local_name` | `GuangJi2017` (multiple devices) |
+| Manufacturer data | `11 02 11 02 …` (double-tagged Telink ID + 4-byte token) |
+
+`0x0211` is registered to **Telink Semiconductor**, a Chinese maker of
+BLE/Zigbee SoCs (TLSR825x, TLSR9 series) widely used in smart lighting
+(BLE mesh), smart switches, BLE keyboards, gaming peripherals, and a
+significant share of cheap Chinese smart-home gear. The `1102 1102`
+manufacturer-data prefix matches Telink's BLE mesh SDK example output.
+
+"GuangJi" is Chinese (光基 / 广济 — "Light Base" / "Wide Aid") and
+likely a Chinese smart-lighting brand running on Telink silicon. The
+fleet of five identically-named devices is consistent with multiple
+bulbs / strips wired into a single home-mesh network.
+
+No dedicated parser yet — too many Telink-based products would
+collide on the same fingerprint. Could be migrated into a
+`telink-generic.md` parser once a meaningful payload structure is
+decoded.
+
+References:
+- Telink BLE Mesh wiki: https://wiki.telink-semi.cn/wiki/protocols/Bluetooth-Mesh/
+
 ## Tracking
 
 When new identifications emerge for any of the above, migrate the entry out
