@@ -1,33 +1,69 @@
-# iBeacon Routing Bug
+# iBeacon Routing Bug — Fixed (May 2026)
 
-## Problem
+## Status
 
-The iBeacon parser registers with `company_id=0x004C` but the classifier/router extracts company_id from raw manufacturer_data bytes using little-endian byte order. When the manufacturer_data starts with `00 4c` (big-endian Apple company ID), the little-endian extraction yields `0x4C00` (19456) instead of `0x004C` (76).
+**Fixed in May 2026.** The fix lives in:
 
-This means **iBeacon advertisements are never routed to the iBeacon parser**, despite the parser itself handling both byte orders internally (lines 23–27 of `ibeacon.py`).
+- `Sources/Parsers/TiltParser.swift` — accepts Apple CID in both byte orders
+- `Sources/Pipeline/Pipeline.swift` — IBeaconParser / TiltParser / AltBeaconParser registered for CID `0x4C00` in addition to `0x004C`
 
-## Evidence
+## Problem (historical, for reference)
 
-- 134,152 sightings in DB from 2 iBeacon ads with UUID `2686f39c-bada-4658-854a-a62e7e5e8b8d`
-- `parsed_by` is NULL for all of them
-- The parser code handles both LE and BE company IDs, but it never gets called
+The Swift `RawAdvertisement.companyID` property reads bytes 0–1 of the
+manufacturer-data block in **little-endian** order — the
+spec-mandated wire format. Apple's company ID `0x004C` is therefore
+expected to appear as `4C 00` in the byte stream.
 
-## Impact
+A handful of iBeacon clones and Tilt-compatible firmwares emit the
+CID in **big-endian** byte order (`00 4C`) — a Bluetooth-spec
+violation but a real-world quirk. The LE extractor reads those bytes
+as `0x4C00`, which is not a SIG-assigned CID and previously matched
+no parser registration.
 
-- All iBeacon advertisements go unparsed
-- Tilt Hydrometer (which uses iBeacon format) also goes unparsed
-- Any iBeacon-based deployment is invisible to the parsed data view
+Result: iBeacon advertisements from those byte-swapped emitters were
+silently dropped — `parsed_by` was NULL for all of them.
 
-## Fix Options
+## Evidence in adwatch May 2026 export
 
-1. **Register with both byte orders**: Add `company_id=[0x004C, 0x4C00]` to `@register_parser`
-2. **Fix the classifier**: Ensure the classifier tries both byte orders when extracting company_id from manufacturer_data
-3. **Register without company_id filter**: Use a broader match and let the parser reject non-iBeacon ads internally (less efficient)
+Two unique records with manufacturer-data prefix `00 4C 02 15 ...`,
+both byte-identical (357 + 158 = 515 sightings of the same physical
+beacon UUID `2686f39c-bada-4658-854a-a62e7e5e8b8d`). All Apple iBeacon
+traffic in the export is BE-encoded; no LE-encoded (`4C 00`) Apple
+iBeacons were captured.
 
-Option 1 is simplest and most targeted.
+## Fix Approach
 
-## Files
+**Two changes:**
 
-- `src/adwatch/parsers/ibeacon.py` — parser registration
-- `src/adwatch/classifier.py` — company_id extraction logic
-- `src/adwatch/registry.py` — routing logic
+1. **Registration**: `IBeaconParser`, `TiltParser`, and
+   `AltBeaconParser` are each registered for **both** CIDs `0x004C`
+   and `0x4C00`, so the registry routes byte-swapped advertisements
+   to the same parser.
+
+2. **In-parser byte check**: `TiltParser` previously rejected anything
+   that didn't start with literal `4C 00`. Relaxed to also accept
+   `00 4C` as a valid leading-byte pair.
+
+`IBeaconParser` and `AltBeaconParser` did not have a literal-CID
+check in their parser bodies — they identify the frame by the
+`02 15` (iBeacon) or `BE AC` (AltBeacon) magic bytes at offset 2–3,
+which are byte-order independent. So registration alone is enough
+for those two.
+
+## Why not normalise at the classifier level?
+
+That would mean every parser that *legitimately* uses CID `0x4C00`
+(if any ever surfaces) would receive Apple iBeacon traffic as well.
+The targeted per-parser approach keeps Apple-format parsers opt-in
+to the byte-swapped synonym and avoids cross-contamination.
+
+## Verification
+
+Tests in:
+
+- `Tests/ParserTests/IBeaconParserTests.swift` — "Parses byte-swapped Apple CID (00 4C ...) — real export capture"
+- `Tests/ParserTests/TiltParserTests.swift` — "Parses byte-swapped Apple CID (00 4C) Tilt clone"
+- `Tests/ParserTests/AltBeaconParserTests.swift` — "Parses real CID 0x0118 Radius Networks AltBeacon capture" (covers the related any-CID registration)
+
+All three parsers also retain their original LE-form tests, which
+continue to pass.

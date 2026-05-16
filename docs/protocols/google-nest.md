@@ -34,8 +34,29 @@ Nest devices use short alphanumeric codes as local names (e.g. `NW3J0`, `NJXAS`)
 ## Identity Hashing
 
 ```
-identifier = SHA256("{mac}:{local_name}")[:16]
+identifier = SHA256(mac_address)[:16]
 ```
+
+## Parser Match Paths (May 2026)
+
+The Nest parser matches an advertisement under any of these conditions:
+
+1. **Service data on `FEAF`** (either the short-form key `"FEAF"` that
+   CoreBluetooth gives on iOS, or the long-form 128-bit expansion
+   `0000FEAF-0000-1000-8000-00805F9B34FB`). When present, the 17-byte
+   payload is decoded into `frame_type`, `frame_version`, and
+   `device_variant` fields.
+
+2. **FEAF in the advertised service-UUID list** + **local name matching
+   a Nest pairing code** (`^[NR][0-9A-Z]{4}$`, e.g. `NJXAS`, `NW3J0`,
+   `R3DB1`, `N004Z`). This catches the common case where a mains-
+   powered Nest device broadcasts only the FEAF UUID and its 5-char
+   code, with no service data.
+
+Match path #2 was added after observing ~4,000 sightings in adwatch
+research exports where FEAF + N/R-prefix name were present but no
+service data was attached — those captures would silently fail to
+parse under the old serviceData-only logic.
 
 ## Known Products Using 0xFEAF
 
