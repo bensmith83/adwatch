@@ -117,10 +117,33 @@ identifier = SHA256("jbl:{mac}")[:16]
 3. Check for FE2C service data to flag FMDN support
 4. Return device class `speaker`
 
+## Legacy Wire Format (Harman CID 0x0057)
+
+Older JBL speakers — JBL Charge 3 / Charge 4 / Flip 5 / Pulse 3 era,
+manufactured before JBL's own SIG company-ID assignment `0x0ECB` —
+advertise under the **parent Harman International** company ID
+`0x0057` with a much shorter manufacturer-data block:
+
+```
+57 00 29 1f 04 00 39 ff       (real "JBL Charge 4" capture, 8 bytes)
+└─┬─┘ └────────┬────────┘
+ cid    6-byte payload
+```
+
+The 6-byte payload format is undocumented. The first byte appears to
+be a frame-type indicator (`0x29` observed) and the trailing bytes
+include what looks like flags + a per-device identifier. The local
+name (`JBL <model>`) is the only reliable model identifier.
+
+The parser tags these as `wire_format=harman_0057` (modern frames are
+tagged `wire_format=jbl_ecb`) so downstream consumers can distinguish
+the two protocol families.
+
 ## References
 
 - [JBL](https://www.jbl.com/) — manufacturer website
 - [Harman International](https://www.harman.com/) — parent company
 - Bluetooth SIG 16-bit UUID assignment: FDDF = Harman International
 - Bluetooth SIG Company ID: 0x0ECB = Harman International Industries, Inc.
+- Bluetooth SIG Company ID: 0x0057 = Harman International (parent, used by legacy JBL Charge/Flip/Pulse era)
 - [Google Find My Device Network](https://developers.google.com/find-my-device) — FMDN specification
