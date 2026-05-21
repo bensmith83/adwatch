@@ -17,20 +17,24 @@ The operator-set local name `"Room 8039"` matches Google office building convent
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Service UUID | `0xFEA0` | SIG-registered to Google LLC. |
-| Service data length | 13 bytes | Fixed for the observed `0x03` frame type. |
-| Local name | optional, operator-set (e.g. `"Room 8039"`) | Only present in ~50% of captures of the same emitter. |
+| Service data length | 13 or 15 bytes | Older firmware emits the 13-byte canonical frame; newer firmware appends 2 trailing bytes (purpose unknown). |
+| Local name | optional, operator-set (e.g. `"Room 8039"`, `"Living Room display 2"`) | Only present in ~50% of captures of the same emitter. |
 
-### Service Data Layout (13 bytes)
+### Service Data Layout (13 or 15 bytes)
 
 ```
-Byte 0     : 0x03               — frame type / version (constant in all captures)
-Bytes 1..7 : fa 8f ca XX XX XX YY — device fingerprint
-                                    ├── bytes 1..3 = vendor magic (fa 8f ca, constant)
-                                    └── bytes 4..7 = per-emitter device-instance ID
-Bytes 8..10: 0x20 0x20 0x20      — fixed-width label slot (3 ASCII spaces in all
-                                    observed captures; the user-facing room name
-                                    is in the GAP local-name field instead)
-Bytes 11..12: bf ff              — constant footer
+Byte 0       : 0x03               — frame type / version (constant in all captures)
+Bytes 1..7   : fa 8f ca XX XX XX YY — device fingerprint
+                                      ├── bytes 1..3 = vendor magic (fa 8f ca, constant)
+                                      └── bytes 4..7 = per-emitter device-instance ID
+Bytes 8..10  : 0x20 0x20 0x20      — fixed-width label slot (3 ASCII spaces in all
+                                      observed captures; the user-facing room name
+                                      is in the GAP local-name field instead)
+Bytes 11..12 : bf ff              — constant footer
+Bytes 13..14 : optional 2-byte trailing field on newer firmware (e.g. `6a 5c` on
+                "Living Room display 2"). Surfaced as `trailing_bytes_hex` in
+                metadata; purpose not yet decoded. Could be tx-power, frame
+                counter, or a checksum.
 ```
 
 Three distinct emitters observed in 24h differ at bytes 4..7 only — confirming that block is the per-device instance ID.
