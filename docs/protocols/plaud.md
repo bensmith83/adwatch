@@ -63,6 +63,45 @@ Both models share the pattern `0a 00 04 [4 bytes] 01 01` at the end. The `0x0A` 
 
 PLAUD NOTE also sends simpler advertisements with only the local name and no manufacturer data. These are likely connectable advertisements used for initial pairing discovery.
 
+### Note Pro / Asastre 28-byte signature
+
+Recent captures of the 2024-2025 Plaud Note Pro flagship (and an unnamed Plaud-Asastre unit) carry a structurally identical 28-byte manufacturer-data payload (2-byte CID + 27 payload bytes). Crucially, the SIG **company ID varies by BLE chipset**, so the parser anchors on **local name + tail signature**, not on the CID.
+
+#### Plaud Note Pro example (CID 0x005D — Realtek)
+
+```
+5d 00 02 71 03 04 56 07 04 01 08 88 10 b5 02 79
+67 59 18 44 14 00 04 83 e3 a7 1b 01 01
+```
+
+#### Plaud-Asastre67 example (CID 0x0059 — Nordic)
+
+```
+59 00 02 78 03 04 56 5f 00 00 09 88 83 16 98 77
+06 44 98 88 0a 00 04 fa d2 86 91 01 01
+```
+
+| Offset | Length | Value | Description |
+|--------|--------|-------|-------------|
+| 0-1 | 2 | varies | SIG company ID (Realtek 0x005D, Nordic 0x0059, possibly others) |
+| 2 | 1 | `02` | Frame type (consistent across captures) |
+| 3-25 | 23 | varies | Variable identity / rolling payload |
+| 26-27 | 2 | `01 01` | **Tail signature — the high-confidence Plaud anchor** |
+
+#### Chip-vendor variation
+
+The same Plaud product line ships on different BLE SoCs and therefore advertises with different SIG-assigned company IDs. Observed so far:
+
+- `0x005D` — Realtek Semiconductor Corp (Note Pro)
+- `0x0059` — Nordic Semiconductor ASA (older Plaud-Asastre unit)
+
+Because the CID changes, the parser must NOT gate on it. Instead the signature path matches when:
+
+1. Local name starts with `Plaud` (or `PLAUD`), AND
+2. Manufacturer payload (after the 2-byte CID) ends in `01 01`.
+
+When this path matches the parser emits extra metadata so downstream code knows which chip vendor was seen: `match_mode=name_plus_signature`, `chip_vendor_cid`, `chip_vendor_name` (when known), `frame_type`, `payload_hex`, `tail_signature=01 01`, and `device_name`.
+
 ## What We Can Parse from Advertisements
 
 | Field | Source | Notes |
@@ -102,5 +141,5 @@ identifier = SHA256("plaud:{mac}")[:16]
 
 ## References
 
-- [PLAUD](https://www.plaud.ai/) — manufacturer website
-- Bluetooth SIG Company Identifiers: 0x0059 (Qualcomm Technologies International), 0x005D (Plantronics)
+- [PLAUD](https://www.plaud.ai/) — manufacturer website (Plaud Note Pro flagship product page)
+- [Bluetooth SIG Assigned Numbers — Company Identifiers (YAML)](https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — authoritative CID lookup (0x0059 → Nordic Semiconductor ASA, 0x005D → Realtek Semiconductor Corp)

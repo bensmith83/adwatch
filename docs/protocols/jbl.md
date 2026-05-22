@@ -198,6 +198,70 @@ serviceUUIDs     : [BE80]
 4. `stableKey = "jbl:<localName>"` — the serial suffix is unique per
    physical unit, so the local name is sufficient.
 
+## Endurance Peak series (2EFC + Eddystone-EID dual broadcast)
+
+JBL's **Endurance Peak** sports earbuds (Endurance Peak 2 / 3 / 4) advertise
+an anonymous dual-broadcast signature distinct from the speaker formats
+above: an **empty `2EFC` service-data entry** plus an Eddystone-EID frame
+on the standard `FEAA` service UUID.
+
+### Real Capture (May 2026, research/adwatch_export 9.json)
+
+```
+localName    : JBL Endurance Peak 4
+mfg          : nil
+serviceData  : {"2EFC":"", "FEAA":"40c0cd809892bd01932b304594281b4a24b982297ae1"}
+```
+
+### Identification
+
+| Signal | Value | Notes |
+|--------|-------|-------|
+| Service UUID | `2EFC` | Empty service-data entry; SIG-squatted (see trivia below) |
+| Service UUID | `FEAA` | Standard Eddystone; carries the EID frame (type `0x40`) |
+| Local-name pattern | `JBL <model>` | e.g. `JBL Endurance Peak 4` |
+| Manufacturer data | absent | The named frame carries no mfr data |
+
+### `2EFC` SIG-squatting trivia
+
+`0x2EFC` is a **Bluetooth SIG-assigned characteristic UUID** named
+**"Total Pressure"** in the GATT specification. It is **not** a service
+UUID assignment — JBL is squatting it as an opaque service marker on
+their Endurance Peak earbuds. Because the only legitimate use of
+`0x2EFC` is as a characteristic under some other service, encountering
+it in the advertisement-level service-data field is itself a strong
+signal that the broadcaster is misusing it (and in the wild, the only
+broadcaster doing so that we have seen is JBL Endurance). A hostile
+naming collision is therefore considered effectively impossible.
+
+### What We Parse
+
+| Field | Source | Example |
+|-------|--------|---------|
+| `match_mode` | constant | `endurance_2efc` |
+| `model` | local-name after `JBL ` | `Endurance Peak 4` |
+| `product_family` | first word of model | `Endurance` |
+| `eddystone_eid_hex` | FEAA frame bytes 2..10 (when frame type `0x40`) | `cd809892bd01932b` |
+| `stableKey` | `jbl_endurance:<eid_hex>` (nil if FEAA absent) | — |
+| `deviceClass` | constant | `earbuds` |
+
+The 8-byte `eddystone_eid_hex` is echoed deliberately so that a
+downstream correlator can stitch this JBL parse result to the
+EddystoneParser's `eddystone_eid` result (which claims the FEAA frame
+independently). See [eddystone.md](./eddystone.md) for the FEAA-side
+parse.
+
+### Parsing Strategy
+
+1. Local name starts with `JBL ` AND `2EFC` service data is present.
+2. Refuse the match if either condition fails: anonymous FEAA-EID-only
+   broadcasts belong to EddystoneParser, and a non-JBL local name with
+   2EFC service data could be a non-JBL squatter (none seen, but the
+   parser will not claim it).
+3. When an FEAA frame with type byte `0x40` is co-broadcast, extract
+   the 8-byte EID (offset 2..10) into `eddystone_eid_hex` and use it
+   as the stable key.
+
 ## References
 
 - [JBL](https://www.jbl.com/) — manufacturer website
@@ -206,4 +270,7 @@ serviceUUIDs     : [BE80]
 - Bluetooth SIG Company ID: 0x0ECB = Harman International Industries, Inc.
 - Bluetooth SIG Company ID: 0x0057 = Harman International (parent, used by legacy JBL Charge/Flip/Pulse era)
 - Bluetooth SIG Company ID: 0x4F47 = **not assigned** (vanity-forged "GO" marker for the JBL GO-series speaker line)
+- Bluetooth SIG 16-bit UUID: 0x2EFC = **Total Pressure** (a GATT *characteristic* UUID; squatted by JBL Endurance Peak as a service-data marker)
+- JBL Endurance Peak 4 product page: https://www.jbl.com/wireless-earbuds/JBLENDURPEAK4.html
+- Bluetooth SIG characteristic-UUID YAML (assigned-numbers, `characteristic_uuids.yaml`) lists `0x2EFC` as `org.bluetooth.characteristic.total_pressure`
 - [Google Find My Device Network](https://developers.google.com/find-my-device) — FMDN specification

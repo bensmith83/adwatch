@@ -12,9 +12,11 @@ This parser is a sibling of `BoseParser`: both vend "is this a Bose audio device
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Company ID | `0x009E` | Newer Bose SIG identifier. |
-| Service UUID | `0xFEBE` | SIG-registered to Bose Corporation. |
-| Local name (when broadcast) | `"Bose Open Earbuds Ultra"`, `"Bose QC Ultra Earbuds"`, … | User-renameable in the Bose Music app. |
+| Company ID | `0x009E` | Newer Bose SIG identifier (canonical). |
+| Company ID | `0x4703` | On-wire `03 47` — Telink big-endian-quirk; see § below. |
+| Company ID | `0x3703` | On-wire `03 37` — Bose+Telink vanity / unregistered; see § below. |
+| Service UUID | `0xFEBE` | SIG-registered to Bose Corporation; required alongside all non-`0x009E` CIDs. |
+| Local name (when broadcast) | `"Bose Open Earbuds Ultra"`, `"Bose QC Ultra Earbuds"`, `"LE-Connies Bose"`, … | User-renameable in the Bose Music app. |
 
 ### Manufacturer Data Layout (9 bytes after company ID)
 
@@ -90,8 +92,89 @@ CID `0x4703` + FEBE service UUID is itself a high-confidence Bose+Telink signatu
 | `payload_hex` | hex of bytes after the 2-byte CID |
 | `product` | local name when broadcast, else `"Bose (Telink/FEBE)"` |
 
+## Vanity CID variant: 0x3703 (unregistered)
+
+A third Bose variant — observed in May 2026 with the local-name string `"LE-Connies Bose"` (and a handful of anonymous emitters with no broadcast name) — advertises with on-wire CID bytes `03 37` (**LE-decoded as `0x3703`**) alongside the FEBE service UUID.
+
+Unlike the `0x4703` path above, `0x3703` is **NOT** a byte-order quirk: `0x3703` is not in the SIG-assigned CID registry (current max ≈ `0x10C7`), so this is a **vanity / unregistered company identifier** — a vendor's forged choice rather than a buggy encoding of a registered ID. The Bose attribution comes from the co-advertised FEBE service UUID (registered to Bose Corporation); the parser will not claim on `0x3703` alone.
+
+The working hypothesis is that this is another Bose product family on a Telink Semiconductor (Shanghai) BLE SoC, distinct from the SKUs in the `0x4703` capture set.
+
+### Observed Payloads
+
+| Manufacturer-data hex (CID + payload) | Length | Local name observed |
+|---|---|---|
+| `03 37 72 10 05 bd 53 4a eb d9 ad 15 bc 50 e1 b5` | 16 B | (no name captured) |
+| `03 37 51 10 70 2a 2b 12 16 a5 cb 9a e4` | 13 B | `"LE-Connies Bose"`, also seen anonymous |
+
+Payload byte 0 carries a **product code** (`0x72`, `0x51` observed) — distinct from the `0x009E` canonical layout where the product code lives at payload byte 1, and distinct from the `0x4703` Telink-BE layout where bytes 0..1 are a 2-byte type/length prefix. The remaining bytes look like a per-device rolling hash; we surface them as `device_hash_hex` without claiming they are a stable serial.
+
+### Detection Logic
+
+Parser keys on **CID `0x3703` + FEBE service UUID**, with no `"Bose"` substring required in the local name (the captured frames are often anonymous). FEBE is the attribution anchor — `0x3703` alone never claims.
+
+### Surfaced Metadata
+
+| Key | Value |
+|---|---|
+| `wire_format` | `"bose_febe_vanity_3703"` |
+| `cid_encoding` | `"vanity_unregistered"` |
+| `chip_vendor` | `"Telink Semiconductor (Shanghai)"` |
+| `company_id` | `"0x3703"` (the LE-decoded value) |
+| `product_code` | hex of payload byte 0 (e.g. `"0x72"`, `"0x51"`) |
+| `device_hash_hex` | hex of payload bytes 1..end |
+| `payload_hex` | hex of all bytes after the 2-byte CID |
+| `local_name` | local name when broadcast |
+| `product` | local name when broadcast, else `"Bose (FEBE/3703)"` |
+
+## Canonical CID 0x009E short-form (9-byte payload) + iOS LE-* name variant
+
+A subset of CID `0x009E` + FEBE advertisements arrives with a **9-byte manufacturer payload** whose byte 2 is **not** `0x06` (the canonical 11-byte form's `model_family` magic byte). Observed payloads:
+
+```
+9e 00 | 00 63 05 8f ac 51 95 6a a3
+9e 00 | 00 23 04 ab 3b d7 6b 74 74
+9e 00 | 00 24 05 42 55 f0 7c c9 61
+```
+
+These devices either broadcast **no local name** or an iOS-prefixed `LE-*` name with a Bose substring (`"LE-mk bose headphones"`, `"LE-Connies Bose"`, etc.). iOS prepends `LE-` to BLE-side broadcasts of audio devices that are also paired over Classic Bluetooth — it's an iOS naming convention surfaced by `CBPeripheral.name`, not a Bose-side choice.
+
+The canonical-CID + FEBE pair is itself a high-confidence Bose match, so the parser accepts the ad when either:
+
+- the local name is absent, or
+- the local name contains the case-insensitive substring `"bose"` (covers both `"LE-Connies Bose"` and the lowercased `"LE-mk bose headphones"` user-rename case).
+
+A `LE-*` name without a Bose substring (`"LE-AirPods"`) is rejected to avoid false positives.
+
+### Observed Product Codes
+
+Payload byte 1 carries a per-product code, distinct from the canonical 11-byte form where the same byte position is also product code but accompanied by the `0x06` model_family byte at offset 2. Observed without overclaiming the SKU mapping:
+
+| `product_code` | Observed context |
+|---|---|
+| `0x23` | `"LE-mk bose headphones"` (user-renamed; product family unknown) |
+| `0x24` | (anonymous emitter) |
+| `0x63` | (anonymous emitter) |
+
+### Surfaced Metadata
+
+| Key | Value |
+|---|---|
+| `wire_format` | `"bose_febe_009e_short"` |
+| `match_mode` | `"canonical_cid_short_payload"` (no name) or `"canonical_cid_ios_le_name"` (LE-* Bose-substring name) |
+| `frame_flag` | hex of payload byte 0 (e.g. `"0x00"`) |
+| `product_code` | hex of payload byte 1 (e.g. `"0x63"`, `"0x23"`, `"0x24"`) |
+| `payload_hex` | hex of all bytes after the 2-byte CID |
+| `local_name` | local name verbatim when broadcast |
+| `product` | local name when broadcast, else `"Bose (FEBE/009E short)"` |
+| `stableKey` | `"bose_febe_009e_short:<payload_hex>"` |
+
+The trailing 7 payload bytes look like a per-device rolling identifier; we treat the whole payload hex as the stable-key region rather than attempting a per-byte semantic decode.
+
 ## References
 
 - [Bluetooth SIG member UUIDs (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/member_uuids.yaml) — confirms `0xFEBE = Bose Corporation`.
+- [Bluetooth SIG company identifiers (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — full CID registry; confirms `0x3703` is unassigned and `0x0347 = Telink Semiconductor (Shanghai) Co., Ltd.`.
+- [Telink Semiconductor TLSR8232 / TLSR8278 BLE SoC product page](https://www.telink-semi.com/products-tlsr8278.html)
 - [Bose QC Ultra Earbuds product page](https://www.bose.com/p/quietcomfort-ultra-earbuds)
 - [Bose Music app](https://www.bose.com/c/bose-music-app)

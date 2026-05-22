@@ -33,6 +33,23 @@ Example: `"DC47-14316"` → model `DC47`, serial `14316`.
 
 8 bytes after the company ID, e.g. `f4 0e 20 6d 12 6e 44 0a`. The structure is opaque to us — bytes vary across sightings but no per-byte semantics have been validated. We expose it as `payload_hex` for further investigation; it does **not** carry the identity (that comes from the local name).
 
+## DC X-series (Dash Cam X110, X130, …)
+
+The 2024 **Dash Cam X-series** refresh — X110 (entry), X210, X310, etc. — uses a different local-name shape than the legacy DC family. They share the same SIG company ID (`0x0087`) and the same Garmin service UUID (`0xFE1F`), but advertise themselves as:
+
+| Signal | Value | Notes |
+|--------|-------|-------|
+| Local name | `^DC X\d{3}$` | E.g. `"DC X110"`, `"DC X130"`. Single space, capital `X`, exactly three model digits. |
+| Manufacturer payload | 4 bytes (rotates) | Trails the CID, e.g. `9611205f1972440a`, `10db`, `0d41`. **Not** stable across advertisements — do not treat as a serial. |
+| Service data (FE1F) | 19-byte structured blob | Starts `20 06 40 04 00 00 00 00 00 …`; semantics unparsed. |
+
+There is **no per-unit serial in the BLE name** on the X-series — only the model number. Bare service-data sightings (no local name, no manufacturer data) are not attributed by this parser; it anchors on the local name.
+
+The parser splits the two naming conventions via a `model_family` metadata key:
+
+- `DC-series` — legacy hyphen form (`DC47-14316`, `DC67-…`). Surfaces `model` + `serial`.
+- `DCX-series` — 2024 X-series (`DC X110`, `DC X130`). Surfaces `model` only.
+
 ## Detection Significance
 
 - **Cars in parking lots / drive-throughs.** A dense cluster of DC-series advertisements is a strong signal that you're scanning in a busy parking lot or near a road — every Garmin-equipped vehicle in earshot will broadcast.
@@ -46,5 +63,7 @@ Example: `"DC47-14316"` → model `DC47`, serial `14316`.
 ## References
 
 - [Garmin Dash Cam product line](https://www.garmin.com/en-US/c/automotive/dash-cameras/)
+- [Garmin Dash Cam X110 product page](https://www.garmin.com/en-US/p/1222949/)
+- [Garmin announces Dash Cam X series (press release)](https://www.garmin.com/en-US/newsroom/press-release/automotive/capture-detailed-eyewitness-video-with-the-new-garmin-dash-cam-x-series/)
 - [Bluetooth SIG member UUIDs (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/member_uuids.yaml)
 - [Bluetooth SIG company identifiers (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml)
