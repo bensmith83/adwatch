@@ -12,9 +12,11 @@ This parser is a sibling of `BoseParser`: both vend "is this a Bose audio device
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Company ID | `0x009E` | Newer Bose SIG identifier. |
-| Service UUID | `0xFEBE` | SIG-registered to Bose Corporation. |
-| Local name (when broadcast) | `"Bose Open Earbuds Ultra"`, `"Bose QC Ultra Earbuds"`, … | User-renameable in the Bose Music app. |
+| Company ID | `0x009E` | Newer Bose SIG identifier (canonical). |
+| Company ID | `0x4703` | On-wire `03 47` — Telink big-endian-quirk; see § below. |
+| Company ID | `0x3703` | On-wire `03 37` — Bose+Telink vanity / unregistered; see § below. |
+| Service UUID | `0xFEBE` | SIG-registered to Bose Corporation; required alongside all non-`0x009E` CIDs. |
+| Local name (when broadcast) | `"Bose Open Earbuds Ultra"`, `"Bose QC Ultra Earbuds"`, `"LE-Connies Bose"`, … | User-renameable in the Bose Music app. |
 
 ### Manufacturer Data Layout (9 bytes after company ID)
 
@@ -90,8 +92,45 @@ CID `0x4703` + FEBE service UUID is itself a high-confidence Bose+Telink signatu
 | `payload_hex` | hex of bytes after the 2-byte CID |
 | `product` | local name when broadcast, else `"Bose (Telink/FEBE)"` |
 
+## Vanity CID variant: 0x3703 (unregistered)
+
+A third Bose variant — observed in May 2026 with the local-name string `"LE-Connies Bose"` (and a handful of anonymous emitters with no broadcast name) — advertises with on-wire CID bytes `03 37` (**LE-decoded as `0x3703`**) alongside the FEBE service UUID.
+
+Unlike the `0x4703` path above, `0x3703` is **NOT** a byte-order quirk: `0x3703` is not in the SIG-assigned CID registry (current max ≈ `0x10C7`), so this is a **vanity / unregistered company identifier** — a vendor's forged choice rather than a buggy encoding of a registered ID. The Bose attribution comes from the co-advertised FEBE service UUID (registered to Bose Corporation); the parser will not claim on `0x3703` alone.
+
+The working hypothesis is that this is another Bose product family on a Telink Semiconductor (Shanghai) BLE SoC, distinct from the SKUs in the `0x4703` capture set.
+
+### Observed Payloads
+
+| Manufacturer-data hex (CID + payload) | Length | Local name observed |
+|---|---|---|
+| `03 37 72 10 05 bd 53 4a eb d9 ad 15 bc 50 e1 b5` | 16 B | (no name captured) |
+| `03 37 51 10 70 2a 2b 12 16 a5 cb 9a e4` | 13 B | `"LE-Connies Bose"`, also seen anonymous |
+
+Payload byte 0 carries a **product code** (`0x72`, `0x51` observed) — distinct from the `0x009E` canonical layout where the product code lives at payload byte 1, and distinct from the `0x4703` Telink-BE layout where bytes 0..1 are a 2-byte type/length prefix. The remaining bytes look like a per-device rolling hash; we surface them as `device_hash_hex` without claiming they are a stable serial.
+
+### Detection Logic
+
+Parser keys on **CID `0x3703` + FEBE service UUID**, with no `"Bose"` substring required in the local name (the captured frames are often anonymous). FEBE is the attribution anchor — `0x3703` alone never claims.
+
+### Surfaced Metadata
+
+| Key | Value |
+|---|---|
+| `wire_format` | `"bose_febe_vanity_3703"` |
+| `cid_encoding` | `"vanity_unregistered"` |
+| `chip_vendor` | `"Telink Semiconductor (Shanghai)"` |
+| `company_id` | `"0x3703"` (the LE-decoded value) |
+| `product_code` | hex of payload byte 0 (e.g. `"0x72"`, `"0x51"`) |
+| `device_hash_hex` | hex of payload bytes 1..end |
+| `payload_hex` | hex of all bytes after the 2-byte CID |
+| `local_name` | local name when broadcast |
+| `product` | local name when broadcast, else `"Bose (FEBE/3703)"` |
+
 ## References
 
 - [Bluetooth SIG member UUIDs (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/member_uuids.yaml) — confirms `0xFEBE = Bose Corporation`.
+- [Bluetooth SIG company identifiers (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — full CID registry; confirms `0x3703` is unassigned and `0x0347 = Telink Semiconductor (Shanghai) Co., Ltd.`.
+- [Telink Semiconductor TLSR8232 / TLSR8278 BLE SoC product page](https://www.telink-semi.com/products-tlsr8278.html)
 - [Bose QC Ultra Earbuds product page](https://www.bose.com/p/quietcomfort-ultra-earbuds)
 - [Bose Music app](https://www.bose.com/c/bose-music-app)

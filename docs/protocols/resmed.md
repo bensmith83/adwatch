@@ -75,6 +75,34 @@ Random address (BLE privacy). The device uses a random (likely static random)
 BLE address rather than its public IEEE MAC address. This is standard practice
 for medical devices to limit tracking.
 
+### Name-only attribution mode
+
+ResMed PAP machines have two observed advertising states:
+
+1. **Full advert (name + CID + service UUID)**: name `ResMed XXXXXX`, company
+   ID `0x038D`, service UUID `0xFD56`, manufacturer payload `8d 03 NN`. Seen
+   when the device is in active discovery / pairing-eligible mode (e.g., when
+   the myAir app is open or after a recent reset).
+2. **Name-only advert (name only)**: just the local name `ResMed XXXXXX`, with
+   no manufacturer data, no service UUID, no service data. This is the steady-
+   state idle advertisement an AirSense 11 / AirCurve broadcasts while it is
+   Wi-Fi-connected and not actively pairing.
+
+The parser supports both modes. For the name-only path we anchor strictly on
+`^ResMed \d{6}$` (case-sensitive, exactly 6 decimal digits after the space).
+Without this anchor, a vanity name like "ResMed Foo" or "ResMed 12345" would
+be misattributed to a real PAP machine; we'd rather miss a few odd-named
+devices than emit false positives, since the name-only path has no second
+discriminator to fall back on.
+
+Parser metadata distinguishes the two modes:
+- `match_mode = "name_and_cid"` -- full advert; `status` byte also set.
+- `match_mode = "name_only"` -- name-only fallback; `status` is omitted.
+
+The `stableKey` is `resmed:<6-digit-serial>` in both modes, which gives us
+MAC-rotation-resilient identity for the same physical machine across BLE
+privacy address rotations.
+
 ## Known Protocol Details
 
 ### Security Model
@@ -205,3 +233,24 @@ parsed fields would be:
 - `device_number`: The 6-digit number from the local name
 - `company_id`: `0x038D` (ResMed Ltd)
 - `device_type`: "CPAP/Sleep Therapy Device"
+
+## Detection Significance
+
+The 6-digit serial in the local name is **printed on the bottom of the
+device** and visible in the myAir app under "About my device", so it is not
+secret -- but it is a stable per-device identifier that survives BLE random
+address rotation. Because PAP machines are tied to a specific patient
+(prescribed therapy hardware), detecting a `ResMed XXXXXX` advertisement is
+de-facto patient-traceable: the serial maps 1:1 to the user registered to
+that device in the myAir cloud. This is sensitive in a HIPAA-adjacent sense
+even though the air is not legally a covered channel for the device vendor's
+own advertising.
+
+The parser stores `stableKey = resmed:<serial>` which lets adwatch correlate
+sightings across BLE address rotations for the same physical machine, but the
+serial itself is treated as PII-equivalent in downstream UI.
+
+### Additional References
+
+- **ResMed myAir app**: https://www.resmed.com/en-us/sleep-apnea/cpap-products/cpap-apps/myair/
+- **AirSense 11 product page**: https://www.resmed.com/en-us/sleep-apnea/cpap-products/cpap-machines/airsense-11/

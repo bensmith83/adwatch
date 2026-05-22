@@ -10,7 +10,9 @@ Sony audio devices (speakers, headphones, earbuds) broadcast BLE advertisements 
 
 - **Company ID:** `0x012D` (Sony Corporation)
 - **Service UUID:** `0xFE2C` (Google LLC — shared UUID)
-- **Local name patterns:** `LE_SRS-*` (speakers), `LE_WF-*` (earbuds), `LE_WH-*` (headphones)
+- **Service UUID:** `0xFE03` (Sony Corporation) — used by many LE-only consumer audio modes
+- **Service UUID:** `0xFE26` (Sony Corporation) — used by some XM-series headphones for background pairing state
+- **Local name patterns:** `LE_SRS-*` (speakers), `LE_WF-*` (earbuds), `LE_WH-*` (headphones), `LE_WI-*` (neckband), `LE_XB-*` / `LE_XE-*` / `LE_XS-*` / `LE_LSPX-*` (speakers); non-`LE_` forms `WH-*`, `WF-*`, `WI-*` also observed
 - **Device class:** `speaker`, `headphones`, `earbuds`
 
 ## Advertisement Formats
@@ -89,9 +91,11 @@ Both Sony and Google FMDN use service UUID `0xFE2C`. To distinguish:
 | Name Pattern | Product Line | Device Class |
 |-------------|-------------|-------------|
 | `LE_SRS-*` | Sony speakers | speaker |
-| `LE_WH-*` | Sony over-ear headphones | headphones |
-| `LE_WF-*` | Sony true wireless earbuds | earbuds |
-| `LE_WI-*` | Sony neckband headphones | headphones |
+| `LE_WH-*` / `WH-*` | Sony over-ear headphones | headphones |
+| `LE_WF-*` / `WF-*` | Sony true wireless earbuds | earbuds |
+| `LE_WI-*` / `WI-*` | Sony neckband headphones | headphones |
+| `LE_XB-*` / `LE_XE-*` / `LE_XS-*` | Sony speakers | speaker |
+| `LE_LSPX-*` | Sony Lightspeaker | speaker |
 
 ## Parsing Strategy
 
@@ -101,8 +105,34 @@ Both Sony and Google FMDN use service UUID `0xFE2C`. To distinguish:
 4. Extract model from local_name (strip `LE_` prefix)
 5. Disambiguate from FMDN by checking for Google indicators
 
+## Name-only attribution mode
+
+Some Sony LE-only firmware modes (notably WH-1000XM4/XM5 and several CH-series headphones) broadcast **no manufacturer data and no `FE2C` service data** — only a Sony product name and one of Sony's allocated service UUIDs (`FE03` or `FE26`).
+
+Observed shapes:
+
+```
+name=LE_WH-1000XM5  mfg=nil  uuids=[FE03]   svc=nil
+name=LE_WH-1000XM4  mfg=nil  uuids=[FE03]   svc={FE26: 3e0a6e}
+name=WH-CH720N      mfg=...  uuids=[FE03]   svc=nil
+```
+
+**Match rule (safety constraint):** the local name MUST match
+`^LE_(SRS|WF|WH|WI|XB|XE|XS|LSPX)-[A-Z0-9]` or the bare form `^(WH|WF|WI)-[A-Z0-9]`,
+AND at least one supporting signal must be present — Sony CID `0x012D`, `FE2C`
+service data, `FE03` service UUID, or `FE26` service UUID/service data. Name
+alone is **not** sufficient (a non-Sony peripheral could advertise a confusable
+name).
+
+When this path matches and there's no manufacturer payload, the parser sets
+`metadata["match_mode"] = "name_with_sony_uuid"` and **does not** fabricate
+`version`/`device_type`/`model_id` fields — only `model` (with `LE_` prefix
+stripped) and `deviceClass` (derived from the name prefix).
+
 ## References
 
 - Bluetooth SIG Company ID `0x012D` — Sony Corporation
+- Bluetooth SIG 16-bit UUID assignment for `0xFE03` — Sony Corporation: https://www.bluetooth.com/specifications/assigned-numbers/
+- Sony WH-1000XM5 product page: https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-b
 - Sony Headphones Connect app reverse engineering
 - https://github.com/nicholasgasior/sony-headphones-ble (community RE)

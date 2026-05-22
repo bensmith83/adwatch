@@ -59,6 +59,30 @@ toggles between ready (`0x40`) and standby (`0x00`). Captures of a Venus
 machine at the same address show both states cleanly. Byte 3 (`0x89`)
 has been constant across every observed Vertuo / Venus machine.
 
+### Name-less re-advertise pulses
+
+Vertuo machines emit periodic re-advertise pulses that carry the same
+manufacturer data (CID `0x0225`/`0x2502` + 6-byte payload) and the same
+proprietary service UUID `06AA1910-F22A-11E3-9DAA-0002A5D5C51B`, but
+**omit `localName`**. The same physical machine therefore appears in
+scan logs in two forms — one with name, one without — both at the same
+MAC. The adwatch parser treats a missing localName as acceptable **only
+when the Vertuo proprietary UUID is also present**; CID alone is not a
+sufficient signal because `0x0225` has SIG-vanity / byte-order
+collisions, and the proprietary UUID alone is also not a sufficient
+signal in the interest of conservative attribution. When the no-name
+branch fires, the parser sets `metadata["match_mode"] =
+"cid_with_vertuo_uuid"`; the name-bearing path sets `match_mode =
+"name_with_cid"`.
+
+The Vertuo proprietary UUID is itself a curiosity: it is a UUIDv1
+(time-and-MAC-based) whose node bytes are `00:02:A5:D5:C5:1B`. The OUI
+`00:02:A5` was assigned to **Compaq Computer Corp** (defunct since 2002,
+HP-acquired), and the embedded timestamp resolves to roughly 2014. The
+implication is that Nespresso's BLE stack — or at least the machine
+that minted this UUID — was a Compaq/HP-era development box still in
+use a decade after Compaq dissolved.
+
 ### Local Name Patterns
 
 | Local Name | Model | Notes |
@@ -107,3 +131,10 @@ identifier = SHA256("nespresso:{mac}")[:16]
 
 - [Nespresso](https://www.nespresso.com/) — manufacturer website
 - Service UUID `06AA` base is used across the Nespresso connected range
+- Bluetooth SIG company-ID registry vs vendor proprietary UUIDs: SIG
+  IDs are 16-bit globally-assigned values (e.g. `0x0225` = Nespresso
+  France SAS), whereas vendor UUIDs like
+  `06AA1910-F22A-11E3-9DAA-0002A5D5C51B` are 128-bit values minted by
+  the vendor (here, a UUIDv1 with a Compaq-era OUI in its node bytes).
+  Both are useful attribution signals; combining them avoids
+  byte-order collisions that affect 16-bit CIDs alone.
