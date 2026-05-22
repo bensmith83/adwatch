@@ -127,6 +127,50 @@ Parser keys on **CID `0x3703` + FEBE service UUID**, with no `"Bose"` substring 
 | `local_name` | local name when broadcast |
 | `product` | local name when broadcast, else `"Bose (FEBE/3703)"` |
 
+## Canonical CID 0x009E short-form (9-byte payload) + iOS LE-* name variant
+
+A subset of CID `0x009E` + FEBE advertisements arrives with a **9-byte manufacturer payload** whose byte 2 is **not** `0x06` (the canonical 11-byte form's `model_family` magic byte). Observed payloads:
+
+```
+9e 00 | 00 63 05 8f ac 51 95 6a a3
+9e 00 | 00 23 04 ab 3b d7 6b 74 74
+9e 00 | 00 24 05 42 55 f0 7c c9 61
+```
+
+These devices either broadcast **no local name** or an iOS-prefixed `LE-*` name with a Bose substring (`"LE-mk bose headphones"`, `"LE-Connies Bose"`, etc.). iOS prepends `LE-` to BLE-side broadcasts of audio devices that are also paired over Classic Bluetooth — it's an iOS naming convention surfaced by `CBPeripheral.name`, not a Bose-side choice.
+
+The canonical-CID + FEBE pair is itself a high-confidence Bose match, so the parser accepts the ad when either:
+
+- the local name is absent, or
+- the local name contains the case-insensitive substring `"bose"` (covers both `"LE-Connies Bose"` and the lowercased `"LE-mk bose headphones"` user-rename case).
+
+A `LE-*` name without a Bose substring (`"LE-AirPods"`) is rejected to avoid false positives.
+
+### Observed Product Codes
+
+Payload byte 1 carries a per-product code, distinct from the canonical 11-byte form where the same byte position is also product code but accompanied by the `0x06` model_family byte at offset 2. Observed without overclaiming the SKU mapping:
+
+| `product_code` | Observed context |
+|---|---|
+| `0x23` | `"LE-mk bose headphones"` (user-renamed; product family unknown) |
+| `0x24` | (anonymous emitter) |
+| `0x63` | (anonymous emitter) |
+
+### Surfaced Metadata
+
+| Key | Value |
+|---|---|
+| `wire_format` | `"bose_febe_009e_short"` |
+| `match_mode` | `"canonical_cid_short_payload"` (no name) or `"canonical_cid_ios_le_name"` (LE-* Bose-substring name) |
+| `frame_flag` | hex of payload byte 0 (e.g. `"0x00"`) |
+| `product_code` | hex of payload byte 1 (e.g. `"0x63"`, `"0x23"`, `"0x24"`) |
+| `payload_hex` | hex of all bytes after the 2-byte CID |
+| `local_name` | local name verbatim when broadcast |
+| `product` | local name when broadcast, else `"Bose (FEBE/009E short)"` |
+| `stableKey` | `"bose_febe_009e_short:<payload_hex>"` |
+
+The trailing 7 payload bytes look like a per-device rolling identifier; we treat the whole payload hex as the stable-key region rather than attempting a per-byte semantic decode.
+
 ## References
 
 - [Bluetooth SIG member UUIDs (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/uuids/member_uuids.yaml) — confirms `0xFEBE = Bose Corporation`.
