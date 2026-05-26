@@ -1,8 +1,15 @@
-# Victron Energy (Instant Readout)
+# Victron Energy (Instant Readout + Vendor Beacon)
 
 ## Overview
 
-Victron Energy makes solar charge controllers, battery monitors, inverters, and other power electronics popular in off-grid/RV/marine setups. Devices broadcast real-time energy data via BLE using an encrypted "Instant Readout" protocol. The unencrypted header contains device identification; decrypted payloads contain voltage, current, power, state of charge, etc.
+Victron Energy makes solar charge controllers, battery monitors, inverters, and other power electronics popular in off-grid/RV/marine setups. We see **two distinct BLE streams** from Victron hardware, handled by the same parser but emitting different `beaconType` values so downstream consumers can tell them apart:
+
+| Stream | CID | Spec | What it carries |
+|--------|-----|------|-----------------|
+| **Instant Readout** | `0x02E1` (SIG-registered) | Victron "Extra Manufacturer Data 2022-12-14" PDF | Encrypted live telemetry (voltage / current / power / SoC) |
+| **Vendor Beacon** | `0x4556` (NOT SIG-registered — "VE" ASCII magic) | No public spec | Identification-only — friendly-name label |
+
+The Instant Readout stream is what most existing community tooling targets; the Vendor Beacon is a separate stream that some Victron WiFi-equipped devices emit alongside (or instead of) Instant Readout. The CID `0x4556` is **not** allocated by the Bluetooth SIG — Victron is stuffing ASCII "VE" into the company-ID slot non-conformantly.
 
 ## BLE Advertisement Format
 
@@ -141,8 +148,66 @@ identifier = SHA256("{mac}:{model_id}")[:16]
 - Full sensor data available with per-device AES key
 - 14 device classes covering solar, battery, inverter, DC-DC, BMS, etc.
 
+## Vendor Beacon Stream (CID `0x4556`, "VE" ASCII magic)
+
+A second BLE stream that some Victron devices emit — particularly the WiFi-equipped variants (Smart Battery Sense w/ Wi-Fi, Smart MPPT, EV Charging Station NS, etc.). Identification-only; no telemetry.
+
+### Identification
+
+| Signal | Value | Notes |
+|--------|-------|-------|
+| Company ID | `0x4556` (LE-read of bytes `56 45` = ASCII "VE") | NOT SIG-assigned — Victron stuffs ASCII into the CID slot non-conformantly |
+| Magic header (full 4 bytes) | `56 45 52 15` | Required exactly to avoid false positives from any other firmware emitting `56 45` |
+| Local name pattern | `<label>.A<2hex>.WIFI` (e.g. `Smart.A7.WIFI`, `Lola's E.A5.WIFI`) | Last 2 hex chars before `.WIFI` look like the low byte of the BLE MAC; the `.WIFI` suffix marks Wi-Fi-capable firmware variants |
+
+### Wire Format
+
+```
+56 45 52 15 | <up to 16 ASCII bytes>
+└────┬────┘ └─────────┬───────────┘
+     │                └── user-set device label (truncated to 16 bytes,
+     │                    NUL- or space-padded)
+     └── 4-byte magic "VE" + 0x52 ("R") + 0x15
+```
+
+| Offset | Bytes | Field | Notes |
+|--------|-------|-------|-------|
+| 0-1    | `56 45` | "VE" magic | ASCII bytes in the CID slot |
+| 2      | `52` | "R" ASCII | Constant across captures — possibly marks "VER" (VE Record) |
+| 3      | `15` | Unknown | Constant across captures — likely a frame-type / version byte; not enough samples to map values to product types |
+| 4-19   | up to 16 bytes | ASCII label | Friendly device name set via VictronConnect; trailing space or NUL padding |
+
+### What We Can Parse
+
+| Field | Source | Notes |
+|-------|--------|-------|
+| Vendor | magic `56 45 52 15` | Victron Energy (vendor-beacon stream) |
+| Label | mfg bytes 4..20 | Trimmed of trailing whitespace / NUL |
+
+### What We Cannot Parse
+
+- Specific product model — the `0x15` byte may encode this but is constant in our captures
+- Live telemetry — this stream does not carry it; if the same device also emits the Instant Readout stream, that's where the data lives
+- Whether `0x15` distinguishes product types (Smart MPPT vs Smart Battery Sense vs EV Charging Station NS, etc.) — needs more samples across known device types
+
+### Identity Hashing
+
+```
+identifier = SHA256(mac_address)[:16]
+```
+
+The vendor-beacon stream carries no stable per-emitter id in the payload (the magic is fleet-constant, the label is user-set), so we fall back to the BLE MAC.
+
+### Why "Vendor Beacon" Has No Published Spec
+
+No published spec exists for the `0x4556` / `VE\x52\x15` stream. The major community Victron BLE projects (`keshavdv/victron-ble`, `Fabian-Schmidt/esphome-victron_ble`, Home Assistant's `victron_ble` integration) all gate strictly on CID `0x02E1` + leading byte `0x10`. The vendor-beacon stream is presumably internal to Victron's app or a Wi-Fi-bridge firmware variant; our decoding is empirical from captures.
+
+If you want richer field decoding here, the next step is to capture more samples across known product types (Smart Battery Sense, SmartShunt, EV Charging Station NS, GlobalLink 520) and watch whether byte 3 (`0x15`) varies — that's the most likely product-type discriminator.
+
 ## References
 
-- [victron-ble](https://github.com/keshavdv/victron-ble) — Python parser (primary reference)
+- [victron-ble](https://github.com/keshavdv/victron-ble) — Python parser for Instant Readout (primary reference)
 - [esphome-victron_ble](https://github.com/Fabian-Schmidt/esphome-victron_ble) — ESPHome component
 - [Victron Community — BLE Protocol](https://community.victronenergy.com/questions/187303/victron-bluetooth-advertising-protocol.html)
+- [Victron Extra Manufacturer Data PDF](https://communityarchive.victronenergy.com/storage/attachments/extra-manufacturer-data-2022-12-14.pdf) — Instant Readout spec
+- [Nordic `bluetooth-numbers-database`](https://github.com/NordicSemiconductor/bluetooth-numbers-database) — confirms Victron has only one SIG-registered CID (`0x02E1`), so `0x4556` is vendor-claimed not SIG-allocated

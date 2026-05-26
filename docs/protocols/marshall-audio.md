@@ -1,114 +1,117 @@
-# Marshall Audio BLE Protocol
+# Marshall Audio (Zound Industries)
 
 ## Overview
 
-Marshall Bluetooth speakers broadcast BLE advertisements using the CSR/Qualcomm service UUID `0xFE8F` and Qualcomm Technologies International company ID `0x0912`. These speakers use CSR Bluetooth chipsets common across many premium audio brands.
+Marshall Bluetooth speakers and headphones broadcast BLE
+advertisements while powered. They expose the CSR / Qualcomm audio
+service UUID `0xFE8F` and a recognizable Marshall product name in
+the local-name field. Live state (volume, EQ, battery, playback,
+multi-speaker group) lives behind the GATT control surface and
+requires a paired connection.
 
-## Identifiers
+Marshall hardware is built by Zound Industries. The brand-correct
+Bluetooth SIG company ID is **`0x065A` (Marshall Group AB)**, but
+units in the field overwhelmingly broadcast non-Marshall CIDs in
+the manufacturer-data prefix — `FE8F` + product name is the
+practical anchor.
 
-- **Service UUID:** `0xFE8F` (16-bit, assigned to CSR plc / Qualcomm)
-- **Company ID:** `0x0912` (Qualcomm Technologies International, Ltd.)
-- **Local name:** Full product names (e.g. "STANMORE II", "EMBERTON", "KILBURN II")
-- **Device class:** `speaker`
-
-## BLE Advertisement Format
-
-### Identification
+## Identification
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Service UUID | `0xFE8F` | CSR / Qualcomm assigned UUID |
-| Company ID | `0x0912` | Qualcomm Technologies International |
-| Local name | Product name | e.g. "STANMORE II", "EMBERTON" |
+| Service UUID | `0xFE8F` | CSR (Cambridge Silicon Radio) — shared by every CSR/Qualcomm audio chip (Bose, JBL, Sony, etc.). NOT Marshall-specific on its own. |
+| Company ID | `0x065A` | Marshall Group AB (SIG-assigned). Real Marshall CID; rarely seen in actual ads from production units. |
+| Local name | Marshall product name | Required when matching via `FE8F` to avoid false-positive CSR-speaker matches |
 
-**Note:** UUID `0xFE8F` is a CSR/Qualcomm UUID used by many audio devices with CSR Bluetooth chips. Marshall devices are identified by the combination of this UUID with recognizable Marshall product names in the local name.
+### Common false-positive guard
 
-### Manufacturer Data Format
+The current parser **requires** either:
+1. A localName starting with a known Marshall product line **AND** `FE8F` in the advertised service UUIDs; OR
+2. Manufacturer CID equal to `0x065A`.
 
-Variable length, company_id `0x0912` (LE: `1209`):
+Plain `FE8F` alone is insufficient — every CSR-based audio device
+in the room would match.
 
-| Offset | Length | Field | Notes |
-|--------|--------|-------|-------|
-| 0-1 | 2 | Company ID | `0x0912` (LE: `1209`) |
-| 2+ | varies | CSR payload | Chipset-specific data |
+### Common CIDs seen in real Marshall captures (none of which are Marshall)
 
-The manufacturer data contains CSR/Qualcomm chipset information but is not Marshall-specific. Useful fields are limited to device presence identification.
+| CID | SIG-registered to | Why we see it |
+|-----|-------------------|---------------|
+| `0x0412` | SEFAM (French medical) | Unknown — possibly non-CID framing the scanner is misreading as a LE company-id |
+| `0x0912` | Nerbio Medical Software Platforms | Historical / firmware quirk |
+| `0x065A` | **Marshall Group AB** | The correct one — rarely the one actually broadcast |
 
-### What We Can Parse from Advertisements
+Do not gate on these CIDs in either direction. Use the product-name +
+`FE8F` rule.
 
-| Field | Source | Notes |
-|-------|--------|-------|
-| Device presence | service_uuid or company_id | Marshall speaker nearby |
-| Model name | local_name | Full product name |
-| Speaker type | local_name | Home vs. portable form factor |
+## Wire Format (post-CID payload)
 
-### What We Cannot Parse (requires GATT)
-
-- Battery level
-- Firmware version
-- EQ settings
-- Playback state (playing, paused)
-- Volume level
-- Multi-speaker grouping status
+The CID prefix is followed by CSR/Qualcomm chipset bytes (audio
+codec advertisement, BAP/CAP data on newer firmwares). We don't
+decode them — they aren't Marshall-specific.
 
 ## Known Models
 
 | Local Name | Product | Form Factor |
 |-----------|---------|-------------|
-| `STANMORE II` | Marshall Stanmore II | Home speaker |
-| `ACTON II` | Marshall Acton II | Compact home speaker |
-| `WOBURN II` | Marshall Woburn II | Large home speaker |
-| `EMBERTON` | Marshall Emberton | Portable speaker |
-| `EMBERTON II` | Marshall Emberton II | Portable speaker |
-| `KILBURN II` | Marshall Kilburn II | Portable speaker |
-| `MIDDLETON` | Marshall Middleton | Portable speaker |
-| `WILLEN` | Marshall Willen | Ultra-compact portable |
-| `STOCKWELL II` | Marshall Stockwell II | Portable speaker |
+| `STANMORE II/III` | Stanmore | Home speaker |
+| `ACTON II/III` | Acton | Compact home speaker |
+| `WOBURN II/III` | Woburn | Large home speaker |
+| `EMBERTON / EMBERTON II` | Emberton | Portable speaker |
+| `KILBURN II` | Kilburn | Portable speaker |
+| `MIDDLETON` | Middleton | Portable speaker |
+| `TUFTON` | Tufton | Portable speaker |
+| `MOTIF` | Motif (A.N.C.) | TWS earbuds |
+| `MINOR` | Minor (III) | Wireless earbuds |
+| `MAJOR` | Major IV/V | Headphones |
+| `MONITOR` | Monitor II A.N.C. | Headphones |
+| `MODE` | Mode/Mode II | Wireless earbuds |
 
-## Sample Advertisements
-
-```
-STANMORE II:
-  Service UUID: fe8f
-  Local name: STANMORE II
-  Manufacturer data: 1209 04a3b7c4e8f2
-
-EMBERTON:
-  Service UUID: fe8f
-  Local name: EMBERTON
-  Manufacturer data: 1209 04f8d2a1b6c9
-
-KILBURN II:
-  Service UUID: fe8f
-  Local name: KILBURN II
-  Manufacturer data: 1209 04c7e5f3a2d8
-```
+The parser's product-line allowlist is the prefix only (`STANMORE`,
+`ACTON`, …) — edition suffixes like `II`/`III` are preserved in
+`metadata["model"]`.
 
 ## Identity Hashing
 
 ```
-identifier = SHA256("{mac}:{local_name}")[:16]
+identifier_hash = SHA256("{mac}:{local_name}")[:16]
 ```
 
-Marshall speakers use a static BLE MAC address, making this a stable identifier.
+Marshall units use a static BLE MAC, so MAC + name is sufficient.
 
-## Detection Significance
+## What We Can Parse from Advertisements
 
-- Indicates presence of premium audio equipment
-- Model name reveals specific product and form factor (home vs. portable)
-- Always-on BLE when speaker is powered on
-- CSR/Qualcomm UUID is shared with other audio brands -- local name is the key differentiator for Marshall
+| Field | Source | Notes |
+|-------|--------|-------|
+| Device presence | name allowlist + FE8F (or CID 0x065A) | "Marshall speaker nearby" |
+| Product line | local_name prefix | STANMORE / ACTON / EMBERTON / … |
+| Model | local_name | Full name incl. edition suffix |
 
-## Parsing Strategy
+## What Requires GATT Connection
 
-1. Match on service_uuid `fe8f` AND/OR company_id `0x0912`
-2. Check local_name against known Marshall product names
-3. Extract model name from local_name
-4. Return device class `speaker`
-5. Note: other audio brands also use `fe8f` -- may need local_name allowlist for Marshall-specific identification
+- Battery level
+- Firmware version
+- EQ / preset
+- Playback state, volume
+- Multi-speaker grouping
+
+## History / Bug Fix
+
+v1 of the parser (Sources/Parsers/MarshallParser.swift) gated on CID
+`0x0912` **AND** service-data key `fe8f`. That was a double bug:
+
+- `0x0912` is registered to Nerbio Medical Software, not Qualcomm
+  or Marshall (per the canonical SIG yaml).
+- Real Marshall captures expose `FE8F` as a **service UUID**, not
+  as a service-data entry — so the `serviceData["fe8f"] != nil`
+  check rejected every real ad.
+
+The fix (v2): name allowlist + FE8F UUID match OR Marshall CID
+match. 713 sightings of a single STANMORE II that v1 missed are
+now parsed.
 
 ## References
 
-- [Marshall](https://www.marshallheadphones.com/) -- manufacturer website
-- [Bluetooth SIG Company IDs](https://www.bluetooth.com/specifications/assigned-numbers/) -- `0x0912` Qualcomm Technologies International, Ltd.
-- Bluetooth SIG UUID Database -- UUID `0xFE8F` assigned to CSR plc
+- Bluetooth SIG company identifiers yaml — confirms `0x065A` =
+  Marshall Group AB, `0x0912` = Nerbio Medical, `0x0412` = SEFAM
+- Bluetooth SIG member UUIDs yaml — confirms `0xFE8F` = CSR
+- Marshall website (`marshallheadphones.com`) — product lineup
