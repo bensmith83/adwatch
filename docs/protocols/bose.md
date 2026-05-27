@@ -69,16 +69,61 @@ sightings — same `product_code=0xc9`, state toggle), `01 c0 02`
 Observed: `02 03 06 00 10 14` (261 sightings), `02 03 41 00 10 50`
 (133 sightings — different product).
 
+### FDF7 presence beacon (no manufacturer data)
+
+Bose devices alternate the CID-0x0065 mfg frame above with a *second*
+ad type carrying nothing but service-data on `0xFDF7`. The same
+`deviceIdentifier` emits both back-to-back, so identity correlation is
+unambiguous in real captures.
+
+```
+service_data["FDF7"] =
+  01 <16 bytes rotating ID> 00 00 00 00 03
+└┬┘                          └────┬────────┘
+ frame                        trailing tail
+ type                         (protocol version?)
+```
+
+| Offset | Bytes | Field |
+|--------|-------|-------|
+| 0      | `01`  | frame_type — version marker |
+| 1–16   | varies | rotating identifier (changes between sightings of the same device) |
+| 17–21  | `00 00 00 00 03` | trailing tail — constant across all captures |
+
+The parser anchors on the *exact* 22-byte shape (length 22, leading
+`0x01`, trailing `00 00 00 00 03`). Anything else on FDF7 — including
+genuine HP printer-accessory frames (the SIG yaml lists FDF7 as
+HP Inc., though Bose has been observed using it in practice) — is
+rejected so we don't over-claim.
+
+> **Why anchor strictly?** The SIG `member_uuids.yaml` attributes
+> `0xFDF7` to *HP Inc.*, not Bose. In all of adwatch's research
+> captures so far, the same physical device emits the CID-0x0065
+> Bose mfg ad and the FDF7 22-byte body in lockstep, so we treat
+> this body shape as Bose's. If HP accessory captures surface later
+> with a different FDF7 body, they will fall through this anchor and
+> remain available for a separate HP-specific parser.
+
 ## Identity Hashing
+
+For Type 1 / Type 2 mfg frames:
 
 ```
 identifier_hash = SHA256("{mac_address}:{product_code}")[:16]
 ```
 
+For the FDF7 presence beacon (no product_code visible):
+
+```
+identifier_hash = SHA256("bose_fdf7:{mac_address}")[:16]
+```
+
 Combining MAC with product_code keeps per-unit granularity (two
 QuietComfort 45 units would hash distinctly via MAC) while ignoring
 the state byte (which toggles on connect/disconnect without
-indicating a different device).
+indicating a different device). The presence-beacon path falls back
+to MAC alone because the rotating 16-byte body has no stable per-unit
+component to anchor on.
 
 ## What We Cannot Parse Without GATT
 
