@@ -2,8 +2,10 @@
 
 ## Status
 
-**Unidentified**, documented here so future packet captures can help attribute
-the source. No parser has been written.
+**Vendor unidentified**, but a fingerprint parser ships as
+`NameBeacon5AEAParser` (beacon_type `name_beacon_5aea`) so the family
+can be counted and grouped pending ground-truth attribution. Future
+packet captures can help confirm the vendor.
 
 ## Observation Summary
 
