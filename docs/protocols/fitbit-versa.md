@@ -1,35 +1,42 @@
-# Fitbit Versa / Sense (FD62 Service-UUID-Only Advertisement)
+# Fitbit Versa / Sense / Air (FD62 Service-UUID-Only Advertisement)
 
 ## Overview
 
-Modern Fitbit smartwatches — **Versa 2/3/4, Sense, Sense 2** — emit a
-minimal BLE advertisement that contains **only** a 16-bit service
-UUID (`FD62`) and the watch's local name (e.g. `Versa 4`). There is
-no manufacturer data block — distinct from the older Fitbit Charge /
-Inspire trackers, which use company ID `0x000A` with a 2-byte
-opcode + device-type payload (see `fitbit.md`).
+Modern Fitbit smartwatches and trackers — **Versa 2/3/4, Sense, Sense 2,
+Inspire 2/3, Charge 5/6, Luxe, Ace 3/LTE**, plus the 2026 Google-branded
+**Air** pebble — emit a minimal BLE advertisement that contains **only**
+a 16-bit service UUID (`FD62` or the newer `FD63`) and the device's local
+name (e.g. `Versa 4`, `Google Fitbit Air`). There is no manufacturer data
+block — distinct from the older Fitbit Charge / Inspire trackers, which
+use company ID `0x000A` with a 2-byte opcode + device-type payload (see
+`fitbit.md`).
 
-`0xFD62` is Fitbit's BT-SIG-assigned 16-bit service UUID
-("Member service UUID, Fitbit, Inc."). Any device advertising this
-UUID is a Fitbit product.
+`0xFD62` and `0xFD63` are Fitbit's BT-SIG-assigned 16-bit service UUIDs
+("Member service UUID, Fitbit, Inc."). Any device advertising either UUID
+is a Fitbit product.
 
-This parser covers the FD62 family; the original
-`FitbitParser` continues to handle the mfr-data variant.
+This parser covers the FD62/FD63 family; the original `FitbitParser`
+continues to handle the mfr-data variant.
 
 ## Supported Models
 
-| Local name family | Hardware |
-|-------------------|----------|
-| `Versa`           | Original Versa (sometimes still seen) |
-| `Versa 2`         | Versa 2 |
-| `Versa 3`         | Versa 3 |
-| `Versa 4`         | Versa 4 |
-| `Sense`           | Sense |
-| `Sense 2`         | Sense 2 |
+| Local name family       | Hardware |
+|-------------------------|----------|
+| `Versa`                 | Original Versa (sometimes still seen) |
+| `Versa 2/3/4`           | Versa 2 / 3 / 4 |
+| `Sense` / `Sense 2`     | Sense / Sense 2 |
+| `Inspire` / `Inspire 2/3` | Inspire band family |
+| `Charge` / `Charge 5/6`  | Charge band family |
+| `Luxe`                  | Luxe band |
+| `Ace` / `Ace 3`         | Kids' Ace family |
+| `Google Fitbit Air` / `Air` | "Air" variant — observed in capture, product attribution not independently verified |
 
 The parser does not hard-code this list — it accepts any name that
-matches `^(Versa|Sense)( \d+)?$`. New post-2026 models with the same
-naming convention will be classified automatically.
+matches `^(?:Google Fitbit )?(Versa|Sense|Inspire|Charge|Luxe|Ace|Air)( \d+)?$`.
+The optional `Google Fitbit ` brand prefix was added when an FD62 capture
+with local name `Google Fitbit Air` appeared in
+`research/nearsight_export 3.json`; FD62 itself is enough to attribute the
+vendor.
 
 ## Identification
 
