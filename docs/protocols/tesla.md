@@ -61,8 +61,15 @@ Offset  Bytes      Meaning
   4     03         Unknown
 ```
 
-A single capture so far. Without more samples we can't decode the 3-byte
-body. Working hypotheses (not confirmed):
+The 2026-07-01 fresh-eyes sweep corroborated but did not further decode this
+frame: the identical constant payload `2B 02 01 FE 03` recurred across 5
+records / 6 sightings on 3 separate site visits (2026-05-15 → 2026-06-05),
+matching the independent 2026-04-26 nRF Connect capture byte-for-byte. Every
+cluster sighting co-occurred within seconds with parsed Tesla vehicle
+phone-key beacons (0x1122) elsewhere in the corpus, and one device kept the
+same address across two visits 21 days apart — a static random address,
+consistent with fixed charging-site infrastructure. Still no per-device
+identity or state in the 3-byte body. Working hypotheses (not confirmed):
 
 - Powerwall / Powerwall 3 — local commissioning beacon
 - Tesla Wall Connector (Gen 3 / Gen 4) — public-charger discoverability
@@ -71,7 +78,10 @@ body. Working hypotheses (not confirmed):
 The parser tags this path as `device_class="energy"` (Powerwall and Wall
 Connector are both energy products — closest fit in our shared device-class
 vocabulary) with `product_kind="non_vehicle"` in metadata until further
-captures distinguish them.
+captures distinguish them. As of the 2026-07-01 sweep this path is **wired
+up** (`companyID: 0x022B` registration + `beaconType="tesla_energy"`); before
+then only the `0x1122` service-UUID route was registered despite this doc
+prescribing the CID route.
 
 ## Parsing Strategy
 
