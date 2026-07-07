@@ -1,4 +1,13 @@
-# SP110E LED Controller Plugin
+# SP110E / SP-series LED Controller Plugin
+
+> **2026-07-06 sweep:** generalized from the single `SP110E` name to the
+> **SP-series** (`SP110E`, `SP601E`, …) — all Shenzhen addressable-LED
+> controllers sharing the `SP<digits><letter>` name + `FFB0` control service.
+> The model is surfaced from the name. `SP601E` advertises a vanity CID `0x5053`
+> whose bytes spell **"SP"** (vs SP110E's `0x0000` placeholder), but matching
+> still anchors on **name + FFB0, never the CID** (FFB0 is shared by unrelated
+> Shenzhen LED controllers). Parser id stays `sp110e_led` for continuity.
+> (SP601E was low-trust-sourced — see the sweep write-up.)
 
 ## Overview
 
