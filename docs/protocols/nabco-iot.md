@@ -1,13 +1,16 @@
-# Nabco IOT (Automatic Door / Gate System)
+# Nabco Remote Connect (Automatic Door BLE Controller)
 
 ## Overview
 
-Nabco Entrances (a Nice North America subsidiary) makes commercial-grade
-automatic pedestrian doors, ICU/sliding hospital doors, and gate operators.
-Their **Nabco IOT** family is a connected-door telemetry add-on: a BLE-equipped
-controller bolted onto a door operator so service technicians can read door
-status with a phone app and remote dashboards can track open/close counts,
-fault codes, and motor health.
+**Nabco Entrances Inc.** (Muskego, WI) — a subsidiary of **Nabtesco
+Corporation** (Japan) — makes commercial-grade automatic pedestrian
+doors, ICU/sliding hospital doors, and gate operators. Their
+**Nabco Remote Connect** product is a jamb-mounted BLE smart switch
+paired with the **NABCO Connect** iOS/Android app, released alongside
+the NABCO SWING non-handed swing-door operator in September 2023. The
+controller lets users open/close doors and schedule day/night modes
+from a phone; remote dashboards track cycle counts, fault codes, and
+motor health.
 
 The advertisement broadcasts the unit's serial in the local name plus a
 vendor-defined GATT service. Live telemetry (cycle count, fault codes,
@@ -31,7 +34,9 @@ motor current) is exposed over a GATT connection, not in the advertisement.
 | Field | Source | Notes |
 |-------|--------|-------|
 | Vendor | hard-coded | `Nabco Entrances` |
-| Product family | hard-coded | `Nabco IOT` (automatic door controller) |
+| Parent company | hard-coded | `Nabtesco Corporation` (Japan) |
+| Product | hard-coded | `Nabco Remote Connect` (jamb-mounted BLE smart switch) |
+| Model name | hard-coded | `Nabco IOT` (the literal localName prefix) |
 | Device class | hard-coded | `access_control` |
 | Unit serial | localName | 16 hex chars between `IOT-` and trailing `n` |
 | Has Current Time Service | `serviceUUIDs` | Boolean — central could read `2A2B` to confirm |
@@ -76,6 +81,12 @@ If for some reason the serial is missing (corrupted name), fall back to
 ## References
 
 - Nabco Entrances product line — <https://www.nabcoentrances.com/>
+- Nabco Remote Connect product page — <https://www.nabcoentrances.com/product/nabco-remote-connect/>
+- Nabco — Bluetooth-related releases — <https://www.nabcoentrances.com/tag/bluetooth/>
+- Introducing the NABCO SWING (Sept 2023, paired with Remote Connect) — <https://www.nabcoentrances.com/introducing-the-nabco-swing/>
+- NABCO Connect on the App Store — <https://apps.apple.com/us/app/nabco-connect/id6446406500>
+- Nabco / Nabtesco parent-company page — <https://www.nabcoentrances.com/our-company/>
+- FCC grantee O82 (NABCO Entrances) — <https://fccid.io/O82-ACUMOTION>
 - Bluetooth Core Specification 5.4, Vol 3 Part G — Current Time Service
   (UUID `0x1805`, characteristic `Current Time 0x2A2B`)
 - BT SIG `member_uuids.yaml` (no entry for `94E06D56-…` — vendor-defined,
