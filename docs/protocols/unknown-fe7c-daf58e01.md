@@ -1,5 +1,10 @@
 # Unknown `0xFE7C` + `DAF58E01-…` BLE Device Plugin
 
+> **Sibling device (2026-07-06):** a second member of this family was later
+> observed — CID `0x6C14` + serviceUUID `DAF58A01`, same
+> `<vanity CID><4 id><00 00>` grammar and shared `DAF58` UUID stem. See
+> [`unknown-6c14-daf58a01.md`](unknown-6c14-daf58a01.md). Still vendor-unattributed.
+
 ## Overview
 
 A single BLE device observed in a 2026-05-20 scan (Boston area, near Fenway
