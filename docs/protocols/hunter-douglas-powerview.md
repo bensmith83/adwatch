@@ -25,12 +25,14 @@ The shades use AES-CTR encryption with a 16-byte "home key" for GATT commands, b
 | `R31:` | Roller (31 series, tentative) | 5 | Single-band roller shades |
 | `PWW:` | PowerView Wand / Wireless (tentative) | 19 | Hand-held / wand-style controller |
 | `FAB:` | Fabric (Designer Roller, tentative) | 5 | Designer-fabric roller line |
+| `RXL:` | Roller (XL series, tentative) | 5 | Field-sighted 2026-08 (battery 100%, type_id 5); no public product mapping |
 
 The `R31:`, `PWW:`, `FAB:` and `VIG:` prefixes were captured in the 2026
-adwatch export. `VIG:` matches Vignette in the public product
-catalogue; the other three are inferred by elimination — Hunter
+adwatch export. `RXL:` was field-sighted 2026-08-04..06 (corpus record
+telemetry-merged.json:214872, hand-verified frame). `VIG:` matches Vignette in the public product
+catalogue; the others are inferred by elimination — Hunter
 Douglas has not published a prefix table. **Treat names of the
-R31 / PWW / FAB rows as best-guess until corroborated by an HD-side
+R31 / PWW / FAB / RXL rows as best-guess until corroborated by an HD-side
 source.** Their advertisement structure is identical to the documented
 shade format, so the parser decodes them the same way.
 

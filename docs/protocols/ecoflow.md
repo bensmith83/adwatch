@@ -11,7 +11,7 @@ EcoFlow Delta, River, and PowerStream devices broadcast BLE advertisements for d
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Company ID | `0xB5B5` | Custom/unregistered, used across all EcoFlow BLE devices |
-| Local name | `EF-*` | Prefix `EF-` followed by serial number chars |
+| Local name | `EF-*` (often absent) | Prefix `EF-` followed by serial number chars — not reliably advertised; see Corpus Notes |
 
 ### Manufacturer Data Layout
 
@@ -75,6 +75,31 @@ If manufacturer data < 20 bytes, defaults: status=0, product_type=0.
 - Solar input
 
 All telemetry requires authenticated GATT connection with ECDH key exchange + AES-CBC encryption.
+
+## Corpus Notes (2026-07-17 sweep)
+
+Findings from real telemetry — a small sample, so field observations rather
+than spec:
+
+- **Identification is no longer name-gated.** The parser previously required
+  the local name to start with `"EF-"`. In the corpus most units don't
+  reliably advertise that name at all: 7 of 8 sampled records had no local
+  name, and the one that did carried a bare serial-like `"R33-3221"` with no
+  `"EF-"` prefix. The parser now identifies EcoFlow units by company ID
+  `0xB5B5` **plus a decodable ASCII serial in the payload** — no local name
+  required. The `EF-*` prefix, when present, is still a corroborating signal
+  but is no longer a precondition.
+
+### Open questions (for a future pass)
+
+1. **Undocumented byte at offset 23.** The byte table above documents offsets
+   0–22. Real captures carry a byte at offset 23 that isn't in the table; its
+   meaning is unknown. Needs more samples before assigning it.
+2. **Long-variant advertisement (~42 bytes).** One record ran ~42 bytes
+   rather than the documented ~21–23. After the documented fields it appends
+   what looks like a *second* vendor sub-record, opening with a repeated-byte
+   marker `c5 c5`. Uninterpreted — only one sample seen so far, so we're not
+   decoding it yet.
 
 ## References
 

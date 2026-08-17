@@ -1,27 +1,42 @@
-# ZL02PRO / DaFit-family Smartwatch Protocol
+# DaFit-family Smartwatch Protocol (ZL02PRO, GW12, …)
 
 ## Overview
 
-"ZL02PRO" is a white-label round-face Bluetooth-calling smartwatch sold by
-many re-sellers (Kronus, Shenzhen Vanssa, opmowatch, ...). Underlying
-hardware is **Realtek RTL8763EWE** (BT 5.2 dual-mode SoC with audio DSP);
-the companion Android/iOS app is **Da Fit** (not VeryFit).
+The **"DaFit family"** is a long-lived white-label Realtek
+(**RTL8763E**-class, BT 5.2 dual-mode SoC with audio DSP) smartwatch
+firmware shipped under many SKU names — ZL02PRO (round-face
+Bluetooth-calling watch), GW12 (small fitness band), plus other
+unattributed re-skins. The companion Android/iOS app is **Da Fit** (not
+VeryFit).
 
-A small number of proprietary BLE-layer constants (company ID, service UUID,
-and service-data framing) are shared across all SKUs using this firmware.
+All variants share three proprietary BLE-layer constants — company ID,
+service-data UUID, and the first 2 bytes of mfg data — and disambiguate
+themselves with a **3-byte ASCII "variant magic"** at the start of the
+FEEA service-data payload:
+
+| Variant magic | ASCII | SKU |
+|---------------|-------|-----|
+| `44 4B 52`    | `DKR` | ZL02PRO (round-face calling watch) |
+| `48 46 55`    | `HFU` | GW12 (small fitness band) |
+| *(others)*    | —     | Generic DaFit-family; parser still matches but `model_hint` is nil |
+
+The parser surfaces the 3-byte magic as `metadata.variant` so unknown
+SKUs cluster cleanly under one family while we wait for more captures.
 
 ## Identifiers
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `ZL02PRO` (and variants: `ZL0xx...`) | Stable model prefix |
-| Company ID | `0xF0EF` (mfg data prefix) | **Not SIG-registered** |
-| Service data UUID | `0xFEEA` | **Not SIG-registered** |
-| DKR magic | ASCII `"DKR"` = `44 4B 52` | First 3 bytes of FEEA service data |
+| Local name | per-variant (`ZL02PRO`, `GW12`, ...) | Optional — useful but not required |
+| Company ID | `0xF0EF` (mfg data prefix) | **Not SIG-registered** — squatted |
+| Service data UUID | `0xFEEA` | **Not SIG-registered**; SIG record is Swirl Networks (defunct) |
+| Variant magic | 3-byte ASCII at FEEA[0..2] | `DKR`, `HFU`, ... |
 
-Note: `0xFEEA` is often mis-attributed to "Samsung". It is **not** in the
-Bluetooth SIG assigned-numbers list; Samsung's SmartTag/Find UUIDs are
-`0xFD59` / `0xFD5A`. The collision appears to be incidental.
+Note: `0xFEEA` is sometimes mis-attributed to JD.com or Samsung. It is
+**not** in the Bluetooth SIG assigned-numbers list as either; the SIG
+record assigns it to **Swirl Networks, Inc.** (a US proximity-beacon
+vendor that exited the market around 2018). Chinese white-label
+firmware vendors squat on the UUID without consequence.
 
 ## Ad Format
 
@@ -37,14 +52,23 @@ Offset  Bytes     Meaning
 
 ```
 Offset  Bytes        Meaning
-  0-2   44 4B 52     ASCII "DKR" protocol magic
+  0-2   <ASCII>      3-byte variant magic — see table above
   3-N   xx..xx       vendor-proprietary state/counter bytes
 ```
 
-Observed example: `44 4B 52 03 04 00 10` — after `DKR`, the trailing
-`03 04 00 10` has not been decoded. Candidate interpretations (not
-confirmed): protocol version (`03`), payload-type (`04`), and a short
-counter or status word.
+Observed examples:
+
+| Variant | FEEA payload | Trailing bytes |
+|---------|--------------|----------------|
+| `DKR` (ZL02PRO) | `44 4B 52 03 04 00 10` | `03 04 00 10` |
+| `HFU` (GW12)    | `48 46 55 04 01 00 91` | `04 01 00 91` |
+
+The trailing bytes after the magic have not been fully decoded.
+Candidate interpretations (not confirmed): protocol version (byte 3),
+payload-type / state byte (byte 4), and a 16-bit counter or status word
+(bytes 5..6). The two variants emit different byte-3 values (`03` vs
+`04`), suggesting the field is variant-specific rather than a generic
+DaFit-family protocol version.
 
 ### What We Cannot Parse
 
@@ -61,16 +85,36 @@ counter or status word.
 
 ## Parsing Strategy
 
-1. Match `^ZL0[0-9A-Z]{2,}` in `local_name`, OR
-2. Service data under UUID `0xFEEA` whose first three bytes are `DKR`.
-3. Emit `device_class="smartwatch"`, store trailing protocol payload as
-   `protocol_payload_hex` for later analysis.
+Single family parser keyed on the AND of three signals (none of which is
+unique enough alone):
+
+1. Manufacturer-data CID `0xF0EF` (LE prefix `EF F0`), AND
+2. Service data under UUID `0xFEEA` with at least 3 bytes of payload, AND
+3. The first 3 bytes of that payload are printable ASCII (the variant
+   magic).
+
+Emit:
+
+- `vendor = "DaFit-family (Realtek RTL8763)"`
+- `variant = <3-char uppercase ASCII>` (e.g. `DKR`, `HFU`)
+- `model_hint = ZL02PRO | GW12 | …` when the variant is known
+- `device_class = "wearable"`
+- `protocol_payload_hex` — bytes 3..N of the FEEA service data
+- `mfg_payload_hex` — bytes 2..N of the manufacturer data
+
+Unknown variant magics still parse — the parser surfaces the magic for
+later attribution rather than dropping the row.
 
 ## Identity Hashing
 
 ```
-identifier = SHA256("{mac}:zl02pro")[:16]
+stable_key = dafit_family:<variant>:<mac>
+identifier = SHA256(stable_key)[:16]
 ```
+
+The variant is included in the key so that two distinct DaFit-family
+SKUs that happen to share a MAC (e.g. spoofed or cloned addresses) are
+counted as separate identities.
 
 ## References
 

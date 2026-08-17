@@ -24,7 +24,7 @@ The Nordic Thingy:52 is a development kit / reference design from Nordic Semicon
 
 - Manufacturer Specific Data:
   - Company ID: `0x0059` (Nordic Semiconductor)
-  - Data: 4-byte random device ID (reversed byte order, generated at boot via RNG)
+  - Data: 4-byte random device ID (reversed byte order, RNG-generated — appears to rotate on a timer, not only at boot; see Corpus Notes)
 
 ### What We Can Parse from Advertisements
 
@@ -32,7 +32,7 @@ The Nordic Thingy:52 is a development kit / reference design from Nordic Semicon
 |-------|--------|-------|
 | Thingy device present | service UUID match | Nordic Thingy:52 nearby |
 | Device name | local_name | User-configurable |
-| Random device ID | manufacturer_data bytes 0–3 | Regenerated at boot |
+| Random device ID | manufacturer_data bytes 0–3 | Rotates periodically (see Corpus Notes) |
 
 ### What We Cannot Parse from Advertisements
 
@@ -63,6 +63,27 @@ All custom services share base UUID `EF68xxxx-9B35-4933-9B10-52FFA9740042`:
 - Nordic Semiconductor development kit — indicates a developer/tinkerer nearby
 - Can optionally broadcast Eddystone-URL beacons in parallel
 - The Thingy:91 (LTE/cellular) uses different firmware and does not share the `EF68xxxx` service architecture
+
+## Corpus Notes (2026-07-17 sweep)
+
+Two findings from real telemetry — a limited sample, so treat these as field
+observations rather than spec:
+
+- **Identification is no longer name-gated.** The app's parser previously
+  required the local name to start with `"Thingy"`. A unit in the corpus had
+  been renamed to `"Bedroom "` yet was still unambiguously a Thingy:52 via
+  the Configuration Service UUID `EF680100-9B35-4933-9B10-52FFA9740042` in
+  its primary advertisement. The parser now accepts *either* signal — the
+  `"Thingy"` local-name prefix **or** the Configuration Service UUID — so
+  renamed units are no longer missed.
+- **The 4-byte device ID appears to rotate on a timer, not only at boot.**
+  Earlier notes here described the ID as "regenerated at boot" (the inline
+  language above has been softened accordingly). In one day's capture, 24
+  distinct "devices" were seen rotating the 4-byte ID field back-to-back with
+  zero time gaps across ~9 continuous hours — a pattern more consistent with
+  a timer-driven rotation than with 24 reboots. Practical consequence: a
+  single physical Thingy:52 can present as many short-lived IDs over one
+  session, inflating apparent device counts.
 
 ## References
 

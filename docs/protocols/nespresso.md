@@ -76,12 +76,25 @@ branch fires, the parser sets `metadata["match_mode"] =
 "name_with_cid"`.
 
 The Vertuo proprietary UUID is itself a curiosity: it is a UUIDv1
-(time-and-MAC-based) whose node bytes are `00:02:A5:D5:C5:1B`. The OUI
-`00:02:A5` was assigned to **Compaq Computer Corp** (defunct since 2002,
-HP-acquired), and the embedded timestamp resolves to roughly 2014. The
-implication is that Nespresso's BLE stack — or at least the machine
-that minted this UUID — was a Compaq/HP-era development box still in
-use a decade after Compaq dissolved.
+(time-and-MAC-based) whose node bytes are `00:02:A5:D5:C5:1B`, and the
+embedded timestamp resolves to roughly 2014. The exact-same node bytes
+`…0002A5D5C51B` also appear on **Oura Ring**'s vendor UUID and on a
+separate **TraceX-branded** vendor UUID (see
+`docs/protocols/tracex-branded-device.md`; that device is currently
+vendor-unattributed) — three unrelated vendors sharing one UUIDv1
+node is a strong indicator the value propagated across vendors via a
+shared SDK / sample-code template (likely the STMicroelectronics
+BlueSTSDK reference base `XXXXXXXX-XXXX-11eX-XXXX-0002a5d5c51b`),
+not that each vendor independently generated it.
+
+The OUI `00:02:A5` has the locally-administered bit clear, so RFC 4122
+says it must have originated from a real IEEE-assigned MAC on whichever
+developer machine first minted these UUIDs in ~2014. Public OUI lookups
+have variably attributed `00:02:A5` to Compaq Computer Corp (historical
+IEEE registry entries) and STMicroelectronics (current public lookups);
+the attribution is unverified and ultimately irrelevant — the node
+tells you about the original developer machine, not about Nespresso's
+chipset vendor.
 
 ### Local Name Patterns
 
@@ -135,6 +148,8 @@ identifier = SHA256("nespresso:{mac}")[:16]
   IDs are 16-bit globally-assigned values (e.g. `0x0225` = Nespresso
   France SAS), whereas vendor UUIDs like
   `06AA1910-F22A-11E3-9DAA-0002A5D5C51B` are 128-bit values minted by
-  the vendor (here, a UUIDv1 with a Compaq-era OUI in its node bytes).
-  Both are useful attribution signals; combining them avoids
-  byte-order collisions that affect 16-bit CIDs alone.
+  the vendor (here, a UUIDv1 whose node bytes `…0002A5D5C51B` are
+  shared across multiple unrelated vendors — see the cross-reference
+  in `docs/protocols/tracex-branded-device.md`). Both are useful
+  attribution signals; combining them avoids byte-order collisions
+  that affect 16-bit CIDs alone.

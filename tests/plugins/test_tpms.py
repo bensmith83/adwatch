@@ -177,3 +177,34 @@ class TestTPMSMalformed:
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["pressure_kpa"] == pytest.approx(200.00)
+
+
+class TestTPMSDoesNotClaimIBBQ:
+    """iBBQ thermometers present as company ID 0x0001.
+
+    Their manufacturer_data begins with a sub-opcode byte (0x01 = live
+    temperatures) followed by a 0x00 header byte, which the BLE stack reads
+    as company ID 0x0001 -- the same ID TPMS sensors reuse. Without a guard
+    TPMS fabricates pressure/temperature readings for a BBQ probe. See
+    apk-ble-hunting/reports/{easybbq,bbqgo}_passive.md and plugins/ibbq.py.
+    """
+
+    IBBQ_DATA = (
+        bytes([0x01, 0x00, 0x00, 0x00])          # sub-op + header + flag
+        + b"\xff\xee\xdd\xcc\xbb\xaa"            # embedded device MAC
+        + struct.pack("<h", 250)                 # probe 1 = 25.0 C
+        + struct.pack("<h", 305)                 # probe 2 = 30.5 C
+    )
+
+    @pytest.mark.parametrize("name", ["iBBQ", "xBBQ", "GrillEye", "iBBQ-4"])
+    def test_rejects_bbq_probe_names(self, parser, name):
+        raw = make_raw(manufacturer_data=self.IBBQ_DATA, local_name=name)
+        assert parser.parse(raw) is None
+
+    def test_still_parses_real_tpms(self, parser):
+        raw = make_raw(manufacturer_data=TPMS_DATA, local_name="TPMS_1")
+        assert parser.parse(raw) is not None
+
+    def test_still_parses_unnamed_company_id_ad(self, parser):
+        raw = make_raw(manufacturer_data=TPMS_DATA)
+        assert parser.parse(raw) is not None

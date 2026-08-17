@@ -131,3 +131,65 @@ class TestDexcomNoMatch:
         # "DexcomABC" is 9 chars — G6 format is exactly 8 (Dexcom + 2).
         raw = make_raw(local_name="DexcomABC")
         assert parser.parse(raw) is None
+
+
+class TestDexcomSteloEnrichment:
+    """apk-ble-hunting/reports/dexcom-stelo_passive.md.
+
+    Stelo is an OTC G7-class biosensor that reuses the G7 transmitter BLE stack
+    and its advertising service UUID, so it is the same passive fingerprint as
+    the G7 — the plugin flags the shared family rather than claiming a model it
+    cannot distinguish. The report also documents Dexcom's SIG company ID
+    0x00D0, which the app never filters on but which is a valid passive vendor
+    signal.
+    """
+
+    def test_g7_uuid_reports_shared_product_family(self, parser):
+        raw = make_raw(service_uuids=[DEXCOM_G7_SERVICE_UUID])
+        result = parser.parse(raw)
+        assert result.metadata["model"] == "G7"
+        assert result.metadata["product_family"] == "G7-class (G7 / ONE+ / Stelo)"
+
+    def test_g7_name_prefix_reports_shared_product_family(self, parser):
+        result = parser.parse(make_raw(local_name="DXCMXYZ123"))
+        assert result.metadata["product_family"] == "G7-class (G7 / ONE+ / Stelo)"
+
+    def test_g6_has_no_product_family(self, parser):
+        result = parser.parse(make_raw(service_uuids=[DEXCOM_G6_SERVICE_UUID]))
+        assert "product_family" not in result.metadata
+
+    def test_company_id_matches_in_registry(self):
+        from adwatch.registry import ParserRegistry, register_parser
+        from adwatch.plugins.dexcom_cgm import DEXCOM_COMPANY_ID
+
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="dexcom_cgm",
+            company_id=DEXCOM_COMPANY_ID,
+            description="Dexcom",
+            version="1.0.0",
+            core=False,
+            registry=registry,
+        )
+        class _P(DexcomCgmParser):
+            pass
+
+        raw = make_raw(manufacturer_data=bytes.fromhex("d0000102"))
+        assert len(registry.match(raw)) == 1
+
+    def test_company_id_only_ad_parses_as_unknown_model(self, parser):
+        raw = make_raw(manufacturer_data=bytes.fromhex("d0000102"))
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["vendor"] == "Dexcom"
+        assert result.metadata["model"] == "unknown"
+        assert result.raw_payload_hex == "d0000102"
+
+    def test_other_company_id_does_not_parse(self, parser):
+        raw = make_raw(manufacturer_data=bytes.fromhex("4c000102"))
+        assert parser.parse(raw) is None
+
+    def test_vendor_set_for_uuid_matches_too(self, parser):
+        result = parser.parse(make_raw(service_uuids=[DEXCOM_G6_SERVICE_UUID]))
+        assert result.metadata["vendor"] == "Dexcom"

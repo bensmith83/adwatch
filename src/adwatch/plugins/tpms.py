@@ -1,10 +1,20 @@
 """TPMS (Tire Pressure Monitoring System) BLE advertisement parser."""
 
 import hashlib
+import re
 import struct
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
 from adwatch.registry import register_parser
+
+
+# Company ID 0x0001 is not exclusive to TPMS sensors. iBBQ-family BBQ
+# thermometers carry no real SIG company ID: their manufacturer data starts
+# with a sub-opcode byte (0x01 = live temperatures) plus a 0x00 header byte,
+# which the stack reads back as company ID 0x0001. Without this guard TPMS
+# invents pressure/temperature values for a cooking probe. See
+# apk-ble-hunting/reports/{easybbq,bbqgo}_passive.md and plugins/ibbq.py.
+_NOT_TPMS_NAME_RE = re.compile(r"^(iBBQ|xBBQ|GrillEye)")
 
 
 @register_parser(
@@ -18,6 +28,9 @@ from adwatch.registry import register_parser
 class TPMSParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         if not raw.manufacturer_data or len(raw.manufacturer_data) < 2:
+            return None
+
+        if raw.local_name and _NOT_TPMS_NAME_RE.match(raw.local_name):
             return None
 
         payload = raw.manufacturer_payload
