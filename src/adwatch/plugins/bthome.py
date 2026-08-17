@@ -1,12 +1,40 @@
-"""BTHome v2 BLE advertisement parser."""
+"""BTHome v1/v2 BLE advertisement parser.
+
+Object table and the v1 framing were cross-checked against
+``reports/watchflower_passive.md`` — WatchFlower is open source, so its
+``src/src/device_sensor_advertisement.cpp:561-858`` is ground truth rather
+than inference.
+
+* **v2** rides on service UUID ``0xFCD2``.  Byte 0 is a device-info byte:
+  bit 0 = encrypted, bits 5-7 = version.  Objects follow with no per-object
+  prefix.
+* **v1** rides on ``0x181C`` (plain) or ``0x181E`` (encrypted).  There is no
+  device-info byte; each object is preceded by one prefix byte whose low 5
+  bits are the length and whose top 3 bits are the format.  WatchFlower reads
+  that byte and ignores both fields, taking the length from its own object
+  table — this parser does the same, so a wrong prefix cannot desynchronise
+  the loop.
+
+Encrypted BTHome (``0x181E``, or the v2 info-byte bit 0) is detected and
+rejected rather than decoded.
+"""
 
 import hashlib
 import struct
 
 from adwatch.models import RawAdvertisement, ParseResult
-from adwatch.registry import register_parser
+from adwatch.registry import register_parser, _normalize_uuid
 
 BTHOME_UUID = "fcd2"
+BTHOME_V1_UUID = "181c"
+BTHOME_V1_ENCRYPTED_UUID = "181e"
+BTHOME_SERVICE_UUIDS = (BTHOME_UUID, BTHOME_V1_UUID, BTHOME_V1_ENCRYPTED_UUID)
+
+_UUID_LOOKUP = {
+    _normalize_uuid(BTHOME_UUID): (2, False),
+    _normalize_uuid(BTHOME_V1_UUID): (1, False),
+    _normalize_uuid(BTHOME_V1_ENCRYPTED_UUID): (1, True),
+}
 
 BUTTON_EVENT_MAP = {
     0x00: "none",
@@ -56,8 +84,8 @@ OBJECT_DEFS = {
     0x22: ("moving", 1, "u", 1),
     0x23: ("occupancy", 1, "u", 1),
     0x2D: ("window", 1, "u", 1),
-    0x2E: ("humidity_flag", 1, "u", 1),
-    0x2F: ("moisture_flag", 1, "u", 1),
+    0x2E: ("humidity", 1, "u", 1),
+    0x2F: ("moisture", 1, "u", 1),
     0x3A: ("button_event", 1, "u", 1),
     0x3C: ("dimmer_event", 2, "u", 1),
     0x45: ("temperature_01", 2, "s", 0.1),
@@ -67,33 +95,58 @@ OBJECT_DEFS = {
 
 @register_parser(
     name="bthome",
-    service_uuid=BTHOME_UUID,
-    description="BTHome v2 sensor advertisements",
-    version="1.0.0",
+    service_uuid=BTHOME_SERVICE_UUIDS,
+    description="BTHome v1/v2 sensor advertisements",
+    version="1.1.0",
     core=False,
 )
 class BTHomeParser:
-    def parse(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.service_data or BTHOME_UUID not in raw.service_data:
+    @staticmethod
+    def _find_payload(raw: RawAdvertisement):
+        """Return (payload, version, uuid_is_encrypted) for the first BTHome
+        service-data entry, in FCD2 > 181C > 181E order."""
+        if not raw.service_data:
             return None
+        normalized = {}
+        for key, value in raw.service_data.items():
+            normalized.setdefault(_normalize_uuid(key), value)
+        for uuid, (version, enc) in _UUID_LOOKUP.items():
+            if uuid in normalized:
+                return normalized[uuid], version, enc
+        return None
 
-        data = raw.service_data[BTHOME_UUID]
+    def parse(self, raw: RawAdvertisement) -> ParseResult | None:
+        found = self._find_payload(raw)
+        if found is None:
+            return None
+        data, version, uuid_is_encrypted = found
+
         if len(data) < 2:
             return None
 
-        device_info = data[0]
-        version = (device_info >> 5) & 0x07
-        encrypted = bool(device_info & 0x01)
+        if version == 2:
+            device_info = data[0]
+            version = (device_info >> 5) & 0x07
+            if version != 2:
+                return None
+            if device_info & 0x01:
+                return None
+            offset = 1
+        else:
+            # v1: encryption is signalled by the service UUID itself.
+            if uuid_is_encrypted:
+                return None
+            offset = 0
 
-        if version != 2:
-            return None
-        if encrypted:
-            return None
-
-        metadata: dict[str, str | int | float | bool] = {}
-        offset = 1
+        metadata: dict[str, str | int | float | bool] = {"bthome_version": version}
 
         while offset < len(data):
+            if version == 1:
+                # Prefix byte: length = b & 0x1F, format = b >> 5. Both are
+                # deliberately ignored (WatchFlower Q_UNUSEDs them).
+                offset += 1
+                if offset >= len(data):
+                    break
             obj_id = data[offset]
             offset += 1
 
@@ -127,7 +180,8 @@ class BTHomeParser:
 
             metadata[name] = value * scale if scale != 1 else value
 
-        if not metadata:
+        # bthome_version alone is not a reading.
+        if len(metadata) <= 1:
             return None
 
         id_hash = hashlib.sha256(raw.mac_address.encode()).hexdigest()[:16]

@@ -405,8 +405,8 @@ class TestBTHomeBinarySensors:
         (0x22, "moving"),
         (0x23, "occupancy"),
         (0x2D, "window"),
-        (0x2E, "humidity_flag"),
-        (0x2F, "moisture_flag"),
+        # 0x2E / 0x2F are NOT binary flags — they are whole-percent uint8
+        # humidity and moisture (see TestBTHomeWatchflowerAudit).
     ])
     def test_binary_sensor_true(self, parser, obj_id, name):
         payload = bytes([DEVICE_INFO_V2, obj_id, 1])
@@ -486,3 +486,114 @@ class TestBTHomeRegistration:
         raw = make_raw(service_data={BTHOME_UUID: TEMP_PAYLOAD})
         matched = reg.match(raw)
         assert any(isinstance(p, BTHomeParser) for p in matched)
+
+
+class TestBTHomeWatchflowerAudit:
+    """Corrections from reports/watchflower_passive.md (open-source ground truth,
+    src/src/device_sensor_advertisement.cpp:561-858)."""
+
+    def test_object_2e_is_uint8_humidity(self):
+        """0x2E is humidity as a whole-percent uint8, not a flag."""
+        payload = bytes([DEVICE_INFO_V2, 0x2E, 0x37])
+        result = BTHomeParser().parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["humidity"] == 0x37
+        assert "humidity_flag" not in result.metadata
+
+    def test_object_2f_is_uint8_moisture(self):
+        """0x2F is moisture as a whole-percent uint8, not a flag."""
+        payload = bytes([DEVICE_INFO_V2, 0x2F, 0x2A])
+        result = BTHomeParser().parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["moisture"] == 0x2A
+        assert "moisture_flag" not in result.metadata
+
+    def test_object_45_is_tenth_degree_temperature(self):
+        payload = bytes([DEVICE_INFO_V2, 0x45]) + struct.pack("<h", 235)
+        result = BTHomeParser().parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert round(result.metadata["temperature_01"], 2) == 23.5
+
+
+class TestBTHomeV1:
+    """BTHome v1 rides on 0x181C (plain) / 0x181E (encrypted).
+
+    There is no device-info byte; each object is prefixed with a byte whose low
+    5 bits are the length and whose top 3 bits are the format.  WatchFlower
+    reads that byte and ignores it, taking the length from its own object
+    table — this parser does the same.
+    """
+
+    V1_UUID = "181c"
+    V1_ENCRYPTED_UUID = "181e"
+
+    @staticmethod
+    def _obj(obj_id, data, fmt=0):
+        prefix = ((fmt & 0x07) << 5) | ((len(data) + 1) & 0x1F)
+        return bytes([prefix, obj_id]) + data
+
+    def _parse(self, payload, uuid=None):
+        uuid = uuid or self.V1_UUID
+        return BTHomeParser().parse(make_raw(service_data={uuid: payload}))
+
+    def test_v1_temperature(self):
+        result = self._parse(self._obj(0x02, struct.pack("<h", 2345)))
+        assert result is not None
+        assert round(result.metadata["temperature"], 2) == 23.45
+        assert result.metadata["bthome_version"] == 1
+
+    def test_v1_battery(self):
+        result = self._parse(self._obj(0x01, bytes([97])))
+        assert result.metadata["battery"] == 97
+
+    def test_v1_multiple_objects(self):
+        payload = (
+            self._obj(0x00, bytes([9]))
+            + self._obj(0x01, bytes([88]))
+            + self._obj(0x02, struct.pack("<h", -1050))
+            + self._obj(0x03, struct.pack("<H", 5432))
+        )
+        result = self._parse(payload)
+        assert result.metadata["packet_id"] == 9
+        assert result.metadata["battery"] == 88
+        assert round(result.metadata["temperature"], 2) == -10.50
+        assert round(result.metadata["humidity"], 2) == 54.32
+
+    def test_v1_prefix_byte_length_is_ignored(self):
+        """WatchFlower Q_UNUSEDs the prefix length; the table length wins."""
+        payload = bytes([0x00, 0x02]) + struct.pack("<h", 2345)
+        result = self._parse(payload)
+        assert round(result.metadata["temperature"], 2) == 23.45
+
+    def test_v1_encrypted_uuid_is_unsupported(self):
+        payload = self._obj(0x02, struct.pack("<h", 2345))
+        assert self._parse(payload, uuid=self.V1_ENCRYPTED_UUID) is None
+
+    def test_v2_still_reports_version_two(self):
+        payload = bytes([DEVICE_INFO_V2, 0x02]) + struct.pack("<h", 2345)
+        result = BTHomeParser().parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["bthome_version"] == 2
+
+    def test_v1_full_128bit_uuid_accepted(self):
+        payload = self._obj(0x01, bytes([50]))
+        result = self._parse(payload, uuid="0000181c-0000-1000-8000-00805f9b34fb")
+        assert result.metadata["battery"] == 50
+
+    def test_v1_too_short_returns_none(self):
+        assert self._parse(b"\x02") is None
+
+    def test_registry_matches_all_three_uuids(self):
+        from adwatch.registry import ParserRegistry, register_parser
+        from adwatch.plugins.bthome import BTHOME_SERVICE_UUIDS
+
+        assert set(BTHOME_SERVICE_UUIDS) == {"fcd2", "181c", "181e"}
+
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="bthome", service_uuid=BTHOME_SERVICE_UUIDS,
+            description="BTHome", version="1.0.0", core=False, registry=registry,
+        )
+        class _P(BTHomeParser):
+            pass
+
+        for uuid in ("fcd2", "181c", "181e"):
+            ad = make_raw(service_data={uuid: b"\x40\x01\x32"})
+            assert len(registry.match(ad)) == 1, uuid

@@ -19,6 +19,8 @@ import hashlib
 import re
 
 from adwatch.models import RawAdvertisement, ParseResult
+from adwatch.plugins.glucose_meters import GLUCOSE_METER_NAME_PATTERN
+from adwatch.plugins.nonin import NONIN_NAME_PATTERN, NONIN_SERVICE_UUID
 from adwatch.registry import register_parser
 
 
@@ -41,6 +43,13 @@ _NAME_RE = re.compile(
     r"^BLE[sS]mart_([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]*)"
 )
 
+# The SIG UUIDs above are vendor-agnostic, so a bare 0x1808/0x1810/... hit is a
+# weak signal. When another vendor's plugin owns the advertised name (e.g. the
+# Roche/Nipro/ForaCare glucose meters in glucose_meters.py), don't double-claim
+# the sighting on the SIG UUID alone.
+_FOREIGN_NAME_RE = re.compile(GLUCOSE_METER_NAME_PATTERN)
+_FOREIGN_NONIN_NAME_RE = re.compile(NONIN_NAME_PATTERN, re.IGNORECASE)
+
 
 @register_parser(
     name="omron",
@@ -61,6 +70,17 @@ class OmronParser:
 
         if not (sig_match or oxi_hit or cid_hit or name_match):
             return None
+
+        # SIG-UUID-only hit on a device another vendor's plugin identifies by
+        # name or by its own proprietary service UUID -> not an Omron device.
+        if not (cid_hit or oxi_hit or name_match):
+            if raw.local_name and (
+                _FOREIGN_NAME_RE.match(raw.local_name)
+                or _FOREIGN_NONIN_NAME_RE.match(raw.local_name)
+            ):
+                return None
+            if NONIN_SERVICE_UUID in normalized:
+                return None
 
         metadata: dict = {}
 

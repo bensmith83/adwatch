@@ -32,11 +32,17 @@ def make_raw(manufacturer_data=None, local_name=None, service_uuids=None, **kwar
 
 FAKE_COMPANY_BYTES = bytes([0x09, 0x09])  # arbitrary company ID prefix
 DISCONNECTED = -32768  # 0x8000 signed = probe disconnected
+NO_PROBE = -10  # 0xFFF6 -- documented iBBQ "probe absent" sentinel
+
+# iBBQ manufacturer_data carries a 10-byte header before the probe fields:
+# sub-opcode(1) + header(2) + flag(1) + device MAC(6). See
+# apk-ble-hunting/reports/{easybbq,bbqgo}_passive.md and plugins/ibbq.py.
+IBBQ_HEADER = bytes([0x01, 0x00, 0x00, 0x00]) + b"\xff\xee\xdd\xcc\xbb\xaa"
 
 
 def _build_ibbq(*probes_raw):
-    """Build manufacturer_data for iBBQ: 2-byte company + 2 bytes per probe (LE signed)."""
-    data = FAKE_COMPANY_BYTES
+    """Build manufacturer_data for iBBQ: 10-byte header + 2 bytes per probe (LE signed)."""
+    data = IBBQ_HEADER
     for val in probes_raw:
         data += struct.pack("<h", val)
     return data
@@ -103,6 +109,15 @@ class TestIBBQProbes:
         result = parser.parse(raw)
         assert result.metadata["probe_1"] == -5.0
 
+    def test_no_probe_sentinel(self, parser):
+        """0xFFF6 (-10 raw) is the documented iBBQ probe-absent sentinel."""
+        data = _build_ibbq(250, NO_PROBE)
+        raw = make_raw(manufacturer_data=data, local_name="iBBQ")
+        result = parser.parse(raw)
+        assert result.metadata["probe_count"] == 2
+        assert result.metadata["probe_1"] == 25.0
+        assert result.metadata["probe_2"] is None
+
 
 # --- IBS-TH Parsing ---
 
@@ -154,7 +169,7 @@ class TestInkbirdFrameFields:
     def test_raw_payload_hex(self, parser):
         raw = make_raw(manufacturer_data=IBBQ_ONE_PROBE, local_name="iBBQ")
         result = parser.parse(raw)
-        expected = IBBQ_ONE_PROBE[2:].hex()
+        expected = IBBQ_ONE_PROBE[10:].hex()
         assert result.raw_payload_hex == expected
 
     def test_ibs_th_raw_payload_hex(self, parser):
@@ -200,8 +215,13 @@ class TestInkbirdRejectsInvalid:
         assert parser.parse(raw) is None
 
     def test_too_short_ibbq(self, parser):
-        # Need at least company ID (2) + 1 probe (2) = 4 bytes
+        # Need at least the 10-byte header + 1 probe (2) = 12 bytes
         raw = make_raw(manufacturer_data=FAKE_COMPANY_BYTES + b"\x01", local_name="iBBQ")
+        assert parser.parse(raw) is None
+
+    def test_header_only_ibbq(self, parser):
+        # 10-byte header with no probe fields is not a reading
+        raw = make_raw(manufacturer_data=IBBQ_HEADER, local_name="iBBQ")
         assert parser.parse(raw) is None
 
     def test_too_short_ibs_th(self, parser):

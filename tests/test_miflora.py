@@ -109,10 +109,10 @@ class TestMifloraTemperature:
 
 class TestMifloraLux:
     def test_illuminance_parsing(self, parser):
-        """MiFlora object 0x0007: illuminance as uint24 LE."""
+        """MiFlora object 0x1007: illuminance as uint24 LE."""
         # 1500 lux
         obj_data = int.to_bytes(1500, 3, "little")
-        raw = make_miflora_raw(object_id=0x0007, object_data=obj_data)
+        raw = make_miflora_raw(object_id=0x1007, object_data=obj_data)
         result = parser.parse(raw)
 
         assert result is not None
@@ -120,7 +120,7 @@ class TestMifloraLux:
 
     def test_zero_lux(self, parser):
         obj_data = int.to_bytes(0, 3, "little")
-        raw = make_miflora_raw(object_id=0x0007, object_data=obj_data)
+        raw = make_miflora_raw(object_id=0x1007, object_data=obj_data)
         result = parser.parse(raw)
 
         assert result is not None
@@ -129,9 +129,9 @@ class TestMifloraLux:
 
 class TestMifloraMoisture:
     def test_moisture_parsing(self, parser):
-        """MiFlora object 0x0008: soil moisture as uint8 %."""
+        """MiFlora object 0x1008: soil moisture as uint8 %."""
         obj_data = bytes([45])
-        raw = make_miflora_raw(object_id=0x0008, object_data=obj_data)
+        raw = make_miflora_raw(object_id=0x1008, object_data=obj_data)
         result = parser.parse(raw)
 
         assert result is not None
@@ -140,9 +140,9 @@ class TestMifloraMoisture:
 
 class TestMifloraConductivity:
     def test_conductivity_parsing(self, parser):
-        """MiFlora object 0x0009: soil conductivity as uint16 LE."""
+        """MiFlora object 0x1009: soil conductivity as uint16 LE."""
         obj_data = struct.pack("<H", 350)
-        raw = make_miflora_raw(object_id=0x0009, object_data=obj_data)
+        raw = make_miflora_raw(object_id=0x1009, object_data=obj_data)
         result = parser.parse(raw)
 
         assert result is not None
@@ -172,7 +172,7 @@ class TestMifloraCommon:
     def test_parser_name_is_mibeacon(self, parser):
         """MiFlora is handled by the generic mibeacon parser."""
         obj_data = bytes([50])
-        raw = make_miflora_raw(object_id=0x0008, object_data=obj_data)
+        raw = make_miflora_raw(object_id=0x1008, object_data=obj_data)
         result = parser.parse(raw)
 
         assert result.parser_name == "mibeacon"
@@ -180,7 +180,7 @@ class TestMifloraCommon:
 
     def test_device_class_sensor(self, parser):
         obj_data = bytes([50])
-        raw = make_miflora_raw(object_id=0x0008, object_data=obj_data)
+        raw = make_miflora_raw(object_id=0x1008, object_data=obj_data)
         result = parser.parse(raw)
 
         assert result.device_class == "sensor"
@@ -189,7 +189,7 @@ class TestMifloraCommon:
         """When MAC is present in the MiBeacon frame, hash should use it."""
         obj_data = bytes([50])
         raw = make_miflora_raw(
-            object_id=0x0008,
+            object_id=0x1008,
             object_data=obj_data,
             mac_address="C4:7C:8D:6A:12:34",
         )
@@ -203,7 +203,7 @@ class TestMifloraCommon:
         """When no MAC in frame, uses raw.mac_address for identity."""
         obj_data = bytes([50])
         raw = make_miflora_raw(
-            object_id=0x0008,
+            object_id=0x1008,
             object_data=obj_data,
             has_mac=False,
             mac_address="AA:BB:CC:DD:EE:FF",

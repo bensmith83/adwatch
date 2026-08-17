@@ -12,8 +12,18 @@ from adwatch.models import RawAdvertisement, ParseResult
 from adwatch.registry import register_parser
 
 
+# The bare-serial branch (8 alphanumerics containing a digit) is a catch-all,
+# so it has to yield to vendors with a specific claim on the same shape.
+# Ecowitt / Ambient Weather consoles advertise e.g. `WS1900AB`, `HP1012CD`
+# (see plugins/ecowitt.py and reports/ecowitt-wsview_passive.md).  The
+# `AMBWeather-xxxx` form is 10+ characters and contains a dash, so it can
+# never reach this 8-alphanumeric branch and needs no exclusion.
+_CATCH_ALL_EXCLUSIONS = r"(?!(?i:WS19|HP10))"
+
 _MAYTRONICS_NAME_RE = re.compile(
-    r"^(IoT_PWS|maytronics00|may|[Mm][A-Za-z0-9]_(?:PWS|pws)|[A-Za-z0-9]{8}$|[0-9a-fA-F]{12}$)"
+    r"^(IoT_PWS|maytronics00|may|[Mm][A-Za-z0-9]_(?:PWS|pws)|"
+    + _CATCH_ALL_EXCLUSIONS
+    + r"(?=[A-Za-z0-9]*[0-9])[A-Za-z][A-Za-z0-9]{7}$|[0-9a-fA-F]{12}$)"
 )
 
 

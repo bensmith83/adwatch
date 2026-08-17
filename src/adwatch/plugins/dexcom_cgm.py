@@ -8,6 +8,18 @@ Dexcom G6 and G7 transmitters advertise passively with distinct identifiers:
 - G7: community-documented service UUID f8083532-849e-531c-c594-30f1f86a4ea5
   + local name prefix `DXCM` (R8-obfuscated in the APK, see
   apk-ble-hunting/reports/dexcom-g7_passive.md).
+
+The G7 fingerprint is shared by the whole G7-class family: per
+apk-ble-hunting/reports/dexcom-stelo_passive.md the OTC Stelo biosensor reuses
+the G7 transmitter stack (`com.dexcom.coresdk.transmitterG7`) and discovers
+purely on that same advertising service UUID — no name filter, no company-ID
+filter — so a passive scanner cannot tell G7 / ONE+ / Stelo apart. That report
+also documents Dexcom's SIG company ID 0x00D0; the app never filters on it, but
+manufacturer data bearing it is still a valid vendor presence signal, so it is
+accepted as a (model-less) match here.
+
+Glucose values are never advertised by any of these: they arrive over GATT
+after the EC-JPAKE / PKI handshake seeded by the on-sensor pairing code.
 """
 
 import hashlib
@@ -17,9 +29,14 @@ from adwatch.models import ParseResult, RawAdvertisement
 from adwatch.registry import _normalize_uuid, register_parser
 
 
+DEXCOM_COMPANY_ID = 0x00D0  # "Dexcom, Inc."
+
 DEXCOM_G6_SERVICE_UUID = "febc"
 DEXCOM_G7_SERVICE_UUID = "f8083532-849e-531c-c594-30f1f86a4ea5"
 DEVICE_INFO_UUID = "180a"
+
+# The G7 advertising service UUID is shared across the G7-class sensors.
+G7_PRODUCT_FAMILY = "G7-class (G7 / ONE+ / Stelo)"
 
 _G6_NAME_RE = re.compile(r"^Dexcom([A-Z0-9]{2})$")
 _G7_NAME_RE = re.compile(r"^DXCM")
@@ -30,10 +47,11 @@ _G7_NORMALIZED = _normalize_uuid(DEXCOM_G7_SERVICE_UUID)
 
 @register_parser(
     name="dexcom_cgm",
+    company_id=DEXCOM_COMPANY_ID,
     service_uuid=[DEXCOM_G6_SERVICE_UUID, DEXCOM_G7_SERVICE_UUID],
     local_name_pattern=r"^(Dexcom[A-Z0-9]{2}$|DXCM)",
     description="Dexcom CGM transmitter advertisements",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class DexcomCgmParser:
@@ -55,10 +73,16 @@ class DexcomCgmParser:
         elif _G7_NAME_RE.match(name):
             model = model or "G7"
 
-        if model is None:
+        cid_hit = raw.company_id == DEXCOM_COMPANY_ID
+
+        if model is None and not cid_hit:
             return None
 
-        metadata: dict = {"model": model}
+        metadata: dict = {"vendor": "Dexcom", "model": model or "unknown"}
+        if model in ("G7",):
+            metadata["product_family"] = G7_PRODUCT_FAMILY
+        if cid_hit:
+            metadata["company_id"] = DEXCOM_COMPANY_ID
         if raw.local_name:
             metadata["device_name"] = raw.local_name
         if serial_tail:
@@ -77,7 +101,7 @@ class DexcomCgmParser:
             beacon_type="dexcom_cgm",
             device_class="medical",
             identifier_hash=id_hash,
-            raw_payload_hex="",
+            raw_payload_hex=raw.manufacturer_data.hex() if raw.manufacturer_data else "",
             metadata=metadata,
         )
 
