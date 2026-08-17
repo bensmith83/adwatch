@@ -1,54 +1,42 @@
 # Medical EKG Devices
 
-## Overview
+> **⚠️ Status: retracted (2026-08-17).** The `EKG-XX-XX-XX` local-name family
+> this doc described is **not a medical ECG monitor**. It is a Fellow "EKG"
+> smart kettle (Stagg EKG / Corvo EKG line — "Electric Kettle Gooseneck") in
+> Espressif Wi-Fi-provisioning mode. See [fellow.md](fellow.md) for the
+> correct decoder and the evidence, and [alivecor-ekg.md](alivecor-ekg.md) for
+> the genuine AliveCor Kardia identification.
+>
+> In short: the "custom service UUID" `021a9004-0382-4aea-bff4-6b3f1c5adfb4`
+> is the Espressif BLE provisioning service (any ESP32 product in setup mode
+> advertises it), and the second UUID this doc listed,
+> `7aebf330-6cb1-46e4-b23b-7cc2262c605e`, is Fellow's aux service UUID from
+> the decompiled Fellow app. The "medical device nearby" inference drawn from
+> these sightings was wrong; the original attribution was a guess from the
+> "EKG" token, as this doc's own "Known Manufacturers" section admitted.
+>
+> Parsers: adwatch `alivecor_ekg.py` v1.2.0 no longer claims `EKG-`; the
+> family moved to `fellow.py` v1.1.0. NearSight `AliveCorParser` v2 is
+> Kardia-only; `FellowKettleParser` owns `EKG-`. The example payload below is
+> kept only so the misattribution is searchable.
 
-Portable EKG/ECG monitors broadcast BLE advertisements to enable pairing with companion mobile apps. These devices are identified by their `local_name` pattern (`EKG-XX-XX-XX`) which encodes part of the device's MAC address.
+## Original text (deprecated — see retraction above)
 
-adwatch detects these via advertisement local name only — no GATT connection is made. The presence of an EKG device is itself an interesting signal (medical device nearby).
+Portable EKG/ECG monitors broadcast BLE advertisements to enable pairing with companion mobile apps. These devices were believed to be identified by their `local_name` pattern (`EKG-XX-XX-XX`) which encodes part of the device's MAC address.
 
-## BLE Advertisement Format
-
-### Identification
+### Identification (as originally documented)
 
 - **Local name pattern:** `^EKG-` (regex)
 - **Example names:** `EKG-99-23-4c`, `EKG-A1-B2-C3`
-- **Custom service UUIDs advertised:** `021a9004-0382-4aea-bff4-6b3f1c5adfb4`, `7aebf330-6cb1-46e4-b23b-7cc2262c605e`
+- **Service UUIDs advertised:** `021a9004-0382-4aea-bff4-6b3f1c5adfb4` (= Espressif provisioning), `7aebf330-6cb1-46e4-b23b-7cc2262c605e` (= Fellow aux)
 
-### What We Can Parse from Advertisements
+### Genuine medical ECG signals (for future work)
 
-| Field | Source | Notes |
-|-------|--------|-------|
-| Device presence | local_name match | EKG device is nearby |
-| Partial MAC | local_name suffix | `EKG-99-23-4c` → MAC ends in `99:23:4C` |
-| Service UUIDs | service_uuids list | Custom UUIDs identify the manufacturer/protocol |
+If real portable ECG monitors are to be catalogued, start from vendor-unique
+signals rather than the "EKG" token:
 
-### What We Cannot Parse (requires GATT)
-
-- WiFi SSID the device is connected to
-- IP address
-- Firmware version
-- Actual EKG readings
-
-## Identity Hashing
-
-```
-identifier = SHA256("{mac}:{local_name}")[:16]
-```
-
-The local_name contains a stable device identifier (MAC suffix), so this produces a consistent hash for the same physical device even across BLE MAC rotations.
-
-## Detection Significance
-
-- Indicates a medical monitoring device is nearby
-- Could indicate a healthcare setting or a person with a cardiac condition
-- The custom service UUIDs (`021a9004-...`) could help identify the specific manufacturer
-
-## Known Manufacturers
-
-The custom service UUID base `021a9004-0382-4aea-bff4-6b3f1c5adfb4` has been observed on consumer EKG monitors. Exact manufacturer identification requires further research.
-
-## Future Work
-
-- Identify specific EKG manufacturers from service UUID patterns
-- Determine if manufacturer_data contains model information
-- Catalog additional medical device advertisement patterns (pulse oximeters, blood pressure monitors, etc.)
+- AliveCor Kardia: `ac060001-328c-a28f-9846-5a8aa212661b` (KardiaMobile 6L),
+  `ac010001-328c-a28f-9846-5a8aa212661b` (KardiaCard), names
+  `KardiaMobile_*` / `KardiaCard_*` — [alivecor-ekg.md](alivecor-ekg.md)
+- Wellue / Viatom DuoEK, Eko stethoscopes, etc. — see the research-repo
+  plugins `wellue_viatom.py`, `eko_stethoscope.py`
