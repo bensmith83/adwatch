@@ -201,3 +201,42 @@ class TestRenphoEnrichedCatalog:
         assert result.metadata.get("embedded_mac") == "11:22:33:44:55:66"
         expected = hashlib.sha256(b"renpho:11:22:33:44:55:66").hexdigest()[:16]
         assert result.identifier_hash == expected
+
+
+class TestRenphoGenericUuidGating:
+    """A bare generic 16-bit UUID must not out-claim an explicit foreign CID.
+
+    `fff0` / `ffe0` / `abf0` are generic Chinese-module service UUIDs shared
+    with unrelated vendors (e.g. the iTENS TENS unit advertises `fff0` under
+    company ID 0x3045). A UUID-only hit that is contradicted by a foreign
+    manufacturer company ID is not a Qingniu scale.
+    """
+
+    def test_generic_uuid_with_foreign_cid_is_rejected(self):
+        # iTENS shape: CID 0x3045 (raw `45 30` LE) + fff0/ffb0.
+        ad = _make_ad(
+            manufacturer_data=bytes.fromhex("4530") + b"EM12345",
+            service_uuids=["fff0", "ffb0"],
+        )
+        assert RenphoParser().parse(ad) is None
+
+    def test_generic_uuid_without_manufacturer_data_still_matches(self):
+        ad = _make_ad(service_uuids=["fff0"])
+        assert RenphoParser().parse(ad) is not None
+
+    def test_catalog_name_survives_a_foreign_cid(self):
+        ad = _make_ad(
+            local_name="Yolanda-CS20H",
+            manufacturer_data=bytes.fromhex("4530") + b"\x01",
+            service_uuids=["fff0"],
+        )
+        result = RenphoParser().parse(ad)
+        assert result is not None
+        assert result.metadata["brand"] == "Yolanda"
+
+    def test_own_cid_still_matches_with_generic_uuid(self):
+        ad = _make_ad(
+            manufacturer_data=struct.pack("<H", 0x0157) + b"\x00\x00\x10",
+            service_uuids=["fff0"],
+        )
+        assert RenphoParser().parse(ad) is not None

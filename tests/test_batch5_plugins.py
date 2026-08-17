@@ -142,6 +142,34 @@ def test_maytronics_name_serial():
     assert result.metadata["serial_number"] == "ABC12345"
 
 
+def test_maytronics_bare_serial_requires_a_digit():
+    """The bare-8-char-name rule is a catch-all heuristic.
+
+    Per maytronics-app_passive.md the app validates a bare serial as
+    "length 8, first char a letter, index 7 not a digit, no spaces"
+    (example `A1234ABC`). Purely alphabetic 8-char names are not plausible
+    factory serials and collided with real device names such as the
+    Neurovalens Modius bootloader name `ModiusBL`.
+    """
+    from adwatch.plugins.maytronics import MaytronicsParser
+    assert MaytronicsParser().parse(_make_ad(local_name="ModiusBL")) is None
+    assert MaytronicsParser().parse(_make_ad(local_name="StressBL")) is None
+    assert MaytronicsParser().parse(_make_ad(local_name="VESTALBL")) is None
+
+
+def test_maytronics_report_example_serial_still_matches():
+    from adwatch.plugins.maytronics import MaytronicsParser
+    result = MaytronicsParser().parse(_make_ad(local_name="A1234ABC"))
+    assert result
+    assert result.metadata["serial_number"] == "A1234ABC"
+
+
+def test_maytronics_named_beacons_still_match():
+    from adwatch.plugins.maytronics import MaytronicsParser
+    for name in ("IoT_PWS", "maytronics00", "may", "MX_PWS"):
+        assert MaytronicsParser().parse(_make_ad(local_name=name)) is not None, name
+
+
 def test_maytronics_mfr_layout():
     from adwatch.plugins.maytronics import MaytronicsParser
     # [model=0x6C][proto=1][skip=0][serial_lo=0x12][serial_hi=0x34][mu_ver=5]

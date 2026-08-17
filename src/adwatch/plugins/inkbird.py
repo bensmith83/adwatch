@@ -6,7 +6,15 @@ import struct
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
 from adwatch.registry import register_parser
 
+# iBBQ manufacturer_data layout (apk-ble-hunting easybbq/bbqgo passive
+# reports; see plugins/ibbq.py for the full table): a 10-byte header --
+# sub-opcode(1) + header(2) + flag(1) + device MAC(6) -- then 2 bytes per
+# probe. The first 2 header bytes are what the BLE stack reports as the
+# "company ID"; these devices carry no real SIG company ID.
+IBBQ_HEADER_LEN = 10
+# 0x8000 and the documented 0xFFF6 / 0xFFFF sentinels all mean "no probe".
 DISCONNECTED_VALUE = -32768  # 0x8000 signed = probe not connected
+IBBQ_ABSENT_VALUES = (DISCONNECTED_VALUE, -10, -1)
 MIN_IBBQ_PAYLOAD = 2  # at least 1 probe (2 bytes)
 MIN_IBS_TH_PAYLOAD = 4  # temp (2) + humidity (2)
 
@@ -35,10 +43,10 @@ class InkbirdParser:
         return None
 
     def _parse_ibbq(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.manufacturer_data or len(raw.manufacturer_data) < 2:
+        if not raw.manufacturer_data or len(raw.manufacturer_data) < IBBQ_HEADER_LEN:
             return None
 
-        payload = raw.manufacturer_data[2:]
+        payload = raw.manufacturer_data[IBBQ_HEADER_LEN:]
         if len(payload) < MIN_IBBQ_PAYLOAD:
             return None
 
@@ -50,7 +58,7 @@ class InkbirdParser:
 
         for i in range(probe_count):
             value = struct.unpack_from("<h", payload, i * 2)[0]
-            if value == DISCONNECTED_VALUE:
+            if value in IBBQ_ABSENT_VALUES:
                 metadata[f"probe_{i + 1}"] = None
             else:
                 metadata[f"probe_{i + 1}"] = value / 10.0

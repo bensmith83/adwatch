@@ -13,6 +13,7 @@ from adwatch.plugins.beurer import (
     BEURER_SCALE_UUID, BEURER_BP_OXIMETER_UUID,
     BEURER_CUSTOM_128_UUID,
     ALL_BEURER_UUIDS,
+    BEURER_NAME_PATTERN,
 )
 
 
@@ -111,3 +112,46 @@ class TestBeurerBasics:
         result = BeurerParser().parse(_make_ad(local_name="BM27"))
         assert result.parser_name == "beurer"
         assert result.device_class == "medical"
+
+
+class TestBeurerNamePrefixGating:
+    """The two-letter model prefixes must be followed by a digit.
+
+    `NAME_FAMILY_RULES` already requires `^PO\\d` etc.; without the same
+    constraint on the match gate, `^PO` claimed unrelated devices such as the
+    Therabody `PowerDot2-…` EMS pod (and would claim `Polar`, `Pod`, …).
+    """
+
+    def test_powerdot_is_not_a_beurer(self):
+        assert BeurerParser().parse(_make_ad(local_name="PowerDot2-4F21")) is None
+
+    def test_polar_is_not_a_beurer(self):
+        assert BeurerParser().parse(_make_ad(local_name="Polar H10")) is None
+
+    def test_asics_is_not_a_beurer(self):
+        assert BeurerParser().parse(_make_ad(local_name="ASICS Runner")) is None
+
+    def test_real_model_codes_still_match(self):
+        for name in ("BM27", "BC54W", "BF700", "AS99", "GL50", "PO60"):
+            result = BeurerParser().parse(_make_ad(local_name=name))
+            assert result is not None, name
+            assert result.metadata["model_code"] == name
+
+    def test_word_prefixes_still_match_without_a_digit(self):
+        for name in ("DELUXE600", "PREMIUM", "Beurer Scale"):
+            assert BeurerParser().parse(_make_ad(local_name=name)) is not None, name
+
+    def test_registry_pattern_matches_the_parse_gate(self):
+        registry = ParserRegistry()
+
+        @register_parser(
+            name="beurer", company_id=BEURER_COMPANY_ID,
+            service_uuid=ALL_BEURER_UUIDS,
+            local_name_pattern=BEURER_NAME_PATTERN,
+            description="Beurer", version="1.0.0", core=False, registry=registry,
+        )
+        class _P(BeurerParser):
+            pass
+
+        assert registry.match(_make_ad(local_name="PowerDot2-4F21")) == []
+        assert len(registry.match(_make_ad(local_name="BM27"))) == 1

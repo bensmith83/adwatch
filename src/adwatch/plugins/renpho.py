@@ -28,6 +28,12 @@ QINGNIU_COMPANY_ID = 0x0157
 # Service UUIDs across hardware vintages.
 QINGNIU_SERVICE_UUIDS = ["fff0", "ffe0", "abf0", "181d"]
 
+# None of these are Qingniu-specific: `fff0`/`ffe0`/`abf0` are generic
+# Chinese-module service UUIDs and `181d` is the vendor-agnostic SIG Weight
+# Scale profile. A hit on one of these alone is therefore only trusted when
+# nothing else in the advertisement contradicts it — see `parse()`.
+_GENERIC_SERVICE_UUIDS = frozenset(QINGNIU_SERVICE_UUIDS)
+
 # From oo0oOO0/renpho0Orenphorenphoo.java:19. The CR-terminated
 # QN-WristBand variant is intentional in the source.
 _NAME_CATALOG = (
@@ -90,6 +96,13 @@ class RenphoParser:
 
         name_match = _NAME_RE.match(local_name)
         if not (cid_hit or uuid_hit or name_match):
+            return None
+
+        # A generic-UUID-only hit is out-claimed by an explicit foreign vendor
+        # company ID: e.g. the iTENS TENS unit advertises `fff0` under CID
+        # 0x3045, which is a positive signal for *that* vendor and evidence
+        # against this being a Qingniu scale.
+        if uuid_hit and not cid_hit and not name_match and cid is not None:
             return None
 
         metadata: dict = {}

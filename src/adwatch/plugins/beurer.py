@@ -66,7 +66,13 @@ FAMILY_UUID_HINT = {
     "pulse_oximeter": BEURER_BP_OXIMETER_UUID,
 }
 
-_NAME_RE = re.compile(r"^(BM|BC|BF|AS|GL|PO|DELUXE|PREMIUM|SERIES|ELITE|SENSE|Beurer)", re.IGNORECASE)
+# The two-letter model prefixes must be followed by a digit, matching
+# NAME_FAMILY_RULES above. Without the digit, `^PO` claimed unrelated devices
+# (Therabody `PowerDot2-…`, `Polar`, …) and `^AS` claimed `ASICS`.
+BEURER_NAME_PATTERN = (
+    r"(?i)^((BM|BC|BF|AS|GL|PO)\d|DELUXE|PREMIUM|SERIES|ELITE|SENSE|Beurer)"
+)
+_NAME_RE = re.compile(BEURER_NAME_PATTERN)
 
 
 def _extract_mac_from_scale_mfr(payload: bytes) -> str | None:
@@ -99,7 +105,7 @@ def _extract_mac_from_scale_mfr(payload: bytes) -> str | None:
     name="beurer",
     company_id=BEURER_COMPANY_ID,
     service_uuid=ALL_BEURER_UUIDS,
-    local_name_pattern=r"(?i)^(BM|BC|BF|AS|GL|PO|DELUXE|PREMIUM|SERIES|ELITE|SENSE|Beurer)",
+    local_name_pattern=BEURER_NAME_PATTERN,
     description="Beurer HealthManager (BP / scales / glucose / oximeter / ECG)",
     version="1.0.0",
     core=False,

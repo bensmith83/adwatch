@@ -15,6 +15,7 @@ import hashlib
 import re
 
 from adwatch.models import RawAdvertisement, ParseResult
+from adwatch.plugins.resound import GN_HEARING_COMPANY_IDS, RESOUND_NAME_PATTERN
 from adwatch.registry import register_parser
 
 
@@ -22,6 +23,11 @@ ASHA_SERVICE_UUID = "fdf0"
 DEMANT_COMPANY_ID = 0x01D7  # Demant A/S — Oticon parent
 
 _OTICON_NAME_RE = re.compile(r"^Oticon\s+(\S+)\s*([LRlr])?$")
+
+# ASHA 0xFDF0 is SIG-allocated for every ASHA hearing aid, so the generic branch
+# below must stand down when the advert already attributes the aid to another
+# vendor's plugin (see plugins/resound.py).
+_FOREIGN_HEARING_AID_NAME_RE = re.compile(RESOUND_NAME_PATTERN, re.IGNORECASE)
 
 
 @register_parser(
@@ -47,6 +53,10 @@ class OticonParser:
         # confirms or Demant CID is present.
         is_confirmed_oticon = bool(name_match) or cid_hit
         if asha_hit and not is_confirmed_oticon:
+            if raw.local_name and _FOREIGN_HEARING_AID_NAME_RE.search(raw.local_name):
+                return None
+            if raw.company_id in GN_HEARING_COMPANY_IDS:
+                return None
             # Generic ASHA hit — return a presence record but mark uncertain.
             return ParseResult(
                 parser_name="oticon",
