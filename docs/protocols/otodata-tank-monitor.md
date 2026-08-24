@@ -91,6 +91,21 @@ differ per unit (`32 15 ad`, `d8 71 ae`, `e6 73 35`) and are the only
 per-unit-distinguishing bytes in the whole family; they are surfaced as an
 opaque `unit_bytes_hex`, not claimed as a serial.
 
+### Additional captures (2026-08-24 sweep)
+
+Three more units on 2026-08-23 (7 records), all claimed by the shipped
+parser, all consistent with the layouts above:
+
+- `OTOSTAT` `01 3414 3414 8abc0400 08 c600 01 01000000` — value 5172
+  mirrored, the shared config word `0x0004BC8A` again, per-unit constant
+  `0x00C6` (198); a second unit read 5025 mirrored with constant `0x00D0`
+  (208). Both constants are new, extending the 184 / 181 / 173 set.
+- `OTOTELE` `02 00 6d0a 0000 3a7a0618 01 00 ff 00000000` — the 32-bit LE
+  word at bytes 15–18 reads `0x18067A3A`, 1,281 above the 2026-07-31
+  `0x18067539`, again consistent with a shared, slowly advancing
+  clock/epoch counter rather than an identity.
+- `OTO3281` per-unit bytes `ce 91 bc` — a fourth distinct value.
+
 ## What We Cannot Parse
 
 - Tank level percentage (the older name-based advertisement carries
