@@ -37,13 +37,80 @@ Best match strategy: `company_id=0x0087` (catches all Garmin devices regardless 
 ```
 Offset  Length  Field            Description
 0       2       Company ID       0x8700 (LE) = 0x0087
-2       1       Message Type     Advertisement type identifier
-3       var     Payload          Type-specific data
+2       var     Payload          Layout-specific (see below)
 ```
 
-The manufacturer data format varies by device and message type. Common patterns:
-- Byte 2 often indicates connection state or advertising mode
-- Remaining bytes contain device-specific identifiers
+The manufacturer data format varies by device family. The named
+sport-watch advertisement carries a short body (often one byte) next to
+the local name; the dash cams carry their own 8-byte body (see
+`garmin-dashcam.md`); and the nameless frames below carry the product
+number.
+
+### Nameless product-ID frame (2026-08-29 sweep)
+
+A Garmin device advertising with **no local name** — the common case for
+a watch that is already paired to its owner's phone — sends one of two
+short frames whose first two post-CID bytes are the device's FIT-profile
+**`garmin_product` number, big-endian**:
+
+```
+87 00 | PP PP                   2-byte frame            87 00 11 b8  → 4536 = fenix8
+87 00 | PP PP | 00 00 00        5-byte, zero-padded     87 00 11 ae 00 00 00 → 4526 (not in the public enum)
+```
+
+The padded layout was seen only on units that also advertise Garmin's SIG
+member service UUID `0xFE1F` (19 units in one afternoon, 2026-08-28); the
+bare 2-byte layout appears with and without FE1F.
+
+Evidence for the reading: of the 24 distinct 2-byte values in the merged
+telemetry corpus, 13 map exactly onto Garmin's own FIT SDK enum and every
+one of them is a mainstream consumer watch —
+
+| Bytes | Number | FIT identifier |
+|-------|--------|----------------|
+| `0f 43` | 3907 | `fenix7x` |
+| `0f b8` | 4024 | `fr955` |
+| `10 a1` | 4257 | `fr265_large` |
+| `11 50` | 4432 | `fr165` |
+| `11 b8` | 4536 | `fenix8` |
+| `0c 36` | 3126 | `instinct_esports` |
+| `0c d2` | 3282 | `fr45` |
+| `09 7f` | 2431 | `fr235` |
+| `08 6e` | 2158 | `fr735xt` |
+| `0c 05` | 3077 | `fr245_music` |
+| `0f 96` | 3990 | `fr255_music` |
+| `0c 98` | 3224 | `vivoactive4_small` |
+| `11 4a` | 4426 | `vivoactive5` |
+
+— while the little-endian reading of the same bytes (0x360c, 0xb811, …)
+lands nowhere in the enum's range. The unmapped values (3393, 3491, 3534,
+3540, 3962, 4012, 4161, 4209, 4422, 4495, 4526, 4527) sit in the enum's
+gaps — the public enum lags regional SKUs and the newest releases (4526 /
+4527 fall between `rally_x10` 4525 and `fenix8_solar` 4532) — and one of
+them, 3540, was advertised by a unit named `CAD-BLE…` next to the Cycling
+Speed and Cadence service, i.e. a cadence sensor, so the number space is
+not watches-only.
+
+Parser behaviour (`garmin` v1.2): on the two layouts above the nameless
+path emits `product_id` (decimal), `product_id_hex`, `frame_layout`
+(`product_id` / `product_id_padded`) and, when the vendored enum knows the
+number, `product_name` (the SDK identifier, verbatim) with
+`product_name_source = fit_sdk_garmin_product` and `product_known = true`;
+an unknown number is reported with `product_known = false` and no name is
+invented. Other lengths, a non-zero tail on the 5-byte frame, and a zero
+number stay raw. A product number is per-model, never per-unit, so
+identity is unchanged (MAC-derived, no stable key). The legacy
+`message_type` key (first payload byte, decimal) is still emitted for
+continuity; on these frames it is simply the number's high byte.
+
+Enum source: Garmin FIT Python SDK, `garmin_fit_sdk/profile.py`, type
+`garmin_product` (fetched 2026-08-29; 496 entries), vendored as
+`GarminProductCatalog` in the app.
+
+Confidence: **high** on the reading (13/24 exact hits on popular models,
+zero hits little-endian); no in-corpus named unit has yet been captured
+alongside its product-ID frame, so a name↔number confirmation from a
+live capture remains the one missing check.
 
 ### Common Service UUIDs
 
