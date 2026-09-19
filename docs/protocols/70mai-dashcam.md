@@ -13,7 +13,7 @@ This parser surfaces the dashcam model (`A810 Plus`, `M500`, `Omni X800`, …) a
 | Signal | Value |
 |---|---|
 | Local name | `^70mai_.+_[0-9A-Fa-f]{4}$` |
-| Company ID | _absent_ — 70mai does not hold a SIG company ID. |
+| Company ID | `0x0909` — **70mai Co., Ltd.** in the Bluetooth SIG registry as of 2026-08 (the earlier note that 70mai held no CID is stale). One nameless 15-byte frame `09 09 e9 db b8 05 62 01 09 c2 8c 17 c8 59 b8` (1 unit, 4 sightings, 2026-08-25) was captured with no local name and no service UUIDs; the parser is still name-gated and does not claim it — layout unknown, revisit on a second unit. |
 | Service UUIDs | _none observed_ — connection-time only. |
 
 ### Local Name Format
@@ -43,4 +43,4 @@ Examples:
 - [70mai M500 user manual (PDF — SSID format)](https://object.pscloud.io/cms/cms/Uploads/file_0_427_166_0_0.pdf)
 - [alu.dog: Reverse engineering the 70mai Android app](https://alu.dog/posts/reverse-engineering-the-70mai-android-app/) — Wi-Fi/HTTP side, no BLE.
 - [DashCamTalk Omni X800 thread (confirms 4-hex serial on label)](https://dashcamtalk.com/forum/threads/unable-to-connect-to-70mai-omni-x800-4k-via-bluetooth-or-wi-fi.53252/)
-- [Bluetooth SIG company identifiers (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — 70mai not assigned.
+- [Bluetooth SIG company identifiers (YAML mirror)](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — `0x0909` = 70mai Co.,Ltd. (assigned since this doc was first written; checked 2026-08-26).
