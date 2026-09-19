@@ -19,10 +19,38 @@ prefix range).
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Service UUID | `0x0AF0` | Unregistered; shared across re-brands |
-| Company ID | Vendor-varying (`0x1EAB`, `0x1F33`, ...) | Little-endian in mfg data |
-| Embedded device ID | 6 bytes | MAC-shaped, stable per unit |
+| Service UUID | `0x0AF0` | Unregistered; shared across re-brands — **the routing key since 2026-08-30** |
+| Company ID | Vendor-varying (`0x1EAB`, `0x1F33`, `0x1DEC`, `0x1E25`, `0x1ECE`, `0x1EED`, ...) | Little-endian in mfg data; per-OEM, so never a sufficient routing key |
+| Embedded device ID | 6 bytes | MAC-shaped, stable per unit; every unit seen so far starts `f4` except one `50 d8 2b …` |
 | Pivot marker | `0x02 0x01` | At offset 8–9 of mfg payload |
+
+### Third-OEM company IDs (2026-08-30 sweep)
+
+The cumulative NearSight telemetry corpus (2026-08-02 → 08-29) held five
+nameless units that carry the exact `02 01` pivot frame under company IDs
+the parser had never seen, and which therefore never routed to it while
+routing was CID-only:
+
+| CID | Frame (mfg data) | First seen | Sightings |
+|-----|------------------|------------|-----------|
+| `0x1ECE` | `ce 1e 50 d8 2b 78 dd ba  02 01 01 01 01 01` | 2026-08-02 | 2 |
+| `0x1EED` | `ed 1e f4 a5 ed 78 47 4f  02 01 0a 01 01 01` | 2026-08-23 | 2 |
+| `0x1DEC` | `ec 1d f4 8a 43 d9 42 dc  02 01 08 01 01 01` | 2026-08-23 | 7 |
+| `0x1E25` | `25 1e f4 6b f9 b9 5b a6  02 01 05 01 01 01` | 2026-08-28 | 22 |
+| `0x1DEC` | `ec 1d f4 d1 87 e9 c3 cd  02 01 08 01 01 01` | 2026-08-29 | 2 |
+
+None of the five CIDs is SIG-assigned. The NearSight parser now routes on
+the `0x0AF0` service UUID as well as the two original CIDs (bead
+adwatch-app-eawg); the `02 01` pivot gate is unchanged and remains the
+actual discriminator.
+
+**Not this family — same UUID, different pivot.** A second product line
+advertises `0x0AF0` with a `03 01` pivot and a 16-byte frame:
+`7b 1f 09 d6 c4 06 be 82  03 01 08 08 00 00 00 62` (named `DR05`, a
+dashcam — CID `0x1F7B`), `75 1f 25 2e c0 e7 21 e4  03 01 07 08 00 00 00 62`,
+`4c 1f 14 58 e3 74 58 cb  03 01 11 08 00 00 00 62`. The pivot check rejects
+these, so the service-UUID route does not over-claim them; they are on the
+NearSight watchlist (DR05 dashcam, CID 0x1F7B) as a separate family.
 
 ## Ad Format — Manufacturer Data
 
