@@ -20,7 +20,7 @@ The first two wire bytes decode as little-endian SIG company identifier `0xb1cd`
 |--------|-------|-------|
 | Company ID | `0xb1cd` | NOT SIG-assigned (highest assigned CID is `0x10C7`). LE wire bytes `cd b1`. |
 | Manufacturer-data total length | 26 bytes | 2-byte CID + 24-byte body. |
-| Manufacturer-data body | exactly `71 bf 99 7c 9d 01 c0 a6 2e bf 48 a0 be 23 0b b5 59 a9 04 12 75 a8 ce 00` | High-entropy except trailing `0x00`. |
+| Manufacturer-data body | exactly one of the catalogued 24-byte bodies (4 as of v1.1 — see below) | High-entropy except trailing `0x00`. |
 | Local name | absent | No advertising name. |
 | Service UUIDs | absent | No service UUIDs advertised. |
 | Address type | random | MAC rotates sub-second. |
@@ -35,6 +35,24 @@ cd b1 | 71 bf 99 7c 9d 01 c0 a6 2e bf 48 a0 be 23 0b b5 59 a9 04 12 75 a8 ce 00
  0xb1cd                       (high-entropy; trailing 0x00 may be a
                               length terminator — unconfirmed)
 ```
+
+### Known Bodies (parser v1.1)
+
+The parser anchors on exact membership in a set of observed 24-byte bodies
+(over-fitted on purpose — see "Detection strategy" in the parser source).
+Four bodies are catalogued as of the 2026-09-29 sweep:
+
+| # | Body (24 bytes) | Records | Capture |
+|---|---|---|---|
+| 1 | `71 bf 99 7c 9d 01 c0 a6 2e bf 48 a0 be 23 0b b5 59 a9 04 12 75 a8 ce 00` | 37 | 2026-05-21, ~4 s burst |
+| 2 | `69 b4 70 00 00 00 00 3e b4 0f f9 88 a8 66 5b 40 eb de 3e 36 6c ac b7 00` | 48 | 2026-05, same fingerprint |
+| 3 | `81 18 17 ec 42 02 00 fb 7d 72 de 54 cc d6 e8 13 21 4b 6f bf 85 ee ff 00` | 72 | 2026-09-13 20:31:39-54Z, 67 rotating MACs in 15 s |
+| 4 | `69 b4 f9 cd 42 02 00 41 ba 16 7a 65 9c 55 07 18 57 d1 1b 4b f9 9d 80 00` | 5 | same 2026-09-13 burst |
+
+All four end in `00`; body 4 shares body 2's `69 b4` head. The 2026-09-13
+records also carried the `B1BB` service-data sibling, but with **30-byte**
+values there — not the 27-byte shape the B1BB-side parser gates on, so that
+side remains (correctly) unclaimed for these records.
 
 ### Observed Sighting (research/adwatch_export 9.json)
 
