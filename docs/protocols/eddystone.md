@@ -14,14 +14,21 @@ The protocol defines four frame types:
 | UID   | `0x00`     | Static beacon identity (10-byte namespace + 6-byte instance) |
 | URL   | `0x10`     | Compressed URL (Physical Web) |
 | TLM   | `0x20`     | Telemetry (battery, temperature, advertising count, uptime) |
-| EID   | `0x40`     | Ephemeral identifier (rotating 8-byte ID, resolved server-side) |
+| EID   | `0x30`     | Ephemeral identifier (rotating 8-byte ID, resolved server-side) |
 
-Note: the canonical Eddystone protocol spec defines the EID frame at
-`0x30`. In practice we observe EID frames at `0x40` in the wild (the
-high-nibble variant is used by some vendors, including JBL audio
-products). The parser accepts `0x40` to handle these captures.
+**`0x40` and `0x41` are not Eddystone.** Earlier revisions of this doc
+called `0x40` "the EID frame as seen in the wild" (JBL earbuds etc.) and
+read tx_power + an 8-byte EID out of it. Those frames are Google's **Find
+My Device network** (FMDN) beacon advertisement — a Fast Pair extension
+that reuses `0xFEAA` with frame type `0x40` (normal) / `0x41`
+(unwanted-tracking-protection mode), a 20- or 32-byte ephemeral identifier
+and an optional hashed-flags byte. See
+[`google-find-my-device-network.md`](google-find-my-device-network.md);
+the NearSight `eddystone` parser declines `0x40`/`0x41` and `google_fmdn`
+owns them (2026-09-02 sweep). The JBL Endurance Peak 4 capture that used to
+be this doc's example lives there now.
 
-## EID frame (0x40)
+## EID frame (0x30)
 
 The **Eddystone-EID** frame carries an 8-byte ephemeral identifier
 that rotates on a schedule configured at beacon registration time
@@ -32,40 +39,22 @@ access, the EID cannot be linked across rotation windows.
 ### Wire Format
 
 ```
-[frame_type:1=0x40] | [tx_power:1] | [eid:8] | [optional trailing bytes...]
+[frame_type:1=0x30] | [tx_power:1] | [eid:8] | [optional trailing bytes...]
 ```
 
 | Offset | Bytes | Field |
 |--------|-------|-------|
-| 0      | 1     | Frame type (`0x40`) |
+| 0      | 1     | Frame type (`0x30`) |
 | 1      | 1     | Ranging data / TX power (signed int8, dBm @ 0m) |
 | 2–9    | 8     | Ephemeral identifier (rotating) |
-| 10+    | N     | Optional vendor-specific trailing bytes (not in canonical spec) |
+| 10+    | N     | Optional trailing bytes (not in canonical spec) |
 
-The canonical Eddystone-EID frame is **exactly 10 bytes**. Captures
-in the wild (e.g. JBL Endurance Peak 4 earbuds) often include
-**11–12 trailing bytes** of vendor-specific extras. The parser
-surfaces these as `metadata["trailing_bytes_hex"]` without
-interpreting them.
-
-### Captured Example (JBL Endurance Peak 4)
-
-```
-40 c0 cd 80 98 92 bd 01 93 2b 30 45 94 28 1b 4a 24 b9 82 29 7a e1
-```
-
-Decoded:
-
-| Field        | Value |
-|--------------|-------|
-| Frame type   | `0x40` (EID) |
-| TX power     | -64 dBm @ 0m |
-| EID          | `cd809892bd01932b` |
-| Trailing     | `304594281b4a24b982297ae1` (12 bytes, vendor-specific) |
-
-The same advertisement also exposed an empty `0x2EFC` service-data
-entry alongside the FEAA frame — a JBL-specific marker. The parser
-ignores siblings and matches purely on the FEAA `0x40` prefix.
+The canonical Eddystone-EID frame is **exactly 10 bytes**. The parser
+surfaces anything past that as `metadata["trailing_bytes_hex"]` without
+interpreting it. No canonical `0x30` EID frame has appeared in the
+NearSight telemetry corpus so far — every `0xFEAA` frame with the high
+nibble `4` was an FMDN frame — so the decode is spec-derived rather than
+capture-derived.
 
 ### Identity Hashing
 
@@ -91,4 +80,5 @@ time — not available from passive scanning.
 
 - [Eddystone Protocol Specification](https://github.com/google/eddystone/blob/master/protocol-specification.md)
 - [Eddystone-EID frame](https://github.com/google/eddystone/blob/master/eddystone-eid/README.md)
+- [`google-find-my-device-network.md`](google-find-my-device-network.md) — the `0x40`/`0x41` frames on the same UUID
 - BT SIG 16-bit UUID `0xFEAA` → Google Inc.
