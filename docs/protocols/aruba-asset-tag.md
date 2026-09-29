@@ -14,28 +14,60 @@ Twenty-seven distinct beacons in a single 48 h capture window is high enough den
 |--------|-------|-------|
 | Company ID | `0x011B` | Aruba Networks (SIG). |
 | Payload length | 19 bytes (after the 2-byte company ID) | Fixed for the observed subtype. |
-| Subtype byte | `0x08` | Constant across all sightings — Aruba subtype identifier. |
-| Vendor magic | `1a f0 29 51 4b 83 01 00` | 8-byte constant; required for positive identification. |
+| Subtype byte | `0x08` | Constant across all `08`-frame sightings — Aruba subtype identifier. A second subtype `0x0a` (17-byte payload) exists and is not decoded. |
+| Constant bytes | `51 4b 83 01 00` at offset 8..12 | Required for positive identification. |
+| Embedded BD_ADDR OUI | `F0:1A:A0` (Hewlett Packard Enterprise) | Second attribution signal; recorded, not required. |
 
-The 8-byte vendor magic is not publicly documented but is identical across every Aruba sighting in our dataset; we treat it as part of the parser's match condition so we won't false-positive on other 0x011B traffic.
+> **Correction (2026-08-23 sweep).** The first write-up described a 4-byte
+> unit ID followed by an 8-byte vendor magic `1a f0 29 51 4b 83 01 00`. A
+> third capture carried `1a f0 2f …` at those offsets and was rejected
+> wholesale. Laid side by side, the three captures are
+>
+> | capture | bytes 1..6 (wire, LE) | → BD_ADDR | byte 7 |
+> |---|---|---|---|
+> | 2026-07 A | `c6 af 7b a0 1a f0` | F0:1A:A0:7B:AF:C6 | `0x29` |
+> | 2026-07 B | `54 ee 7a a0 1a f0` | F0:1A:A0:7A:EE:54 | `0x29` |
+> | 2026-08 (26 rec) | `06 1e 7c a0 1a f0` | F0:1A:A0:7C:1E:06 | `0x2f` |
+>
+> `F0:1A:A0` is IEEE-registered to Hewlett Packard Enterprise. The "magic"
+> straddled the address's last byte (`a0 1a f0` is the OUI in wire order),
+> and byte 7 is a separate per-device field. The earlier observation that
+> "three of four unit IDs end in `af7ba0`" was this same OUI showing
+> through. Only `51 4b 83 01 00` is actually constant.
 
 ### Manufacturer Data Layout (19 bytes after company ID)
 
 ```
-Offset 0     : 0x08            — subtype / version (constant)
-Offset 1..4  : UU UU UU UU     — 4-byte stable unit ID (the tag's identity)
-Offset 5..12 : 1a f0 29 51 4b 83 01 00 — 8-byte vendor magic (constant)
+Offset 0     : 0x08            — subtype / version (constant for this frame)
+Offset 1..6  : M6 M5 M4 M3 M2 M1 — BD_ADDR, little-endian (OUI F0:1A:A0 = HPE)
+Offset 7     : XX              — per-device field, meaning unknown (0x29, 0x2f seen)
+Offset 8..12 : 51 4b 83 01 00  — 5-byte constant (the parser's match condition)
 Offset 13    : 0x00            — reserved / pad
 Offset 14..15: TT TT           — uptime counter (LE uint16, ~1 Hz)
 Offset 16..17: 00 00           — reserved / pad
 Offset 18    : 0xFF            — tail sentinel (possibly TX-power default −1 dBm)
 ```
 
-### Unit ID
+### Unit ID / BD_ADDR
 
-The 4-byte unit ID at offset 1..4 is **the** stable identifier — CoreBluetooth rotates the BLE MAC, but the unit ID persists across MAC rotations and tag reboots. It is the right field to key the device on.
+The embedded address is **the** stable identifier — CoreBluetooth rotates
+the advertising MAC, but the burned-in address persists across rotations
+and reboots. The parser surfaces the full address as `bd_addr` and keeps
+its original `unit_id` (= the address's low four bytes in wire order, e.g.
+`c6af7ba0` for F0:1A:A0:7B:AF:C6) as the stable-key pre-image so the
+layout correction needed no identity migration.
 
-Three of the four observed unit IDs end with the suffix `af7ba0`, strongly suggesting a vendor-allocated ID block — Aruba mints serials inside a small numeric range per production batch.
+### Second frame shape (subtype `0x0a`, not decoded)
+
+Three sightings on 2026-08-20 of a 17-byte 0x011B payload:
+
+```
+0a ec 1b 5f c9 XX XX a3 00 82 06 02 07 0a 01 77 cb
+```
+
+with bytes 5..6 varying (`ea dd`, `eb 04`, `dd c6`). Too few to separate a
+counter from an identifier; the parser explicitly rejects it rather than
+mis-decode it.
 
 ### Uptime Counter
 

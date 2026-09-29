@@ -95,6 +95,15 @@ identifier = SHA256(stable_key)[:16]
 - Extensible: more TCL OUIs can be added to the static set as they are
   verified against the IEEE registry.
 
+## See also
+
+- `daf5-bare-mac-family.md` — the same `06 10 00 00 <MAC>` layout turned
+  up on non-TCL OUIs (Chipsguide `F4:2B:7D`, an IEEE-RA sub-block) beside
+  byte-reversed `daf5XX01` service UUIDs and without `FFC0` (2026-08-29
+  sweep). The TCL parser keeps its TCL-OUI gate; the DAF5 family claims
+  the header layout only on its own UUID and hands a TCL OUI or an `FFC0`
+  advertiser back here. One module SDK behind both is the likely story.
+
 ## References
 
 - [IEEE OUI registry CSV](https://standards-oui.ieee.org/oui/oui.csv) — `2C:E0:32` → TCL King Electrical Appliances (Huizhou) Co., Ltd

@@ -15,7 +15,17 @@ This parser is a sibling of `BoseParser`: both vend "is this a Bose audio device
 | Company ID | `0x009E` | Newer Bose SIG identifier (canonical). |
 | Company ID | `0x4703` | On-wire `03 47` — Telink big-endian-quirk; see § below. |
 | Company ID | `0x3703` | On-wire `03 37` — Bose+Telink vanity / unregistered; see § below. |
+| Company ID | `0x0501` / `0x0310` | **Co-opted** — SIG-assigned to Polaris IND / SGL Italia respectively, but used by Bose (Color II / SoundLink Revolve+). |
 | Service UUID | `0xFEBE` | SIG-registered to Bose Corporation; required alongside all non-`0x009E` CIDs. |
+
+> **2026-07-06 sweep:** the **nameless** `FEBE` + `0x0310` (SoundLink Revolve+)
+> frame previously slipped through the "require a `Bose` local name" gate. The
+> parser now allows a **name-independent match** for `FEBE` + `0x0310` — `FEBE`
+> (Bose's SIG member UUID) is the anchor, so this is high-confidence without the
+> name. `0x0501` / `0x4301` deliberately stay name-gated (a regression test
+> locks that a `FEBE` + `0x0501` + non-Bose device must not be claimed), and the
+> deferred `FEBE` + `0x0601` (Schrader, a real non-Bose assignment) case still
+> does **not** parse. (`0x0310` was low-trust-sourced — see the sweep write-up.)
 | Local name (when broadcast) | `"Bose Open Earbuds Ultra"`, `"Bose QC Ultra Earbuds"`, `"LE-Connies Bose"`, … | User-renameable in the Bose Music app. |
 
 ### Manufacturer Data Layout (9 bytes after company ID)

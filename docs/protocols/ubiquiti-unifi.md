@@ -145,3 +145,9 @@ record.
 - Ubiquiti BLE adoption workflow: https://help.ui.com/hc/en-us/articles/204910064
 - UniFi product line: https://store.ui.com/us/en/category/all-wifi
 - OUI lookup: https://standards-oui.ieee.org/oui/oui.txt (`0C-EA-14`)
+
+## See also
+
+- `ubiquiti-device-beacon.md` — the same `0x252A` factory-MAC convention
+  on Ubiquiti's other product lines (three further 128-bit UUIDs, no
+  uptime/adoption blocks), from the 2026-08-28 sweep.

@@ -130,10 +130,42 @@ advertise under the **parent Harman International** company ID
  cid    6-byte payload
 ```
 
-The 6-byte payload format is undocumented. The first byte appears to
-be a frame-type indicator (`0x29` observed) and the trailing bytes
-include what looks like flags + a per-device identifier. The local
-name (`JBL <model>`) is the only reliable model identifier.
+The payload is 6–10 bytes and is NOT limited to "older" speakers: Flip 7
+(2025) and Charge 6 (2025) still use it, with FDDF (Harman) service data
+alongside. Its first two bytes are a **little-endian product id** — the
+2026-08-23 telemetry sweep read it off 61 named records across 13 models
+in one corpus, and the ids increase monotonically with release year,
+which is what pins the byte order:
+
+| PID (LE) | Model | Year | PID (LE) | Model | Year |
+|---|---|---|---|---|---|
+| `0x1ED1` | Flip 4 | 2017 | `0x206D` | Boombox 3 | 2022 |
+| `0x1F27` | BoomBox | 2017 | `0x20DC` | Xtreme 4 | 2024 |
+| `0x1F29` | Charge 4 | 2018 | `0x20E3` | Charge 6 | 2025 |
+| `0x1F31` | Flip 5 | 2019 | `0x20E4` | Go 4 | 2024 |
+| `0x202F` | Xtreme 3 | 2020 | `0x20F5` | Clip 5 | 2024 |
+| `0x2040` | Charge 5 | 2021 | `0x2107` | Flip 7 | 2025 |
+| `0x204F` | Flip 6 | 2021 | | | |
+
+```
+57 00 | 07 21 | 01 34 | e7 8d 8f 1e | 01 00     (nameless Flip 7, 10 bytes)
+ cid    PID LE   state   4-byte field   tail
+```
+
+Everything after the id is still undecoded. On 2021+ models there is a
+4-byte field that *looks* per-unit (one Charge 6 held `aedad6fd` across
+three records on three days) but `09 03 …` recurs in that position across
+models often enough that it is not safe to key identity on; the parser
+records it raw only. `20b3`, `20f7`, `20ce` have been seen in FDDF
+service-data bodies without a name — add them to the table only from a
+named capture.
+
+Because the id is model-constant, a **nameless** 0x0057 frame (the name
+was in a scan response the sighting didn't capture — 5 of 66 records in
+the August corpus) is attributable when its id is in the table
+(`model_source=product_id_table`); an unlabelled id on a nameless frame
+is left unclaimed since 0x0057 is the parent Harman slot and could be
+another brand. A non-"JBL " name on 0x0057 is never claimed.
 
 The parser tags these as `wire_format=harman_0057` (modern frames are
 tagged `wire_format=jbl_ecb`) so downstream consumers can distinguish
