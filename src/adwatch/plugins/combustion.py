@@ -5,6 +5,16 @@ apk-ble-hunting/reports/combustion-app_passive.md.
 
 Combustion publishes their BLE protocol — temperatures broadcast in
 plaintext. A passive scanner gets full per-sensor cook telemetry.
+
+v1.1 aligns the enums with Combustion's published spec
+(https://github.com/combustion-inc/combustion-documentation):
+
+* ``probe_ble_specification.rst`` "Mode and ID Data": mode 0 Normal,
+  1 Instant Read, 2 **Reserved**, 3 Error (v1.0 called mode 2 "REFERENCE"
+  and had no Error).
+* ``meatnet_node_ble_specification.rst`` "Product Type": 0 Unknown,
+  1 Predictive Probe, 2 MeatNet Repeater Node, 3 Giant Grill Gauge,
+  4 Display (Timer), 5 Booster (Charger), 6 Engine (4-6 were missing).
 """
 
 import hashlib
@@ -22,12 +32,15 @@ PRODUCT_TYPES = {
     0x01: "PROBE",
     0x02: "NODE",
     0x03: "GAUGE",
+    0x04: "DISPLAY",
+    0x05: "BOOSTER",
+    0x06: "ENGINE",
 }
 
 # Mode/color/id byte bit-layout (offset 18 of probe). Exact masks verified by
 # the Kotlin source; if Combustion ever rebalances the bitfields these will
 # need re-checking.
-PROBE_MODES = {0: "NORMAL", 1: "INSTANT", 2: "REFERENCE"}
+PROBE_MODES = {0: "NORMAL", 1: "INSTANT_READ", 2: "RESERVED", 3: "ERROR"}
 PROBE_COLORS = {0: "YELLOW", 1: "GREY", 2: "RED", 3: "BLUE", 4: "GREEN", 5: "ORANGE", 6: "PURPLE", 7: "BLACK"}
 
 DFU_NAME_PREFIXES = {
@@ -67,7 +80,7 @@ def decode_temperatures_13bit(packed: bytes) -> list[float]:
     service_uuid=COMBUSTION_SERVICE_UUID,
     local_name_pattern=r"^(Thermom_DFU_|Display_DFU_|Charger_DFU_|Gauge_DFU_|CI Probe BL|CI Timer BL|CI Gauge BL)",
     description="Combustion Inc predictive thermometer (Probe/Node/Gauge)",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class CombustionParser:
