@@ -18,6 +18,20 @@ Corrections that came out of that audit (all previously wrong here):
   capability field, which has to be skipped or the object header is read at
   the wrong offset.
 
+v1.2 corrections against Home Assistant's xiaomi-ble
+(https://github.com/Bluetooth-Devices/xiaomi-ble ``parser.py``,
+``xiaomi_dataobject_dict``) and Xiaomi's object definition
+(https://iot.mi.com/new/doc/accesses/direct-access/embedded-development/ble/object-definition):
+
+* **0x1001 is the button** object (index, value, press type — ``<BBB``),
+  not motion.
+* **0x1005 is power on/off + temperature** (byte 0 power, byte 1 whole
+  degrees C), not a button.
+* **0x0003 is a motion event** (MUE4094RT), not illuminance.
+* **0x000F is motion + uint24 LE illuminance** ("moving with light"), not
+  door/window.
+* **0x000A is body temperature** (int16 LE / 100 degrees C), not battery.
+
 Frame layout::
 
     0    2  frame control   uint16 LE
@@ -73,6 +87,9 @@ FC_SOLICITED = 9
 
 AUTH_MODES = {0: "rc4", 1: "secure_auth", 2: "standard_auth"}
 
+# 0x1001 press types (xiaomi-ble obj1001, generic remotes).
+BUTTON_PRESS_TYPES = {0: "press", 1: "double_press", 2: "long_press"}
+
 # withCapability && bindable == 3 && version >= 3 inserts a 2-byte combo key.
 COMBO_KEY_BINDABLE = 3
 COMBO_KEY_MIN_VERSION = 3
@@ -82,16 +99,16 @@ EVENT_V5_MIN_VERSION = 5
 
 # --- Object IDs ---
 # Short-ID space (Xiaomi event objects).
-OBJECT_MOTION_ILLUMINANCE = 0x0003
+OBJECT_MOTION = 0x0003
 OBJECT_DOOR_EVENT = 0x0007
-OBJECT_BATTERY_LOW = 0x000A
-OBJECT_DOOR_WINDOW = 0x000F
+OBJECT_BODY_TEMP = 0x000A
+OBJECT_MOTION_ILLUMINANCE = 0x000F
 # 0x10xx measurement space.
-OBJECT_MOTION = 0x1001
+OBJECT_BUTTON = 0x1001
 OBJECT_SLEEP_STATE = 0x1002
 OBJECT_RSSI = 0x1003
 OBJECT_TEMP = 0x1004
-OBJECT_BUTTON = 0x1005
+OBJECT_POWER_TEMP = 0x1005
 OBJECT_HUMIDITY = 0x1006
 OBJECT_ILLUMINANCE = 0x1007
 OBJECT_SOIL_MOISTURE = 0x1008
@@ -126,7 +143,7 @@ PRODUCT_IDS = {
     name="mibeacon",
     service_uuid=MIBEACON_UUID,
     description="Xiaomi MiBeacon",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class MiBeaconParser:
@@ -246,25 +263,28 @@ class MiBeaconParser:
 
     @staticmethod
     def _decode_object(metadata: dict, object_id: int, obj_data: bytes) -> None:
-        if object_id == OBJECT_MOTION_ILLUMINANCE and len(obj_data) >= 4:
-            metadata["illuminance"] = struct.unpack_from("<I", obj_data, 0)[0]
+        if object_id == OBJECT_MOTION:
+            metadata["motion"] = True
+        elif object_id == OBJECT_MOTION_ILLUMINANCE and len(obj_data) >= 3:
+            metadata["motion"] = True
+            metadata["illuminance"] = int.from_bytes(obj_data[:3], "little")
         elif object_id == OBJECT_DOOR_EVENT and len(obj_data) >= 1:
             metadata["door_event"] = "closed" if obj_data[0] else "open"
-        elif object_id == OBJECT_BATTERY_LOW and len(obj_data) >= 1:
-            metadata["battery"] = obj_data[0]
-        elif object_id == OBJECT_DOOR_WINDOW and len(obj_data) >= 1:
-            metadata["door_window"] = "closed" if obj_data[0] else "open"
-        elif object_id == OBJECT_MOTION:
-            metadata["motion"] = True
+        elif object_id == OBJECT_BODY_TEMP and len(obj_data) >= 2:
+            metadata["body_temperature"] = struct.unpack_from("<h", obj_data, 0)[0] / 100.0
+        elif object_id == OBJECT_BUTTON and len(obj_data) >= 3:
+            metadata["button_index"] = obj_data[0]
+            metadata["button_value"] = obj_data[1]
+            metadata["button_press"] = BUTTON_PRESS_TYPES.get(obj_data[2], obj_data[2])
         elif object_id == OBJECT_SLEEP_STATE and len(obj_data) >= 1:
             metadata["sleep_state"] = obj_data[0]
         elif object_id == OBJECT_RSSI and len(obj_data) >= 1:
             metadata["reported_rssi"] = obj_data[0]
         elif object_id == OBJECT_TEMP and len(obj_data) >= 2:
             metadata["temperature"] = struct.unpack_from("<h", obj_data, 0)[0] / 10.0
-        elif object_id == OBJECT_BUTTON and len(obj_data) >= 2:
-            metadata["button_event_type"] = obj_data[0]
-            metadata["button_count"] = obj_data[1]
+        elif object_id == OBJECT_POWER_TEMP and len(obj_data) >= 2:
+            metadata["power"] = bool(obj_data[0])
+            metadata["temperature"] = obj_data[1]
         elif object_id == OBJECT_HUMIDITY and len(obj_data) >= 2:
             metadata["humidity"] = struct.unpack_from("<h", obj_data, 0)[0] / 10.0
         elif object_id == OBJECT_ILLUMINANCE and len(obj_data) >= 3:
