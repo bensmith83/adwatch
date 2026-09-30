@@ -17,6 +17,12 @@ than inference.
 
 Encrypted BTHome (``0x181E``, or the v2 info-byte bit 0) is detected and
 rejected rather than decoded.
+
+The dimmer object ``0x3C`` follows the BTHome spec (https://bthome.io/format/)
+and Home Assistant's bthome-ble (``event.py`` DIMMER_EVENTS,
+``parser.py`` parse_event_type/parse_event_properties): byte 0 is the event
+(0x00 none, 0x01 rotate left, 0x02 rotate right) and byte 1 the uint8 step
+count.  v1.1 read the two bytes the other way round.
 """
 
 import hashlib
@@ -34,6 +40,12 @@ _UUID_LOOKUP = {
     _normalize_uuid(BTHOME_UUID): (2, False),
     _normalize_uuid(BTHOME_V1_UUID): (1, False),
     _normalize_uuid(BTHOME_V1_ENCRYPTED_UUID): (1, True),
+}
+
+DIMMER_EVENT_MAP = {
+    0x00: "none",
+    0x01: "rotate_left",
+    0x02: "rotate_right",
 }
 
 BUTTON_EVENT_MAP = {
@@ -97,7 +109,7 @@ OBJECT_DEFS = {
     name="bthome",
     service_uuid=BTHOME_SERVICE_UUIDS,
     description="BTHome v1/v2 sensor advertisements",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class BTHomeParser:
@@ -173,9 +185,8 @@ class BTHomeParser:
             if name == "button_event":
                 value = BUTTON_EVENT_MAP.get(value, value)
             elif name == "dimmer_event":
-                steps = obj_bytes[0]
-                direction = "clockwise" if obj_bytes[1] == 0 else "counter_clockwise"
-                metadata[name] = {"steps": steps, "direction": direction}
+                event = DIMMER_EVENT_MAP.get(obj_bytes[0], obj_bytes[0])
+                metadata[name] = {"event": event, "steps": obj_bytes[1]}
                 continue
 
             metadata[name] = value * scale if scale != 1 else value
