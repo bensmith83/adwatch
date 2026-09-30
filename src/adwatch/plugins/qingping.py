@@ -19,6 +19,18 @@ Two bugs this rewrite fixes:
 * The TLV loop used a **2-byte** object type starting at offset 9.  Objects
   are keyed by a **1-byte** type and start at offset 8, so every object ID and
   every subsequent offset was wrong.
+
+v2.1 corrections (cross-checked against Home Assistant's qingping-ble,
+https://github.com/Bluetooth-Devices/qingping-ble ``parser.py``):
+
+* TLV ``0x0F`` is a one-byte **packet id**, not a door state.  The door /
+  window state is TLV ``0x04``: 0 = open, 1 = closed, 2 = open too long
+  ("left open").
+* The product-id table now follows qingping-ble ``DEVICE_TYPES``; the old
+  table had ``0x0C`` = CGG1 (really the CGD1 alarm clock), ``0x12`` = CGH1
+  (really the CGPR1 motion & light sensor; CGH1 is ``0x04``) and ``0x18`` =
+  "Air Monitor Lite" (really the CGP23W temp & RH monitor pro; the Air
+  Monitor Lite CGDN1 is ``0x0E`` / ``0x24``).
 """
 
 import hashlib
@@ -34,18 +46,36 @@ _QINGPING_UUID_FULL = _normalize_uuid(QINGPING_UUID)
 HEADER_LEN = 8
 TLV_START = 8
 
+# Product id -> model, per qingping-ble DEVICE_TYPES.
 DEVICE_TYPES = {
-    0x0C: "CGG1",
-    0x10: "CGDK2",
-    0x12: "CGH1",
-    0x18: "Air Monitor Lite",
+    0x01: "CGG1",
+    0x04: "CGH1",    # door/window sensor
+    0x07: "CGG1",
+    0x09: "CGP1W",
+    0x0C: "CGD1",    # alarm clock
+    0x0E: "CGDN1",   # air monitor lite
+    0x0F: "CGM1",
+    0x10: "CGDK2",   # temp & RH monitor lite
+    0x12: "CGPR1",   # motion & light
+    0x15: "CGF1W",
+    0x16: "CGG1",
+    0x18: "CGP23W",  # temp & RH monitor pro
+    0x1E: "CGC1",
+    0x24: "CGDN1",
+    0x26: "CGP23W",
+    0x33: "CGP22C",
+    0x4F: "CGG3",
+    0x5D: "CGP22C",
 }
 
 # TLV object type -> handler name.  Scalings per the WatchFlower table.
 TLV_TEMP_HUMIDITY = 0x01
 TLV_BATTERY = 0x02
+TLV_DOOR_STATE = 0x04
 TLV_PRESSURE = 0x07
-TLV_DOOR_STATE = 0x0F
+TLV_PACKET_ID = 0x0F
+
+_DOOR_STATES = {0: "open", 1: "closed", 2: "left_open"}
 TLV_PM = 0x12
 TLV_CO2 = 0x13
 
@@ -54,7 +84,7 @@ TLV_CO2 = 0x13
     name="qingping",
     service_uuid=QINGPING_UUID,
     description="Qingping (ClearGrass) Sensors",
-    version="2.0.0",
+    version="2.1.0",
     core=False,
 )
 class QingpingParser:
@@ -104,8 +134,8 @@ class QingpingParser:
         mac_str = ":".join(f"{b:02X}" for b in reversed(mac_bytes))
         metadata["mac"] = mac_str
 
-        # Header fields alone are not a reading.
-        if len(metadata) <= header_keys + 1:
+        # Header fields (and a bare packet id) alone are not a reading.
+        if len(metadata) - ("packet_id" in metadata) <= header_keys + 1:
             return None
 
         id_hash = hashlib.sha256(mac_str.encode()).hexdigest()[:16]
@@ -147,7 +177,15 @@ class QingpingParser:
                 struct.unpack_from("<h", value, 0)[0] / 10.0, 1
             )
         elif tlv_type == TLV_DOOR_STATE and len(value) >= 1:
-            metadata["door_state"] = value[0]
+            state = _DOOR_STATES.get(value[0])
+            if state is None:
+                metadata["door_state_raw"] = value[0]
+            else:
+                metadata["door_state"] = state
+                metadata["door_open"] = state != "closed"
+                metadata["door_left_open"] = state == "left_open"
+        elif tlv_type == TLV_PACKET_ID and len(value) >= 1:
+            metadata["packet_id"] = value[0]
         elif tlv_type == TLV_PM and len(value) >= 4:
             pm25, pm10 = struct.unpack_from("<hh", value, 0)
             metadata["pm25"] = pm25

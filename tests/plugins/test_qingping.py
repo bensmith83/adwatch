@@ -42,11 +42,13 @@ def make_raw(service_data=None, **kwargs):
 # MAC address bytes reversed (AA:BB:CC:DD:EE:FF -> bytes)
 MAC_REVERSED = bytes([0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA])
 
+# Product id -> model, per qingping-ble DEVICE_TYPES
+# (https://github.com/Bluetooth-Devices/qingping-ble, parser.py).
 DEVICE_TYPES = {
-    "CGG1": 0x0C,
+    "CGG1": 0x01,
     "CGDK2": 0x10,
-    "CGH1": 0x12,
-    "Air Monitor Lite": 0x18,
+    "CGH1": 0x04,
+    "CGDN1": 0x0E,
 }
 
 
@@ -206,10 +208,25 @@ class TestQingpingMultipleTLV:
 
 class TestQingpingDeviceType:
     @pytest.mark.parametrize("model,type_code", [
-        ("CGG1", 0x0C),
+        # qingping-ble DEVICE_TYPES (Bluetooth-Devices/qingping-ble parser.py)
+        ("CGG1", 0x01),
+        ("CGH1", 0x04),
+        ("CGG1", 0x07),
+        ("CGP1W", 0x09),
+        ("CGD1", 0x0C),   # alarm clock (adwatch previously said CGG1)
+        ("CGDN1", 0x0E),
+        ("CGM1", 0x0F),
         ("CGDK2", 0x10),
-        ("CGH1", 0x12),
-        ("Air Monitor Lite", 0x18),
+        ("CGPR1", 0x12),  # motion & light (adwatch previously said CGH1)
+        ("CGF1W", 0x15),
+        ("CGG1", 0x16),
+        ("CGP23W", 0x18), # temp & RH monitor pro (adwatch: Air Monitor Lite)
+        ("CGC1", 0x1E),
+        ("CGDN1", 0x24),
+        ("CGP23W", 0x26),
+        ("CGP22C", 0x33),
+        ("CGG3", 0x4F),
+        ("CGP22C", 0x5D),
     ])
     def test_device_type_identification(self, parser, model, type_code):
         payload = _build_qingping(device_type=type_code, tlvs=_temp_tlv(200))
@@ -455,10 +472,35 @@ class TestQingpingWatchflowerLayout:
         result = parser.parse(make_raw(service_data=_make_service_data(payload)))
         assert result.metadata["co2"] == 1450
 
-    def test_door_state_object_0x0f(self, parser):
-        payload = _build_qingping(tlvs=_tlv(0x0F, bytes([1])))
+    def test_object_0x0f_is_packet_id_not_door(self, parser):
+        """qingping-ble: TLV 0x0F is the packet id, not a door state."""
+        payload = _build_qingping(tlvs=_tlv(0x0F, bytes([1])) + _battery_tlv(90))
         result = parser.parse(make_raw(service_data=_make_service_data(payload)))
-        assert result.metadata["door_state"] == 1
+        assert result.metadata["packet_id"] == 1
+        assert "door_state" not in result.metadata
+
+    def test_packet_id_alone_is_not_a_reading(self, parser):
+        payload = _build_qingping(tlvs=_tlv(0x0F, bytes([7])))
+        assert parser.parse(make_raw(service_data=_make_service_data(payload))) is None
+
+    @pytest.mark.parametrize("raw_value,state,is_open,left_open", [
+        (0, "open", True, False),
+        (1, "closed", False, False),
+        (2, "left_open", True, True),
+    ])
+    def test_door_state_object_0x04(self, parser, raw_value, state, is_open, left_open):
+        """qingping-ble: TLV 0x04 door, 0 open / 1 closed / 2 left open."""
+        payload = _build_qingping(device_type=0x04, tlvs=_tlv(0x04, bytes([raw_value])))
+        result = parser.parse(make_raw(service_data=_make_service_data(payload)))
+        assert result.metadata["door_state"] == state
+        assert result.metadata["door_open"] is is_open
+        assert result.metadata["door_left_open"] is left_open
+
+    def test_door_state_unknown_value_kept_raw(self, parser):
+        payload = _build_qingping(device_type=0x04, tlvs=_tlv(0x04, bytes([9])))
+        result = parser.parse(make_raw(service_data=_make_service_data(payload)))
+        assert result.metadata["door_state_raw"] == 9
+        assert "door_state" not in result.metadata
 
     def test_unknown_tlv_is_skipped_by_its_length(self, parser):
         """An unrecognised object must not desynchronise the loop."""
