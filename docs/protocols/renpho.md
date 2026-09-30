@@ -18,6 +18,20 @@ The advertisement is identification-only — live data (weight, fan
 speed, water level, ambient air quality, etc.) requires a paired
 GATT session.
 
+### Company ID `0x0157` is Huami, not Qingniu (corrected 2026-09-30)
+
+An earlier version of the `renpho` plugin also claimed CID `0x0157` as
+"Qingniu's SIG-assigned CID" and decoded a live weight preview (LE16 weight
+/ unit nibble / stable bit / embedded MAC) from it. That attribution was
+wrong: the [Bluetooth SIG Assigned Numbers registry](https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/company_identifiers/company_identifiers.yaml)
+(and adwatch's own `_bt_company_ids.py`) assigns `0x0157` to **Anhui Huami
+Information Technology Co., Ltd.** (Zepp / Amazfit). All six `0x0157` frames
+in the NearSight telemetry corpus are Huami wearables
+(`57 01 02 ...`, handled by `huami_amazfit` — see `huami-amazfit.md`), and
+the weight decode mislabelled them as scales. The plugin now matches only
+CID `0x06D0`, the Qingniu/Yolanda name catalog and the scale service UUIDs;
+no Qingniu manufacturer-data weight preview is decoded.
+
 ## Wire Format
 
 ```
