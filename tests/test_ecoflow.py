@@ -280,11 +280,15 @@ class TestEcoFlowReportEnrichment:
     """Fields verified against reports/ecoflow_passive.md (Stage 4b)."""
 
     def test_alternate_company_ids_are_registered(self):
-        """The app installs scan filters for 0xB5B5, 0xA4A8 and 0x0BA9."""
-        assert set(ECOFLOW_COMPANY_IDS) == {0xB5B5, 0xA4A8, 0x0BA9}
+        """EcoFlow CIDs are 0xB5B5 and 0xA4A8.
+
+        The app also filters on 0x0BA9, but that is Allterco Robotics'
+        (Shelly) SIG-assigned CID and belongs to shelly_blu.
+        """
+        assert set(ECOFLOW_COMPANY_IDS) == {0xB5B5, 0xA4A8}
         assert ECOFLOW_COMPANY_ID == 0xB5B5
 
-    @pytest.mark.parametrize("cid", [0xB5B5, 0xA4A8, 0x0BA9])
+    @pytest.mark.parametrize("cid", [0xB5B5, 0xA4A8])
     def test_parses_each_company_id(self, cid):
         payload = _build_full_payload()
         ad = _make_ad(manufacturer_data=struct.pack("<H", cid) + payload)
@@ -293,7 +297,7 @@ class TestEcoFlowReportEnrichment:
         assert result.metadata["company_id"] == cid
         assert result.metadata["serial_number"] == "R331ABCDEFGHIJKL"
 
-    @pytest.mark.parametrize("cid", [0xB5B5, 0xA4A8, 0x0BA9])
+    @pytest.mark.parametrize("cid", [0xB5B5, 0xA4A8])
     def test_registry_matches_each_company_id(self, cid):
         registry = ParserRegistry()
 
@@ -426,3 +430,42 @@ class TestEcoFlowReportEnrichment:
 
         ad = _make_ad(service_data={"fff6": b"\x00\x00\x0f\x5f\x23\x00\x00\x00"})
         assert registry.match(ad) == []
+
+
+class TestEcoFlowDoesNotClaimShellyCid:
+    """CID 0x0BA9 is SIG-assigned to Allterco Robotics (Shelly).
+
+    Bluetooth SIG Assigned Numbers, company_identifiers.yaml: 0x0BA9 =
+    "Allterco Robotics ltd". All 0x0BA9 frames in the NearSight corpus are
+    Shelly BLU devices.
+    """
+
+    @pytest.mark.parametrize("hexframe", [
+        "a90b0101000b30100a189fc197bacc",
+        "a90b0101000b28100a90e7c0e385a0",
+    ])
+    def test_shelly_blu_corpus_frame_rejected(self, hexframe):
+        ad = _make_ad(manufacturer_data=bytes.fromhex(hexframe))
+        assert EcoFlowParser().parse(ad) is None
+
+    def test_shelly_cid_with_ecoflow_shaped_payload_rejected(self):
+        ad = _make_ad(manufacturer_data=struct.pack("<H", 0x0BA9) + _build_full_payload())
+        assert EcoFlowParser().parse(ad) is None
+
+
+class TestEcoFlowCorpusStatusByte:
+    """Real frames: bit 7 of payload[17] is always clear and bits 0-6 carry a
+    plausible SoC, so bit 7 is dormancy (active == not dormant), not an
+    "active" flag."""
+
+    @pytest.mark.parametrize("hexframe,soc", [
+        ("b5b513523333315a413141394837463332323143000100003e4b", 67),
+        ("b5b513503332315a41314150484144323331346400010000be6b", 100),
+        ("b5b513455331315a41314232483555303134390800010000be17", 8),
+    ])
+    def test_corpus_frame(self, hexframe, soc):
+        ad = _make_ad(manufacturer_data=bytes.fromhex(hexframe))
+        result = EcoFlowParser().parse(ad)
+        assert result.metadata["state_of_charge_pct"] == soc
+        assert result.metadata["dormant"] is False
+        assert result.metadata["active"] is True
