@@ -40,20 +40,24 @@ def _build_h5074(
     temperature=2580,   # 25.80 C
     humidity=5247,       # 52.47 %
     battery=87,          # 87%
-    pad_prefix=b"\x00\x00",  # 2 bytes before temp (offset 0-1)
+    pad_prefix=b"\x00",  # 1 byte before temp (offset 0)
+    trailer=b"\x02",
 ):
     """Build manufacturer_data for H5074 format.
 
-    Payload layout (after company ID):
-      offset 0-1: prefix bytes (device-specific, not parsed)
-      offset 2-3: temperature as int16 LE, /100 for C
-      offset 4-5: humidity as uint16 LE, /100 for %
-      offset 6:   battery percentage
+    Payload layout (after company ID), per HA govee-ble (data[1:6] "<hHB")
+    and Theengs H5074_json.h, confirmed by corpus frame 88ec00fc0dc5086402:
+      offset 0:   prefix byte (0x00 observed)
+      offset 1-2: temperature as int16 LE, /100 for C
+      offset 3-4: humidity as uint16 LE, /100 for %
+      offset 5:   battery percentage
+      offset 6:   trailer (0x02 observed)
     """
     payload = pad_prefix
     payload += struct.pack("<h", temperature)
     payload += struct.pack("<H", humidity)
     payload += bytes([battery])
+    payload += trailer
     return COMPANY_ID_BYTES + payload
 
 
@@ -61,23 +65,27 @@ def _build_h5075(
     *,
     encoded_value=256470,  # temp=25.6 C, hum=47.0%
     battery=91,
-    pad_prefix=b"\x00\x00\x00",  # 3 bytes before encoded (offset 0-2)
+    pad_prefix=b"\x00",  # 1 byte before encoded (offset 0)
+    trailer=b"\x00",
 ):
     """Build manufacturer_data for H5075/H5072 3-byte encoding format.
 
-    Payload layout (after company ID):
-      offset 0-2: prefix bytes
-      offset 3-5: 3-byte big-endian encoded value
-      offset 6:   battery percentage
+    Payload layout (after company ID), per HA govee-ble (6-byte 0xEC88
+    frame, data[1:5]) and Theengs H5072_json.h, e.g. corpus 88ec0003bb2d3800:
+      offset 0:   flag byte (0x00)
+      offset 1-3: 3-byte big-endian encoded value
+      offset 4:   battery percentage
+      offset 5:   trailer (0x00)
 
-    Encoded value:
-      temperature = value / 10000  (C)
+    Encoded value (govee-ble decode_temp_humid):
+      temperature = (value & 0x7FFFFF) // 1000 / 10  (C)
       humidity = (value % 1000) / 10  (%)
       If bit 23 is set, temperature is negative.
     """
     payload = pad_prefix
     payload += encoded_value.to_bytes(3, "big")
     payload += bytes([battery])
+    payload += trailer
     return COMPANY_ID_BYTES + payload
 
 
@@ -92,13 +100,13 @@ H5074_NEG_TEMP = _build_h5074(temperature=-520)
 # H5074: zero temp
 H5074_ZERO_TEMP = _build_h5074(temperature=0, humidity=5000, battery=100)
 
-# H5075: encoded_value=256470 -> temp=256470/10000=25.647->25.6 C, hum=256470%1000/10=47.0%
+# H5075: encoded_value=256470 -> temp=256470//1000/10=25.6 C, hum=256470%1000/10=47.0%
 H5075_VALID = _build_h5075(encoded_value=256470, battery=91)
 
 # H5075: negative temp via bit 23
 # bit 23 set: 0x800000 | value. temp = -(value/10000), hum = value%1000/10
 # value with bit23 = 0x800000 | 103550 = 8491038
-# temp = -(103550/10000) = -10.355 -> -10.355 C, hum = 103550%1000/10 = 55.0%
+# temp = -(103550//1000/10) = -10.3 C, hum = 103550%1000/10 = 55.0%
 H5075_NEG_TEMP = _build_h5075(encoded_value=(0x800000 | 103550), battery=80)
 
 # Wrong company ID
@@ -146,11 +154,11 @@ class TestGoveeH5074Battery:
 
 class TestGoveeH5075Format:
     def test_positive_temperature(self, parser):
-        # 256470 / 10000 = 25.647 C
+        # 256470 // 1000 / 10 = 25.6 C (the low 3 digits are humidity)
         raw = make_raw(manufacturer_data=H5075_VALID, local_name="GVH5075_5678")
         result = parser.parse(raw)
         assert result is not None
-        assert result.metadata["temperature_c"] == pytest.approx(25.647)
+        assert result.metadata["temperature_c"] == pytest.approx(25.6)
 
     def test_humidity(self, parser):
         # 256470 % 1000 / 10 = 47.0%
@@ -165,10 +173,10 @@ class TestGoveeH5075Format:
 
     def test_negative_temperature_bit23(self, parser):
         # bit 23 set: temp is negative
-        # value without bit23 = 103550, temp = -(103550/10000) = -10.355
+        # value without bit23 = 103550, temp = -(103550 // 1000 / 10) = -10.3
         raw = make_raw(manufacturer_data=H5075_NEG_TEMP, local_name="GVH5075_5678")
         result = parser.parse(raw)
-        assert result.metadata["temperature_c"] == pytest.approx(-10.355)
+        assert result.metadata["temperature_c"] == pytest.approx(-10.3)
 
     def test_negative_temp_humidity(self, parser):
         # 103550 % 1000 / 10 = 55.0%
@@ -180,7 +188,7 @@ class TestGoveeH5075Format:
         raw = make_raw(manufacturer_data=H5075_VALID, local_name="GVH5072_9999")
         result = parser.parse(raw)
         assert result is not None
-        assert result.metadata["temperature_c"] == pytest.approx(25.647)
+        assert result.metadata["temperature_c"] == pytest.approx(25.6)
 
 
 class TestGoveeModel:
@@ -403,14 +411,14 @@ class TestGoveeH5100Series:
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["model"] == "H5100"
-        assert result.metadata["temperature_c"] == pytest.approx(25.647)
+        assert result.metadata["temperature_c"] == pytest.approx(25.6)
 
     def test_h5101_temperature(self, parser):
         raw = make_raw(manufacturer_data=H5075_VALID, local_name="GVH5101_1234")
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["model"] == "H5101"
-        assert result.metadata["temperature_c"] == pytest.approx(25.647)
+        assert result.metadata["temperature_c"] == pytest.approx(25.6)
 
     def test_h5102_humidity(self, parser):
         raw = make_raw(manufacturer_data=H5075_VALID, local_name="GVH5102_1234")
@@ -433,7 +441,7 @@ class TestGoveeH5103Series:
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["model"] == "H5103"
-        assert result.metadata["temperature_c"] == pytest.approx(25.647)
+        assert result.metadata["temperature_c"] == pytest.approx(25.6)
 
     def test_h5104_temperature(self, parser):
         raw = make_raw(manufacturer_data=H5103_VALID, local_name="GVH5104_1234")
@@ -457,7 +465,7 @@ class TestGoveeH5103Series:
         data = _build_h5103(encoded_value=(0x800000 | 103550), battery=80)
         raw = make_raw(manufacturer_data=data, local_name="GVH5103_1234")
         result = parser.parse(raw)
-        assert result.metadata["temperature_c"] == pytest.approx(-10.355)
+        assert result.metadata["temperature_c"] == pytest.approx(-10.3)
 
     def test_h5103_too_short_payload(self, parser):
         # Only 7 bytes payload (needs 8 for h5103 format)
@@ -786,3 +794,170 @@ class TestGoveeH5124API:
             assert len(data) >= 1
 
         await database.close()
+
+
+
+# --- Corpus-verified frames (NearSight telemetry, 2026-09-29) ---
+
+
+class TestGoveeH5074CorpusOffset:
+    """H5074 temperature starts at payload offset 1, not 2.
+
+    HA govee-ble: 7-byte 0xEC88 payload -> "<hHB" at data[1:6];
+    Theengs H5074_json.h: manufacturerdata hex offsets 6/10/14 (payload
+    bytes 1/3/5). Corpus frame 88ec00fc0dc5086402 ("Govee_H5074_42AC")
+    decodes to 35.80 C / 22.45 % / 100 %; offset 2 gave -150.9 C / 256.1 %.
+    """
+
+    @pytest.mark.parametrize("hexframe,name,temp,hum,batt", [
+        ("88ec00fc0dc5086402", "Govee_H5074_42AC", 35.80, 22.45, 100),
+        ("88ec002a0d8e126302", "Govee_H5074_04DB", 33.70, 47.50, 99),
+        ("88ec00a5087f115502", "Govee_H5074_FC16", 22.13, 44.79, 85),
+    ])
+    def test_corpus_frame(self, parser, hexframe, name, temp, hum, batt):
+        result = parser.parse(make_raw(manufacturer_data=bytes.fromhex(hexframe), local_name=name))
+        assert result.metadata["model"] == "H5074"
+        assert result.metadata["temperature_c"] == pytest.approx(temp)
+        assert result.metadata["humidity_percent"] == pytest.approx(hum)
+        assert result.metadata["battery_percent"] == batt
+
+
+class TestGoveeH5075CorpusFrames:
+    """Real 6-byte 0xEC88 H5072/H5075 frames: flag, enc24 BE, battery, 0x00.
+
+    Per HA govee-ble (msg_length 6, data[1:5]) and Theengs H5072_json.h.
+    The old decode needed >= 7 payload bytes at offset 3 and never decoded
+    a real capture.
+    """
+
+    def test_doc_worked_example(self, parser):
+        result = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("88ec0003bb2d3800"), local_name="GVH5075_CF71"))
+        assert result.metadata["model"] == "H5075"
+        assert result.metadata["temperature_c"] == pytest.approx(24.4)
+        assert result.metadata["humidity_percent"] == pytest.approx(52.5)
+        assert result.metadata["battery_percent"] == 56
+
+    def test_unnamed_six_byte_ec88_frame_is_h5075_family(self, parser):
+        # 0x03557c = 218492 -> 21.8 C / 49.2 %, battery 0x4f = 79
+        result = parser.parse(make_raw(manufacturer_data=bytes.fromhex("88ec0003557c4f00")))
+        assert result is not None
+        assert result.metadata["model"] == "H5072/H5075"
+        assert result.metadata["temperature_c"] == pytest.approx(21.8)
+        assert result.metadata["humidity_percent"] == pytest.approx(49.2)
+        assert result.metadata["battery_percent"] == 79
+
+    def test_glued_ibeacon_is_ignored(self, parser):
+        frame = bytes.fromhex(
+            "88ec0003ee7828004c000215494e54454c4c495f524f434b535f48575075f2ff0c")
+        result = parser.parse(make_raw(manufacturer_data=frame))
+        # 0x03ee78 = 257656 -> 25.7 C / 65.6 %, battery 0x28 = 40
+        assert result.metadata["temperature_c"] == pytest.approx(25.7)
+        assert result.metadata["humidity_percent"] == pytest.approx(65.6)
+        assert result.metadata["battery_percent"] == 40
+        assert result.metadata["ibeacon_marker"] == "HWPu"
+
+
+EC88_UUIDS = ["0000ec88-0000-1000-8000-00805f9b34fb"]
+
+
+class TestGoveeCid0001Frames:
+    """CID-0x0001 frames on the EC88 service: 01 00 | 01 01 | enc24 | batt.
+
+    Same layout as HA govee-ble's H5100/H5101/H5102/H5104/H5105/H5108/H5174/
+    H5177 path (decode_temp_humid_battery_error(data[2:6])) and Theengs
+    H5102_json.h ("0100" prefix, enc at hex 8..13, battery at hex 14).
+    Battery is the low 7 bits; bit 7 flags a sensor error.
+    """
+
+    @pytest.mark.parametrize("hexframe,temp,hum,batt", [
+        ("01000101045b0d64", 28.5, 45.3, 100),
+        ("0100010103d21156", 25.0, 38.5, 86),
+        ("0100010103a4424e", 23.8, 65.8, 78),
+        ("010001010734dd64", 47.2, 28.5, 100),
+    ])
+    def test_corpus_frames(self, parser, hexframe, temp, hum, batt):
+        result = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex(hexframe), service_uuids=EC88_UUIDS))
+        assert result is not None
+        md = result.metadata
+        assert md["frame_format"] == "govee_cid_0001"
+        assert md["temperature_c"] == pytest.approx(temp)
+        assert md["humidity_percent"] == pytest.approx(hum)
+        assert md["battery_percent"] == batt
+        assert md["sensor_error"] is False
+
+    def test_short_uuid_form(self, parser):
+        result = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("01000101045b0d64"), service_uuids=["ec88"]))
+        assert result.metadata["temperature_c"] == pytest.approx(28.5)
+
+    def test_error_bit_outlier(self, parser):
+        """010001010ef0c0be: battery byte 0xbe has bit 7 set -> error frame;
+        battery 0x3e = 62, temperature/humidity not reported (HA reports
+        ERROR for these)."""
+        result = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("010001010ef0c0be"), service_uuids=EC88_UUIDS))
+        md = result.metadata
+        assert md["sensor_error"] is True
+        assert md["battery_percent"] == 62
+        assert "temperature_c" not in md
+        assert "humidity_percent" not in md
+
+    def test_hwpu_ibeacon_marker(self, parser):
+        frame = bytes.fromhex(
+            "01000101045b0d644c000215494e54454c4c495f524f434b535f48575075f2ff0c")
+        md = parser.parse(make_raw(manufacturer_data=frame, service_uuids=EC88_UUIDS)).metadata
+        assert md["temperature_c"] == pytest.approx(28.5)
+        assert md["battery_percent"] == 100
+        assert md["ibeacon_marker"] == "HWPu"
+        assert md["model"] == "H5075"
+
+    def test_hwqw_ibeacon_marker(self, parser):
+        frame = bytes.fromhex(
+            "0100010103d211564c000215494e54454c4c495f524f434b535f48575177f2ffc2")
+        md = parser.parse(make_raw(manufacturer_data=frame, service_uuids=EC88_UUIDS)).metadata
+        assert md["temperature_c"] == pytest.approx(25.0)
+        assert md["ibeacon_marker"] == "HWQw"
+        assert md["model"] == "H5177"
+
+    def test_model_from_name(self, parser):
+        md = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("0100010103d5fd5f"),
+            local_name="GVH5177_B1E1", service_uuids=EC88_UUIDS)).metadata
+        assert md["model"] == "H5177"
+        assert md["temperature_c"] == pytest.approx(25.1)
+        assert md["humidity_percent"] == pytest.approx(38.9)
+        assert md["battery_percent"] == 95
+
+    def test_name_alone_is_enough(self, parser):
+        md = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("0100010103d5fd5f"),
+            local_name="GVH5177_B1E1")).metadata
+        assert md["model"] == "H5177"
+
+    def test_eight_byte_payload_is_h5108_temperature_only(self, parser):
+        """HA: CID 0x0001 + 8-byte payload -> H5108; Theengs: no humidity
+        for GV5108. 010001010054603b0000 -> 2.1 C, battery 59."""
+        md = parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("010001010054603b0000"),
+            service_uuids=EC88_UUIDS)).metadata
+        assert md["model"] == "H5108"
+        assert md["temperature_c"] == pytest.approx(2.1)
+        assert md["battery_percent"] == 59
+        assert "humidity_percent" not in md
+
+    def test_negative_temperature(self, parser):
+        enc = 0x800000 | 52345  # -5.2 C, 34.5 %
+        frame = bytes.fromhex("01000101") + enc.to_bytes(3, "big") + bytes([80])
+        md = parser.parse(make_raw(manufacturer_data=frame, service_uuids=EC88_UUIDS)).metadata
+        assert md["temperature_c"] == pytest.approx(-5.2)
+        assert md["humidity_percent"] == pytest.approx(34.5)
+
+    def test_cid_0001_without_govee_signal_rejected(self, parser):
+        """CID 0x0001 is shared (TPMS, iBBQ...); require EC88 or a Govee name."""
+        assert parser.parse(make_raw(manufacturer_data=bytes.fromhex("01000101045b0d64"))) is None
+
+    def test_cid_0001_wrong_length_rejected(self, parser):
+        assert parser.parse(make_raw(
+            manufacturer_data=bytes.fromhex("0100010104"), service_uuids=EC88_UUIDS)) is None

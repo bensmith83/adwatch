@@ -14,6 +14,10 @@ Govee uses two company IDs:
 |------------|-------------------|---------|
 | `0xEC88`   | Plaintext sensors | Direct, per-subformat |
 | `0xEF88`   | H512x ("Govee 5") | AES-ECB-encrypted, 24-byte payload |
+| `0x0001`\* | H5100 family (H5100/01/02/04/05/08/74/77) | `01 00 01 01 <enc24> <batt>` on service `0xEC88` — see `govee-ec88-0001.md` |
+
+\* Not a Govee CID: the payload's leading `01 00` is read back as company
+ID 0x0001.
 
 The LED light-strip product line (`0x8843` / `0x8802` / `Govee_HXXXX_*`
 local names) is a separate parser — see `govee-led.md`.
@@ -24,7 +28,7 @@ local names) is a separate parser — see `govee-led.md`.
 |--------------|------------|-------------------------|-------|
 | H5072        | h5075      | 8                       | Pocket thermo-hygrometer |
 | H5075        | h5075      | 8 (or 33 with iBeacon piggyback) | Classic Govee sensor |
-| H5100, H5101, H5102 | h5075 | 8                  | Refreshed H5075 hardware |
+| H5100, H5101, H5102 | h5075 (0xEC88) / cid_0001 | 8 | Per govee-ble these send the CID-0x0001 frame (`govee-ec88-0001.md`) |
 | H5074, H5174 | h5074      | 9                       | Older smart-display sensor |
 | H5103, H5104, H5105 | h5103 | 10                  | Display thermometer |
 | H5177, H5179 | h5177      | 13                      | Smart-display sensor |
@@ -32,7 +36,10 @@ local names) is a separate parser — see `govee-led.md`.
 | H5121, H5122, H5123, H5124, H5125, H5126, H5130 | h512x | 26 (24 payload) | Encrypted sensors |
 
 Model detection runs on the BLE local name, which always includes the
-4-digit model number (e.g. `GVH5075_CF71` → `H5075`).
+4-digit model number (e.g. `GVH5075_CF71` → `H5075`). The name usually
+arrives only in the scan response; without it, a 6-byte `0xEC88` payload
+is reported as `H5072/H5075` (govee-ble does the same) and a 7-byte one is
+decoded with the H5074 layout.
 
 ## h5075 Wire Format (real-world capture)
 
@@ -49,7 +56,7 @@ Bytes:   88 EC | 00 | 03 BB 2D | 38 | 00
 |-------------------|-------|---------|
 | 0                 | `00`  | Flag byte (always 0x00 observed) |
 | 1–3               | `03 bb 2d` | 24-bit big-endian encoded temp + humidity |
-| 4                 | `38`  | Battery percent (0–100) |
+| 4                 | `38`  | Battery percent in bits 0–6; bit 7 = sensor error (govee-ble) |
 | 5                 | `00`  | Trailer (always 0x00 observed) |
 
 ### Encoded → temperature / humidity
@@ -57,17 +64,24 @@ Bytes:   88 EC | 00 | 03 BB 2D | 38 | 00
 ```
 encoded = (b1 << 16) | (b2 << 8) | b3       # 24-bit big-endian
 is_negative = (encoded & 0x800000) != 0
-if is_negative: encoded ^= 0x800000
-temperature_c = encoded / 10000.0
+encoded &= 0x7FFFFF
+temperature_c = (encoded // 1000) / 10.0    # govee-ble decode_temp_humid
 if is_negative: temperature_c = -temperature_c
 humidity_pct  = (encoded % 1000) / 10.0
 ```
+
+(Corrected 2026-09-30: this doc and the plugin used `encoded / 10000`,
+which leaks the humidity digits into the temperature — 244525 gave
+24.4525 °C where the ".0525" is really the 52.5 % humidity. The value
+packs `temp×10` in the upper digits and `RH×10` in the low three, so the
+temperature resolution is 0.1 °C, as in Home Assistant govee-ble and the
+Theengs `H5072_json.h` decoder.)
 
 Worked example from a real capture (`88ec0003bb2d3800`):
 
 ```
 encoded = 0x03BB2D = 244525
-temperature_c = 244525 / 10000        = 24.45 °C
+temperature_c = (244525 // 1000) / 10 = 24.4 °C
 humidity_pct  = (244525 % 1000) / 10  = 52.5 %
 battery       = 0x38                  = 56 %
 ```
@@ -88,29 +102,44 @@ The iBeacon UUID literally encodes the ASCII string
 ignores everything past the first 6 bytes — sensor decoding is
 identical whether the iBeacon is appended or not.
 
-### Heuristic for the legacy padded form
+The iBeacon's 16-byte UUID is exactly `INTELLI_ROCKS_HW`; its 2-byte
+*major* carries two more ASCII characters (`Pu` on H5075 captures, `Qw` on
+an H5177), surfaced as `ibeacon_marker` (`HWPu`, `HWQw`).
 
-A small number of older Govee firmware variants (and historical adwatch
-test fixtures) shipped a longer "padded" payload with an extra two
-prefix bytes. The parser auto-detects layout: it uses the modern
-6-byte decode when the payload is short or starts with the
-`00 <non-zero>` flag pattern, and falls back to the legacy
-3-prefix-bytes decode otherwise. This keeps adwatch compatible with
-old captures while correctly decoding live H5075 hardware in 2026.
+### Correction (2026-09-30): no "legacy padded form"
+
+This section previously described a layout auto-detect with a "legacy"
+3-prefix-byte decode. The plugin never implemented it: it always read the
+encoded value at payload offset 3 and the battery at 6 and required 7
+bytes, so it could not decode a single real 6-byte capture. The plugin now
+reads the layout above (offset 1, battery 4), matching govee-ble (6-byte
+`0xEC88` payload, `data[1:5]`) and Theengs `H5072_json.h` (hex offsets
+6/12). No capture of a padded form exists in the adwatch or NearSight
+corpora.
 
 ## h5074 / h5103 / h5177 / h5181 (summary)
 
 | Format | Temp encoding | Humidity encoding | Battery |
 |--------|---------------|-------------------|---------|
-| h5074  | int16 little-endian / 100, offset 2 | uint16 LE / 100, offset 4 | byte 6 |
+| h5074  | int16 little-endian / 100, offset 1 | uint16 LE / 100, offset 3 | byte 5 |
 | h5103  | 24-bit BE encoded (same algo as h5075), offset 4 | from encoded % 1000 / 10 | byte 7 |
 | h5177  | int16 LE / 100, offset 6 | uint16 LE / 100, offset 8 | byte 10 |
 | h5181  | up to 6 probe int16 LE / 100 at offsets 2,4,6,… | — (meat probes only) | — |
 
-Real-world captures of those sub-formats are not present in the
-adwatch research export at time of writing, so the offsets are
-inherited from prior community decoders and should be treated as
-provisional until verified against live captures.
+**h5074 verified (2026-09-30).** The table previously gave offsets 2 / 4 /
+6. The real 7-byte payload is `00 | temp LE16 | hum LE16 | batt | 02`, per
+Home Assistant govee-ble (7-byte `0xEC88` payload, `"<hHB"` at
+`data[1:6]`) and Theengs `H5074_json.h` (hex offsets 6 / 10 / 14). NearSight
+corpus frame `88ec00fc0dc5086402` (`Govee_H5074_42AC`) decodes to
+**35.80 °C / 22.45 % / 100 %** at offset 1, but to −150.9 °C / 256.1 %
+(battery 0x02, really the trailer) at offset 2. Eight named H5074 captures
+all agree with offset 1.
+
+h5103 and h5177 (on `0xEC88`) remain unverified. govee-ble decodes the
+H5103/H5177 family from the CID-0x0001 frame instead (payload offset 2,
+see `govee-ec88-0001.md`), and the only named H5177 in the NearSight corpus
+(`GVH5177_B1E1`) sends exactly that frame; treat the `0xEC88` h5103/h5177
+offsets as provisional.
 
 ## h512x (encrypted)
 
@@ -149,6 +178,9 @@ key — no extra suffixing required.
 
 ## References
 
+- Home Assistant govee-ble parser: https://github.com/Bluetooth-Devices/govee-ble/blob/main/src/govee_ble/parser.py
+- Theengs H5074 / H5072-75 definitions: https://github.com/theengs/decoder/blob/development/src/devices/H5074_json.h , https://github.com/theengs/decoder/blob/development/src/devices/H5072_json.h
+- CID-0x0001 H5100-family frames: `govee-ec88-0001.md`
 - Theengs decoder (cross-vendor BLE decoder): https://github.com/theengs/decoder
 - ESPHome `govee_h5075` component: https://esphome.io/components/sensor/bluetooth_proxy.html
 - Theengs H5075 spec: https://github.com/theengs/decoder/blob/development/docs/devices/GVH5075.md

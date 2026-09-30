@@ -5,7 +5,7 @@ import re
 import struct
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
-from adwatch.registry import register_parser
+from adwatch.registry import register_parser, _normalize_uuid
 
 
 # Company ID 0x0001 is not exclusive to TPMS sensors. iBBQ-family BBQ
@@ -14,7 +14,12 @@ from adwatch.registry import register_parser
 # which the stack reads back as company ID 0x0001. Without this guard TPMS
 # invents pressure/temperature values for a cooking probe. See
 # apk-ble-hunting/reports/{easybbq,bbqgo}_passive.md and plugins/ibbq.py.
-_NOT_TPMS_NAME_RE = re.compile(r"^(iBBQ|xBBQ|GrillEye)")
+#
+# Govee thermo-hygrometers (H5100 family, H5075/H5177 revisions) also send
+# ``01 00 01 01 <enc24> <batt>`` frames on service UUID 0xEC88; those belong
+# to the govee plugin (docs/protocols/govee-ec88-0001.md).
+_NOT_TPMS_NAME_RE = re.compile(r"^(iBBQ|xBBQ|GrillEye|GVH|GV5|Govee)")
+_GOVEE_EC88_UUID = _normalize_uuid("ec88")
 
 
 @register_parser(
@@ -22,7 +27,7 @@ _NOT_TPMS_NAME_RE = re.compile(r"^(iBBQ|xBBQ|GrillEye)")
     company_id=0x0001,
     local_name_pattern=r"^(TPMS|BR)",
     description="BLE tire pressure monitoring sensors",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class TPMSParser:
@@ -31,6 +36,9 @@ class TPMSParser:
             return None
 
         if raw.local_name and _NOT_TPMS_NAME_RE.match(raw.local_name):
+            return None
+
+        if any(_normalize_uuid(u) == _GOVEE_EC88_UUID for u in (raw.service_uuids or [])):
             return None
 
         payload = raw.manufacturer_payload

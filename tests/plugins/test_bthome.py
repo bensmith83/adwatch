@@ -455,19 +455,41 @@ class TestBTHomeButtonEvent:
 
 
 class TestBTHomeDimmerEvent:
-    def test_dimmer_clockwise(self, parser):
-        payload = bytes([DEVICE_INFO_V2, 0x3C, 3, 0x00])
-        raw = make_raw(service_data={BTHOME_UUID: payload})
-        result = parser.parse(raw)
-        assert result is not None
-        assert result.metadata["dimmer_event"] == {"steps": 3, "direction": "clockwise"}
+    """Object 0x3C per the BTHome spec (https://bthome.io/format/) and
+    bthome-ble: byte 0 is the event (0x00 none, 0x01 rotate left, 0x02
+    rotate right), byte 1 is the uint8 step count."""
 
-    def test_dimmer_counter_clockwise(self, parser):
-        payload = bytes([DEVICE_INFO_V2, 0x3C, 5, 0x01])
-        raw = make_raw(service_data={BTHOME_UUID: payload})
-        result = parser.parse(raw)
+    def test_dimmer_rotate_left(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x01, 3])
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
         assert result is not None
-        assert result.metadata["dimmer_event"] == {"steps": 5, "direction": "counter_clockwise"}
+        assert result.metadata["dimmer_event"] == {"event": "rotate_left", "steps": 3}
+
+    def test_dimmer_rotate_right(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x02, 5])
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result is not None
+        assert result.metadata["dimmer_event"] == {"event": "rotate_right", "steps": 5}
+
+    def test_dimmer_none(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x00, 0])
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["dimmer_event"] == {"event": "none", "steps": 0}
+
+    def test_dimmer_unknown_event_kept_raw(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x07, 2])
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["dimmer_event"] == {"event": 0x07, "steps": 2}
+
+
+class TestBTHomeEnergyObject:
+    """0x0A is energy (uint24, 0.001 kWh), 0x0B is power (uint24, 0.01 W)."""
+
+    def test_energy_0x0a(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x0A]) + (1346).to_bytes(3, "little")
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["energy"] == pytest.approx(1.346)
+        assert "power" not in result.metadata
 
 
 class TestBTHomeRegistration:

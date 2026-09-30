@@ -284,3 +284,40 @@ class TestIdentity:
         assert result.parser_name == "combustion"
         assert result.beacon_type == "combustion"
         assert result.device_class == "sensor"
+
+
+class TestCombustionSpecTables:
+    """Per Combustion's published BLE spec
+    (github.com/combustion-inc/combustion-documentation):
+    probe_ble_specification.rst "Mode and ID Data" and
+    meatnet_node_ble_specification.rst "Product Type"."""
+
+    def test_probe_modes_per_spec(self):
+        assert PROBE_MODES == {0: "NORMAL", 1: "INSTANT_READ", 2: "RESERVED", 3: "ERROR"}
+
+    def test_product_types_per_spec(self):
+        assert PRODUCT_TYPES == {
+            0x00: "UNKNOWN", 0x01: "PROBE", 0x02: "NODE", 0x03: "GAUGE",
+            0x04: "DISPLAY", 0x05: "BOOSTER", 0x06: "ENGINE",
+        }
+
+    @staticmethod
+    def _probe_payload(mode_byte):
+        serial = struct.pack("<I", 0x0000ABCD)
+        return b"\x01" + serial + bytes(13) + bytes([mode_byte, 0x00, 0x00])
+
+    @pytest.mark.parametrize("mode_bits,name", [
+        (0, "NORMAL"), (1, "INSTANT_READ"), (2, "RESERVED"), (3, "ERROR"),
+    ])
+    def test_probe_mode_decode(self, mode_bits, name):
+        ad = _make_ad(manufacturer_data=_mfr(self._probe_payload(mode_bits)))
+        result = CombustionParser().parse(ad)
+        assert result.metadata["mode_code"] == mode_bits
+        assert result.metadata["mode"] == name
+
+    @pytest.mark.parametrize("ptype,name", [(4, "DISPLAY"), (5, "BOOSTER"), (6, "ENGINE")])
+    def test_display_booster_engine_product_types(self, ptype, name):
+        ad = _make_ad(manufacturer_data=_mfr(bytes([ptype]) + bytes(8)))
+        result = CombustionParser().parse(ad)
+        assert result is not None
+        assert result.metadata["product_type"] == name

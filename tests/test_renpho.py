@@ -126,7 +126,7 @@ class TestRenphoParser:
 
 
 class TestRenphoEnrichedCatalog:
-    """v2.0.0: full Qingniu OEM brand catalog + 0x0157 CID + live weight."""
+    """v2.0.0: full Qingniu OEM brand catalog."""
 
     def test_yolanda_brand_recognized(self):
         parser = RenphoParser()
@@ -161,25 +161,6 @@ class TestRenphoEnrichedCatalog:
         result = parser.parse(ad)
         assert result.metadata["name_prefix"] == "QN-Scale1"
 
-    def test_qingniu_cid_match(self):
-        parser = RenphoParser()
-        mfr = struct.pack("<H", 0x0157) + b"\xC8\x00\x10"  # 200 (=20.0 kg), kg, stable
-        ad = _make_ad(manufacturer_data=mfr)
-        result = parser.parse(ad)
-        assert result is not None
-        assert result.metadata["qingniu_cid"] is True
-        assert result.metadata["weight_kg"] == 20.0
-        assert result.metadata["unit"] == "kg"
-        assert result.metadata["stable"] is True
-
-    def test_qingniu_cid_lb_unstable(self):
-        parser = RenphoParser()
-        mfr = struct.pack("<H", 0x0157) + b"\x10\x27\x01"  # 10000 (=1000.0), lb, unstable
-        ad = _make_ad(manufacturer_data=mfr)
-        result = parser.parse(ad)
-        assert result.metadata["unit"] == "lb"
-        assert result.metadata["stable"] is False
-
     def test_service_uuid_match(self):
         parser = RenphoParser()
         ad = _make_ad(service_uuids=["fff0"])
@@ -191,16 +172,6 @@ class TestRenphoEnrichedCatalog:
         ad = _make_ad(service_uuids=["0000181d-0000-1000-8000-00805f9b34fb"])
         result = parser.parse(ad)
         assert result is not None
-
-    def test_embedded_mac_used_for_identity(self):
-        parser = RenphoParser()
-        # 4 reserved/header bytes then 6-byte MAC
-        mfr = struct.pack("<H", 0x0157) + b"\x00\x00\x10\x00" + b"\x66\x55\x44\x33\x22\x11"
-        ad = _make_ad(manufacturer_data=mfr, mac_address="AA:AA:AA:AA:AA:AA")
-        result = parser.parse(ad)
-        assert result.metadata.get("embedded_mac") == "11:22:33:44:55:66"
-        expected = hashlib.sha256(b"renpho:11:22:33:44:55:66").hexdigest()[:16]
-        assert result.identifier_hash == expected
 
 
 class TestRenphoGenericUuidGating:
@@ -236,7 +207,49 @@ class TestRenphoGenericUuidGating:
 
     def test_own_cid_still_matches_with_generic_uuid(self):
         ad = _make_ad(
-            manufacturer_data=struct.pack("<H", 0x0157) + b"\x00\x00\x10",
+            manufacturer_data=struct.pack("<H", 0x06D0) + b"\x00\x00\x10",
             service_uuids=["fff0"],
         )
         assert RenphoParser().parse(ad) is not None
+
+
+class TestRenphoDoesNotClaimHuamiCid:
+    """CID 0x0157 is SIG-assigned to Anhui Huami (Zepp/Amazfit), not Qingniu.
+
+    Bluetooth SIG Assigned Numbers, company_identifiers.yaml: 0x0157 =
+    "Anhui Huami Information Technology Co., Ltd." (also adwatch's own
+    _bt_company_ids.py). Every 0x0157 frame in the NearSight corpus is a
+    Huami wearable (``57 01 02 ...``), so decoding a scale weight from it
+    mislabels watches as scales.
+    """
+
+    HUAMI_FRAMES = [
+        "570102ffffffffffffffffffffffffffffffff03d36a75af9292",
+        "5701020202000304fcf6ffffffffffffffffff03f96690d95c10",
+        "570101a701ff",
+    ]
+
+    @pytest.mark.parametrize("hexframe", HUAMI_FRAMES)
+    def test_huami_corpus_frame_is_not_a_scale(self, hexframe):
+        ad = _make_ad(manufacturer_data=bytes.fromhex(hexframe))
+        assert RenphoParser().parse(ad) is None
+
+    def test_0x0157_not_registered(self):
+        from adwatch.registry import _default_registry
+        entries = [e for e in _default_registry.get_entries() if e["name"] == "renpho"]
+        assert entries, "renpho parser should be registered"
+        cids = entries[0]["company_id"]
+        cids = cids if isinstance(cids, (list, tuple)) else [cids]
+        assert 0x0157 not in cids
+        assert 0x06D0 in cids
+
+    def test_huami_frame_yields_no_weight_even_with_scale_name(self):
+        ad = _make_ad(
+            local_name="QN-Scale",
+            manufacturer_data=bytes.fromhex("5701c8001000665544332211"),
+        )
+        result = RenphoParser().parse(ad)
+        assert result is not None  # the name still identifies the scale
+        assert "weight_kg" not in result.metadata
+        assert "embedded_mac" not in result.metadata
+        assert "qingniu_cid" not in result.metadata
