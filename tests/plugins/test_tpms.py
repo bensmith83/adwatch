@@ -208,3 +208,21 @@ class TestTPMSDoesNotClaimIBBQ:
     def test_still_parses_unnamed_company_id_ad(self, parser):
         raw = make_raw(manufacturer_data=TPMS_DATA)
         assert parser.parse(raw) is not None
+
+
+class TestTPMSDeclinesGovee:
+    """Govee thermo-hygrometers send CID-0x0001 frames on service UUID EC88
+    (01 00 01 01 <enc24> <batt>); TPMS used to decode them as -37 C / 0.02 V."""
+
+    @pytest.mark.parametrize("uuid", ["0000ec88-0000-1000-8000-00805f9b34fb", "EC88", "ec88"])
+    def test_ec88_service_uuid_declined(self, uuid):
+        raw = make_raw(manufacturer_data=bytes.fromhex("01000101045b0d64"), service_uuids=[uuid])
+        assert TPMSParser().parse(raw) is None
+
+    def test_govee_name_declined(self):
+        raw = make_raw(manufacturer_data=bytes.fromhex("0100010103d5fd5f"), local_name="GVH5177_B1E1")
+        assert TPMSParser().parse(raw) is None
+
+    def test_plain_tpms_frame_still_parses(self):
+        raw = make_raw(manufacturer_data=bytes.fromhex("0100019641e803"))
+        assert TPMSParser().parse(raw) is not None
