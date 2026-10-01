@@ -2,9 +2,9 @@
 
 ## Overview
 
-[Withings ScanWatch](https://www.withings.com/us/en/scanwatch) is a line of hybrid analog/digital health-tracking smartwatches: the original **ScanWatch** (2020), **ScanWatch 2** (2024), **ScanWatch Light** (2024), and **ScanWatch Horizon**. Unlike the rest of Withings' BLE product line (scales, blood-pressure monitors, sleep trackers), the ScanWatch family advertises **by local name only** — no manufacturer data, no service data, no service UUIDs — and the underlying BD_ADDR is a random/rotating address.
+[Withings ScanWatch](https://www.withings.com/us/en/scanwatch) is a line of hybrid analog/digital health-tracking smartwatches: the original **ScanWatch** (2020), **ScanWatch 2** (2024), **ScanWatch Light** (2024), and **ScanWatch Horizon**. Unlike the rest of Withings' BLE product line (scales, blood-pressure monitors, sleep trackers), the ScanWatch family's *named* advertisements carry **no manufacturer data and no service UUIDs** — identification there is **by local name only**, and the underlying BD_ADDR is a random/rotating address. Alongside the named ads, at least one ScanWatch 2 unit also broadcasts a **nameless service-data frame under Withings' SIG member UUID `0xFD77`** (see below) — the 2026-10-01 sweep added a parser branch for it.
 
-This branch of the Withings parser keys off the local name only. It identifies the watch family from the `ScanWatch[ <variant>]` prefix and surfaces the trailing hex token as a `mac_suffix_hint` for inspection, but does **not** mint a stable identifier — the suffix (1-4 hex digits) collides too easily across devices to use as an identity on its own, and there is nothing else in the advertisement to anchor on.
+The name branch of the Withings parser keys off the local name only. It identifies the watch family from the `ScanWatch[ <variant>]` prefix and surfaces the trailing hex token as a `mac_suffix_hint` for inspection, but does **not** mint a stable identifier — the suffix (1-4 hex digits) collides too easily across devices to use as an identity on its own, and there is nothing else in the advertisement to anchor on.
 
 ## BLE Advertisement Format
 
@@ -15,8 +15,25 @@ This branch of the Withings parser keys off the local name only. It identifies t
 | Local name | `^ScanWatch( 2\| Light\| Horizon)? [0-9A-F]{2,4}$` | E.g. `"ScanWatch 2 D9"`. The hex suffix appears to be the trailing bytes of the current random BD_ADDR. |
 | Company ID / mfg data | _absent_ | The ScanWatch family does not advertise manufacturer-specific data. Contrast with Withings scales/BPMs, which embed the paired-host MAC at bytes 2-7 of their manufacturer payload. |
 | Service UUID | _absent_ | No FF9x signature UUIDs, no SIG service UUIDs. |
-| Service data | _absent_ | |
+| Service data | `0xFD77` → 9-byte frame | Nameless broadcast documented below; absent from the *named* ads. `0xFD77` is Withings' SIG-registered member UUID. |
 | BD_ADDR type | random (rotating) | Two consecutive ads from the same physical watch arrive from different MAC addresses. |
+
+### Nameless `0xFD77` service-data frame
+
+Observed from a unit whose named sibling ads match `ScanWatch 2 87` (so at minimum a ScanWatch 2 broadcast; whether scales or other Withings devices emit the same frame is unknown — n=1 physical unit so far). The frame is 9 bytes under service-data key `0xFD77`:
+
+```
+10 5E 11 | SS | TT TT TT TT TT
+ prefix   state  unit token (constant across the unit's 38 sightings)
+```
+
+| Bytes | Field | Notes |
+|---|---|---|
+| 0–2 | frame prefix `10 5E 11` | Constant in both observed variants. |
+| 3 | state byte | Observed toggling `01` ↔ `03` within one ~2.5-minute encounter; semantics unknown (flags/counter). |
+| 4–8 | unit token | Constant per unit in the single observed unit; per-unit constancy unproven (n=1), so the parser surfaces it but does not anchor identity on it. |
+
+The parser branch (Withings parser v1.1, `match_mode = fd77_service_data`) gates on the exact observed shape (9 bytes, `10 5E 11` prefix) so other `0xFD77` shapes stay unclaimed for future decode. Emits `deviceClass = medical` — the nameless frame alone does not prove the smartwatch model.
 
 ### Local Name Format
 
