@@ -16,6 +16,24 @@ from adwatch.registry import register_parser
 # apk-ble-hunting/reports/{easybbq,bbqgo}_passive.md and plugins/ibbq.py.
 _NOT_TPMS_NAME_RE = re.compile(r"^(iBBQ|xBBQ|GrillEye)")
 
+# FOBO (Salutica) sensors are owned by plugins/fobo_tpms.py: stand down on
+# their family service UUIDs or the Salutica OUI 00:15:88.
+_FOBO_SHORT_UUIDS = frozenset({
+    "ee00", "eefe", "faf0", "0126", "0129", "012b", "fcf0", "014a", "010a",
+})
+_FOBO_OUI = "00:15:88"
+
+
+def _is_fobo(raw: RawAdvertisement) -> bool:
+    if raw.mac_address.upper().startswith(_FOBO_OUI):
+        return True
+    for u in raw.service_uuids or []:
+        u = u.lower()
+        short = u[4:8] if len(u) == 36 and u.startswith("0000") else u
+        if short in _FOBO_SHORT_UUIDS:
+            return True
+    return False
+
 
 @register_parser(
     name="tpms",
@@ -31,6 +49,9 @@ class TPMSParser:
             return None
 
         if raw.local_name and _NOT_TPMS_NAME_RE.match(raw.local_name):
+            return None
+
+        if _is_fobo(raw):
             return None
 
         payload = raw.manufacturer_payload

@@ -9,6 +9,11 @@ Known company IDs:
   0x058E - Meta Platforms Technologies, LLC
   0x0D53 - Luxottica Group S.p.A (Meta Ray-Ban manufacturer)
   0x03C2 - Snapchat, Inc. (Snap Spectacles)
+
+Ray-Ban Meta V2 header (apk-ble-hunting facebook-stella report, native
+ManufacturerData.deserialize in libstartup.so), CID 0x01AB, post-CID payload
+len >= 14: [0]=0x80 V2 marker, [1-2]=model id u16 LE (0x0601 Ray-Ban Meta),
+[3]=pairing seed, [4] bit0=hasOwner, [5-13]=9-byte cleartext device id.
 """
 
 import hashlib
@@ -23,6 +28,12 @@ MANUFACTURER_NAMES = {
     0x058E: "Meta Platforms Technologies",
     0x0D53: "Luxottica",
     0x03C2: "Snapchat",
+}
+
+META_COMPANY_ID = 0x01AB
+META_V2_MARKER = 0x80
+META_MODEL_NAMES = {
+    0x0601: "Ray-Ban Meta",
 }
 
 
@@ -46,6 +57,27 @@ class SmartGlassesParser:
         id_hash = hashlib.sha256(
             f"{raw.mac_address}:{payload.hex()}".encode()
         ).hexdigest()[:16]
+        metadata = {
+            "manufacturer": MANUFACTURER_NAMES.get(company_id, "Unknown"),
+            "company_id": f"0x{company_id:04x}",
+            "payload_hex": payload.hex(),
+        }
+
+        if (company_id == META_COMPANY_ID and len(payload) >= 14
+                and payload[0] == META_V2_MARKER):
+            model_id = int.from_bytes(payload[1:3], "little")
+            device_id = payload[5:14].hex()
+            metadata.update({
+                "meta_format": "v2",
+                "model_id": model_id,
+                "model_name": META_MODEL_NAMES.get(model_id, "Unknown Meta device"),
+                "pairing_seed": payload[3],
+                "has_owner": bool(payload[4] & 0x01),
+                "device_id": device_id,
+            })
+            id_hash = hashlib.sha256(
+                f"meta_glasses:{device_id}".encode()
+            ).hexdigest()[:16]
 
         return ParseResult(
             parser_name="smart_glasses",
@@ -53,11 +85,7 @@ class SmartGlassesParser:
             device_class="wearable",
             identifier_hash=id_hash,
             raw_payload_hex=payload.hex(),
-            metadata={
-                "manufacturer": MANUFACTURER_NAMES.get(company_id, "Unknown"),
-                "company_id": f"0x{company_id:04x}",
-                "payload_hex": payload.hex(),
-            },
+            metadata=metadata,
         )
 
     def storage_schema(self):

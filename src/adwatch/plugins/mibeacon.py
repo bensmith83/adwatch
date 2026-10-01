@@ -51,9 +51,26 @@ Known divergences, left as-is deliberately:
   IO capability consumes 2 bytes.
 * The v>=5 event ID is a single byte drawn from an ID space neither report
   documents, so those events are surfaced raw rather than decoded.
+
+``reports/xiaomi-wearable_passive.md`` (Mi Fitness ``BeaconRecognizer.java``
+/ ``AdvPacket.java``) agrees field-for-field and adds:
+
+* Frame-control **bit 2 = bondNew** (factory-new / unbonded). The wearable
+  scanner surfaces a device when ``bondNew || !registered`` -> ``pairing_mode``.
+* **Encrypted frames keep a cleartext header** (FC, product ID, counter, MAC,
+  capability). Only the event payload is AES-CCM, followed by a 3-byte
+  extended frame counter and a MIC (4 bytes for v>=4, 1 byte below), then the
+  optional 2-byte mesh field. Encrypted frames are therefore surfaced with
+  ``encrypted=True`` rather than dropped; the ciphertext is not decrypted.
+* Mesh field byte 1: bits 0-1 pbType, 2-3 state, 4-7 version.
+* IoCapability byte 1: bits 0-3 input, 4-7 output capability.
+* Capability bits 6-7 = netStatus (offline / LAN / WAN).
+* Wearables (Xiaomi Smart Band / Mi Band / Xiaomi Watch / Redmi) carry a
+  static model name; product IDs are cloud-fetched, so the name labels them.
 """
 
 import hashlib
+import re
 import struct
 
 from adwatch.models import RawAdvertisement, ParseResult
@@ -62,6 +79,7 @@ from adwatch.registry import register_parser
 MIBEACON_UUID = "fe95"
 
 # --- Frame control bits ---
+FC_BOND_NEW = 2
 FC_ENCRYPTED = 3
 FC_HAS_MAC = 4
 FC_HAS_CAPABILITY = 5
@@ -72,6 +90,15 @@ FC_REGISTERED = 8
 FC_SOLICITED = 9
 
 AUTH_MODES = {0: "rc4", 1: "secure_auth", 2: "standard_auth"}
+
+# IoCapability nibbles (MiotBleAdvPacket.java:286-295).
+IO_CAPABILITIES = {0: "none", 1: "six_number", 2: "six_char", 4: "nfc_tag", 8: "qr_code"}
+
+# Mi Fitness wearables advertise a static model name alongside FE95.
+WEARABLE_NAME_RE = re.compile(
+    r"^(Xiaomi Smart Band|Mi Smart Band|Mi Band|Xiaomi Band|Xiaomi Watch|"
+    r"Redmi Watch|Redmi Smart Band|Redmi Band)\b"
+)
 
 # withCapability && bindable == 3 && version >= 3 inserts a 2-byte combo key.
 COMBO_KEY_BINDABLE = 3
@@ -126,7 +153,7 @@ PRODUCT_IDS = {
     name="mibeacon",
     service_uuid=MIBEACON_UUID,
     description="Xiaomi MiBeacon",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class MiBeaconParser:
@@ -151,9 +178,8 @@ class MiBeaconParser:
         has_capability = bool(frame_control & (1 << FC_HAS_CAPABILITY))
         has_object = bool(frame_control & (1 << FC_HAS_OBJECT))
         encrypted = bool(frame_control & (1 << FC_ENCRYPTED))
-
-        if encrypted:
-            return None
+        has_mesh = bool(frame_control & (1 << FC_MESH))
+        bond_new = bool(frame_control & (1 << FC_BOND_NEW))
 
         auth_mode = (frame_control >> 10) & 0x03
         version = (frame_control >> 12) & 0x0F
@@ -170,6 +196,9 @@ class MiBeaconParser:
             "auth_mode": auth_mode,
             "auth_mode_name": AUTH_MODES.get(auth_mode, "unknown"),
             "protocol_version": version,
+            "encrypted": encrypted,
+            "bond_new": bond_new,
+            "pairing_mode": bond_new or not is_registered,
         }
 
         model = PRODUCT_IDS.get(device_type)
@@ -197,6 +226,7 @@ class MiBeaconParser:
             metadata["centralable"] = bool(capability & 0x02)
             metadata["encryptable"] = bool(capability & 0x04)
             metadata["bindable"] = bindable
+            metadata["net_status"] = (capability >> 6) & 0x03
             # A factory-reset Xiaomi-ecosystem device advertises itself as
             # bindable and connectable but not yet registered.
             metadata["unprovisioned"] = connectable and not is_registered
@@ -213,9 +243,27 @@ class MiBeaconParser:
                 if offset + 2 > len(data):
                     return None
                 metadata["io_capability"] = struct.unpack_from("<H", data, offset)[0]
+                io_in = data[offset] & 0x0F
+                io_out = data[offset] >> 4
+                metadata["io_input_capability"] = io_in
+                metadata["io_input_capability_name"] = IO_CAPABILITIES.get(io_in, "unknown")
+                metadata["io_output_capability"] = io_out
+                metadata["io_output_capability_name"] = IO_CAPABILITIES.get(io_out, "unknown")
                 offset += 2
 
-        if has_object:
+        if encrypted:
+            # Event payload is AES-CCM: surface ciphertext + trailer, no decode.
+            rest = data[offset:]
+            if has_mesh and len(rest) >= 2:
+                self._decode_mesh(metadata, rest[-2:])
+                rest = rest[:-2]
+            mic_len = 4 if version >= 4 else 1
+            if len(rest) >= 3 + mic_len:
+                metadata["encrypted_payload_hex"] = rest[:-(3 + mic_len)].hex()
+                metadata["ext_frame_counter"] = int.from_bytes(
+                    rest[-(3 + mic_len):-mic_len], "little")
+                metadata["mic_hex"] = rest[-mic_len:].hex()
+        elif has_object:
             if version >= EVENT_V5_MIN_VERSION:
                 # v5+: length(1) + id(1) + data.  The 1-byte ID space is not
                 # documented, so the payload is surfaced but not decoded.
@@ -225,12 +273,23 @@ class MiBeaconParser:
                     offset += 2
                     metadata["object_id"] = object_id
                     metadata["object_data_hex"] = data[offset:offset + obj_len].hex()
+                    offset += obj_len
             elif offset + 3 <= len(data):
                 object_id, obj_len = struct.unpack_from("<HB", data, offset)
                 offset += 3
                 obj_data = data[offset:offset + obj_len]
                 metadata["object_id"] = object_id
                 self._decode_object(metadata, object_id, obj_data)
+                offset += len(obj_data)
+
+        if has_mesh and not encrypted and offset + 2 <= len(data):
+            self._decode_mesh(metadata, data[offset:offset + 2])
+
+        device_class = "sensor"
+        name = raw.local_name or ""
+        if WEARABLE_NAME_RE.match(name):
+            device_class = "wearable"
+            metadata["wearable_model"] = name
 
         identity_mac = mac_str or raw.mac_address
         id_hash = hashlib.sha256(identity_mac.encode()).hexdigest()[:16]
@@ -238,11 +297,18 @@ class MiBeaconParser:
         return ParseResult(
             parser_name="mibeacon",
             beacon_type="mibeacon",
-            device_class="sensor",
+            device_class=device_class,
             identifier_hash=id_hash,
             raw_payload_hex=data.hex(),
             metadata=metadata,
         )
+
+    @staticmethod
+    def _decode_mesh(metadata: dict, mesh: bytes) -> None:
+        b = mesh[0]
+        metadata["mesh_pb_type"] = b & 0x03
+        metadata["mesh_state"] = (b >> 2) & 0x03
+        metadata["mesh_version"] = (b >> 4) & 0x0F
 
     @staticmethod
     def _decode_object(metadata: dict, object_id: int, obj_data: bytes) -> None:
