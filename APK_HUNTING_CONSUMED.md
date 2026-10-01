@@ -271,6 +271,28 @@ Tracks which `*_passive.md` byte-level advertisement guides from the sibling
 | 233 | zoundindustries-marshallbt | audio | enriched | `plugins/marshall_audio.py` (enriched) | Now also registers CIDs 0x065A + byte-swap 0x5A06 and name regex `^(LE-\|\[LE\])(MINOR III\|adidas Z.N.E. 01)`. Post-CID payload[0]=model type → 35-codename BLEDevice.Type table, [1]=color id, [8]==1 → pairing_mode. Existing fe8f UUID path unchanged. Identity: MAC (no stable in-payload id) |
 | 234 | hyperice-app | recovery | consumed | `plugins/hyperice.py` (new) | SIG CID 0x08BA (Hyperice) + 24 exact DFU names (exact-match regex); Nordic CID 0x0059 deliberately NOT registered and bare `DfuTarg` (Nordic SDK default) excluded from matching to avoid claiming every nRF bootloader. Report offsets come from `SparseArray.get(2234)` (CID already stripped) so payload[0] = model (28-entry table, Hypervolt+/Premier Hip name disambiguation) and payload[7] = Normatec 3 submodel (RYDER/MINEW) with no -2 shift. DFU names map to family. Identity only, no telemetry; identity = MAC+model (no in-payload serial) |
 | 235 | facebook-stella | smart_glasses | enriched | `plugins/smart_glasses.py` (enriched) | Meta CID 0x01AB V2 header (payload[0]==0x80, len>=14): model_id u16 LE @1-2 (0x0601 → Ray-Ban Meta), pairing_seed @3, has_owner @4 bit0, 9-byte cleartext device_id @5-13. Identity = `meta_glasses:<device_id>` (survives MAC rotation). Non-V2 / other glasses CIDs unchanged (MAC+payload hash) |
+| 236 | bioself-sensatepebble | wellness | pending | — | NEW?: Sensate relaxation puck |
+| 237 | biotelemetry-remoteinr | medical | pending | — | NEW?: Roche CoaguChek INRange/Vantus INR meter |
+| 238 | cousins-sears-beaconthermometer | sensor | pending | — | OVERLAP → cross-check `sensorpush.py` |
+| 239 | cowboy-app | vehicles | pending | — | NEW?: Cowboy 4 / Cross e-bike |
+| 240 | eargo-link-release | hearing | pending | — | NEW?: Eargo OTC hearing aid (cross-check oticon/ASHA gating) |
+| 241 | embrlabs-eden | wearable | pending | — | NEW?: Embr Wave 2 |
+| 242 | even-g1 | smart_glasses | pending | — | OVERLAP? → cross-check `smart_glasses.py`; has `_native.md` |
+| 243 | flipperdevices-app | misc | pending | — | OVERLAP → cross-check `flipper.py` |
+| 244 | greenteg-core-app | wearable | pending | — | NEW?: greenteg CORE body-temp sensor |
+| 245 | inkbird-inkbirdapp | sensor | pending | — | OVERLAP → cross-check `inkbird.py`; has `_native.md` |
+| 246 | ladytechnologies-kegel | medical | pending | — | NEW?: kegg fertility/kegel trainer |
+| 247 | moonbird-app | wellness | pending | — | NEW?: moonbird breathing device |
+| 248 | motorola-tag | tracker | pending | — | NEW?: Moto Tag (cross-check `google_fmd.py` FMDN) |
+| 249 | nowatch-app | wearable | pending | — | NEW?: NOWATCH EDA wearable |
+| 250 | plaud-android-plaud | audio | pending | — | OVERLAP → cross-check `plaud.py`; has `_native.md` |
+| 251 | ruuvi-station | sensor | pending | — | OVERLAP → cross-check `ruuvi.py` |
+| 252 | saf-aranetcube-android | sensor | pending | — | OVERLAP → cross-check `aranet4.py` |
+| 253 | shelly-smartcontrol | smart_home | pending | — | OVERLAP → cross-check `shelly_blu.py` |
+| 254 | uprightpose-upright-go2 | wearable | pending | — | NEW?: Upright GO 2 posture trainer |
+| 255 | willow-go | medical | pending | — | NEW?: Willow Go/360 breast pump; has `_native.md` |
+
+> **Backlog found 2026-10-01** — rows 236–255 appended as `pending`: 20 `_passive.md` reports (apk-ble-hunting batch 24 and a few earlier, e.g. willow-go from 2026-09-02) that were never queued here. 8 likely overlap existing plugins (sensorpush, flipper, inkbird, plaud, ruuvi, aranet4, shelly_blu, smart_glasses); 12 look new.
 
 > **Batch 25 (2026-10-01)** — rows 230–235 processed ✅: consumed **2** (new `fobo_tpms`, `hyperice`), enriched **4** (`parsers/apple_proximity` ← Beats B2P/BCD/BTP, `mibeacon` ← cleartext header of encrypted frames + bond/pairing flags, `marshall_audio` ← Zound CIDs 0x065A/0x5A06 + model/color/pairing decode, `smart_glasses` ← Meta V2 header + 9-byte device id). Collateral: generic `tpms` stands down on FOBO UUIDs / Salutica OUI 00:15:88. Total reports now **235**. The batch's 3 framework-specials (bang_olufsen / casio / ninebot) still have **no `_passive.md`** (deferred to apk-ble-hunting Stage 6d).
 
