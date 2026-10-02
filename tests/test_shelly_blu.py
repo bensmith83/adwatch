@@ -40,10 +40,18 @@ def _make_registry():
     return registry
 
 
-def _shelly_mfr_data(device_type=0x01, packet_counter=0x05, battery=85, extra=b""):
-    """Build manufacturer data: company_id (LE) + device_type + packet_counter + battery + extra."""
-    payload = bytes([device_type, packet_counter, battery]) + extra
-    return SHELLY_COMPANY_ID.to_bytes(2, "little") + payload
+def _shelly_mfr_data(flags=0x0003, model_id=0x1001, mac="3C:2E:F5:71:9A:01", extra=b""):
+    """Build Shelly (CID 0x0BA9) mfr data per shelly-smartcontrol report
+    (BleDevice.parseManufacturerData, BleDevice.java:973-1034):
+    CID LE | 0x01 flags(u16 LE) | 0x0B model(u16 LE) | 0x0A mac(6, reversed)."""
+    payload = b""
+    if flags is not None:
+        payload += b"\x01" + flags.to_bytes(2, "little")
+    if model_id is not None:
+        payload += b"\x0b" + model_id.to_bytes(2, "little")
+    if mac is not None:
+        payload += b"\x0a" + bytes.fromhex(mac.replace(":", ""))[::-1]
+    return SHELLY_COMPANY_ID.to_bytes(2, "little") + payload + extra
 
 
 class TestShellyBluParser:
@@ -82,35 +90,7 @@ class TestShellyBluParser:
         result = parser.parse(ad)
         assert result.beacon_type == "shelly_blu"
 
-    def test_device_class_sensor(self):
-        """device_class is 'sensor'."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data())
-        result = parser.parse(ad)
-        assert result.device_class == "sensor"
-
     # --- Manufacturer data parsing ---
-
-    def test_device_type_from_payload(self):
-        """metadata['device_type'] is byte 0 of payload."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data(device_type=0x03))
-        result = parser.parse(ad)
-        assert result.metadata["device_type"] == 0x03
-
-    def test_packet_counter_from_payload(self):
-        """metadata['packet_counter'] is byte 1 of payload."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data(packet_counter=0xAB))
-        result = parser.parse(ad)
-        assert result.metadata["packet_counter"] == 0xAB
-
-    def test_battery_level_from_payload(self):
-        """metadata['battery_level'] is byte 2 of payload."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data(battery=72))
-        result = parser.parse(ad)
-        assert result.metadata["battery_level"] == 72
 
     # --- Device model from local_name ---
 
@@ -192,23 +172,7 @@ class TestShellyBluParser:
 
     # --- Identity hash ---
 
-    def test_identity_hash(self):
-        """Identity hash is SHA256(mac_address:shelly_blu)[:16]."""
-        mac = "11:22:33:44:55:66"
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data(), mac_address=mac)
-        result = parser.parse(ad)
-        expected = hashlib.sha256(f"{mac}:shelly_blu".encode()).hexdigest()[:16]
-        assert result.identifier_hash == expected
-
     # --- raw_payload_hex ---
-
-    def test_raw_payload_hex(self):
-        """raw_payload_hex contains hex of manufacturer payload (without company_id)."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data(device_type=0xAA, packet_counter=0xBB, battery=0xCC))
-        result = parser.parse(ad)
-        assert result.raw_payload_hex == bytes([0xAA, 0xBB, 0xCC]).hex()
 
     # --- Edge cases ---
 
@@ -227,18 +191,78 @@ class TestShellyBluParser:
         result = parser.parse(ad)
         assert result is None
 
-    def test_returns_none_short_data(self):
-        """Returns None when payload < 3 bytes (company_id + 2 bytes only)."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=SHELLY_COMPANY_ID.to_bytes(2, "little") + b"\x01\x02")
-        result = parser.parse(ad)
-        assert result is None
 
-    def test_handles_extra_payload_bytes(self):
-        """Handles extra payload bytes beyond the 3 required without crashing."""
-        parser = ShellyBluParser()
-        ad = _make_ad(manufacturer_data=_shelly_mfr_data(extra=b"\xDE\xAD\xBE\xEF"))
-        result = parser.parse(ad)
-        assert result is not None
-        assert result.metadata["battery_level"] == 85
-        assert result.parser_name == "shelly_blu"
+class TestShellyReportMfrDecode:
+    """Report-cited layout replaces the old fictional
+    device_type/packet_counter/battery decode (no such bytes exist; BLU
+    telemetry rides in BTHome 0xFCD2 service data, handled by bthome.py)."""
+
+    def test_full_advert_offsets(self):
+        mfr = bytes.fromhex("a90b" "011300" "0b0110" "0a019a71f52e3c")
+        r = ShellyBluParser().parse(_make_ad(manufacturer_data=mfr))
+        md = r.metadata
+        assert md["flags"] == 0x0013
+        assert md["discoverable"] is True
+        assert md["auth_enabled"] is True
+        assert md["rpc_enabled"] is False
+        assert md["buzzer_enabled"] is False
+        assert md["pairing_mode"] is True
+        assert md["provision_locked"] is False
+        assert md["model_id"] == 0x1001
+        assert md["device_mac"] == "3C:2E:F5:71:9A:01"
+        assert r.raw_payload_hex == mfr[2:].hex()
+
+    def test_flags_block_optional(self):
+        r = ShellyBluParser().parse(_make_ad(manufacturer_data=_shelly_mfr_data(flags=None)))
+        assert "flags" not in r.metadata
+        assert r.metadata["model_id"] == 0x1001
+
+    def test_jti_object(self):
+        mfr = _shelly_mfr_data(mac=None, extra=bytes.fromhex("09a1b2c3d4e5f6"))
+        r = ShellyBluParser().parse(_make_ad(manufacturer_data=mfr))
+        assert r.metadata["jti"] == "a1b2c3d4e5f6"
+
+    def test_identity_from_advertised_device_mac(self):
+        p = ShellyBluParser()
+        a = p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(), mac_address="11:11:11:11:11:11"))
+        b = p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(), mac_address="22:22:22:22:22:22"))
+        assert a.identifier_hash == b.identifier_hash
+        assert a.identifier_hash == hashlib.sha256(b"shelly:3C:2E:F5:71:9A:01").hexdigest()[:16]
+
+    def test_identity_falls_back_to_mac(self):
+        mac = "11:22:33:44:55:66"
+        r = ShellyBluParser().parse(_make_ad(manufacturer_data=_shelly_mfr_data(mac=None), mac_address=mac))
+        assert r.identifier_hash == hashlib.sha256(f"{mac}:shelly_blu".encode()).hexdigest()[:16]
+
+    def test_truncated_tlv_does_not_crash(self):
+        mfr = SHELLY_COMPANY_ID.to_bytes(2, "little") + b"\x01\x03\x00\x0a\x01\x02"
+        r = ShellyBluParser().parse(_make_ad(manufacturer_data=mfr))
+        assert r is not None
+        assert "device_mac" not in r.metadata
+        assert r.metadata["flags"] == 3
+
+    def test_cid_only_returns_none(self):
+        assert ShellyBluParser().parse(_make_ad(manufacturer_data=b"\xa9\x0b")) is None
+
+    def test_device_class(self):
+        p = ShellyBluParser()
+        assert p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(), local_name="SBBT-002C")).device_class == "sensor"
+        assert p.parse(_make_ad(manufacturer_data=_shelly_mfr_data())).device_class == "smart_home"
+
+    def test_bthome_encryption_flag_surfaced(self):
+        """bthome.py drops encrypted frames; surface the bit here (BleDevice.java:888)."""
+        p = ShellyBluParser()
+        r = p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(),
+                             service_data={"fcd2": bytes.fromhex("45aabbccdd")}))
+        assert r.metadata["bthome_encrypted"] is True
+        r = p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(),
+                             service_data={"fcd2": bytes.fromhex("44000164")}))
+        assert r.metadata["bthome_encrypted"] is False
+
+    def test_does_not_claim_bthome_service_uuid(self):
+        """Service-data-only BLU adverts belong to bthome.py, not shelly_blu."""
+        import adwatch.plugins.shelly_blu  # noqa: F401
+        from adwatch.registry import _default_registry
+        entry = next(e for e in _default_registry._parsers if e["name"] == "shelly_blu")
+        ad = _make_ad(service_data={"fcd2": bytes.fromhex("44000164")})
+        assert not _default_registry._entry_matches(entry, ad)

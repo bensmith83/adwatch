@@ -34,7 +34,7 @@ def make_raw(service_data=None, local_name=None, **kwargs):
 
 
 def build_aranet4(co2=450, temp_raw=440, pressure_raw=10130, humidity=55,
-                   battery=85, status=0, interval=60, age=15):
+                   battery=85, status=1, interval=60, age=15):
     """Build 13-byte Aranet4 payload.
 
     Default: CO2=450ppm, temp=22.0C (440/20), pressure=1013.0hPa (10130/10),
@@ -106,20 +106,32 @@ class TestAranet4Parsing:
 
 
 class TestAranet4Status:
-    def test_status_green(self, parser):
+    # parseColor (readingParsing_es5.js:95-100): value&3 -> 0=error,
+    # 1=green, 2=yellow, 3=red. The original plugin used 0/1/2 = green/yellow/red.
+    def test_status_error(self, parser):
         data = build_aranet4(status=0)
+        raw = make_raw(service_data={ARANET_UUID: data}, local_name="Aranet4 12345")
+        assert parser.parse(raw).metadata["status"] == "error"
+
+    def test_status_ignores_upper_bits(self, parser):
+        data = build_aranet4(status=0xF2)
+        raw = make_raw(service_data={ARANET_UUID: data}, local_name="Aranet4 12345")
+        assert parser.parse(raw).metadata["status"] == "yellow"
+
+    def test_status_green(self, parser):
+        data = build_aranet4(status=1)
         raw = make_raw(service_data={ARANET_UUID: data}, local_name="Aranet4 12345")
         result = parser.parse(raw)
         assert result.metadata["status"] == "green"
 
     def test_status_yellow(self, parser):
-        data = build_aranet4(status=1)
+        data = build_aranet4(status=2)
         raw = make_raw(service_data={ARANET_UUID: data}, local_name="Aranet4 12345")
         result = parser.parse(raw)
         assert result.metadata["status"] == "yellow"
 
     def test_status_red(self, parser):
-        data = build_aranet4(status=2)
+        data = build_aranet4(status=3)
         raw = make_raw(service_data={ARANET_UUID: data}, local_name="Aranet4 12345")
         result = parser.parse(raw)
         assert result.metadata["status"] == "red"
@@ -149,19 +161,80 @@ class TestAranet4Identity:
             mac_address="11:22:33:44:55:66",
         )
         result = parser.parse(raw)
-        expected = hashlib.sha256("11:22:33:44:55:66:Aranet4 12345".encode()).hexdigest()[:16]
+        # Name suffix is a stable per-device serial fragment (report) -> name basis
+        expected = hashlib.sha256("aranet:Aranet4 12345".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
 
 
 class TestAranet4Malformed:
-    def test_returns_none_no_service_data(self, parser):
-        raw = make_raw(service_data=None, local_name="Aranet4 12345")
+    # With no readable reading block the device is still identified
+    # (presence + model) -- report "Fallback" section.
+    def test_presence_no_service_data(self, parser):
+        result = parser.parse(make_raw(service_data=None, local_name="Aranet4 12345"))
+        assert result is not None
+        assert result.metadata["model"] == "Aranet4"
+        assert "co2_ppm" not in result.metadata
+
+    def test_presence_wrong_uuid(self, parser):
+        result = parser.parse(make_raw(service_data={"abcd": NORMAL_DATA}, local_name="Aranet4 12345"))
+        assert "co2_ppm" not in result.metadata
+
+    def test_presence_too_short(self, parser):
+        result = parser.parse(make_raw(service_data={ARANET_UUID: bytes(5)}, local_name="Aranet4 12345"))
+        assert "co2_ppm" not in result.metadata
+
+    def test_returns_none_unrelated(self, parser):
+        raw = make_raw(service_data=None, local_name="Thermo", service_uuids=[])
         assert parser.parse(raw) is None
 
-    def test_returns_none_wrong_uuid(self, parser):
-        raw = make_raw(service_data={"abcd": NORMAL_DATA}, local_name="Aranet4 12345")
-        assert parser.parse(raw) is None
 
-    def test_returns_none_too_short(self, parser):
-        raw = make_raw(service_data={ARANET_UUID: bytes(5)}, local_name="Aranet4 12345")
-        assert parser.parse(raw) is None
+class TestAranetEnrichment:
+    def test_negative_temperature_signed(self, parser):
+        data = build_aranet4(temp_raw=-100 & 0xFFFF)
+        raw = make_raw(service_data={ARANET_UUID: data}, local_name="Aranet4 12345")
+        assert parser.parse(raw).metadata["temperature_c"] == pytest.approx(-5.0)
+
+    def test_fce0_service_uuid_presence(self, parser):
+        raw = make_raw(service_data=None, local_name=None,
+                       service_uuids=["0000fce0-0000-1000-8000-00805f9b34fb"])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["model"] == "Aranet"
+        h = hashlib.sha256("AA:BB:CC:DD:EE:FF".encode()).hexdigest()[:16]
+        assert result.identifier_hash == h
+
+    def test_saf_company_id_presence(self, parser):
+        raw = make_raw(service_data=None, local_name=None, service_uuids=[],
+                       manufacturer_data=bytes([0x02, 0x07, 0x21, 0x00]))
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["model"] == "Aranet"
+
+    @pytest.mark.parametrize("name,model", [
+        ("Aranet2 1A2B3", "Aranet2"),
+        ("Aranet Radon 0F11", "Aranet Radon"),
+        ("Aranet\u2622 123", "Aranet Nucleo"),
+        ("Aranet4 12345", "Aranet4"),
+    ])
+    def test_model_from_name(self, parser, name, model):
+        result = parser.parse(make_raw(service_data=None, local_name=name, service_uuids=[]))
+        assert result.metadata["model"] == model
+
+    def test_registration_covers_fce0_cid_and_names(self):
+        from adwatch.registry import ParserRegistry
+        from adwatch.plugins import aranet4 as mod
+        reg = ParserRegistry()
+        reg.register(
+            name="aranet4", company_id=mod.SAF_COMPANY_ID,
+            service_uuid=mod.ARANET_SERVICE_UUIDS,
+            local_name_pattern=mod.ARANET_NAME_PATTERN,
+            description="t", version="t", core=False, instance=Aranet4Parser(),
+        )
+        assert mod.SAF_COMPANY_ID == 0x0702
+        for raw in (
+            make_raw(service_uuids=["fce0"]),
+            make_raw(service_uuids=[ARANET_UUID]),
+            make_raw(service_uuids=[], manufacturer_data=bytes([0x02, 0x07, 0x00])),
+            make_raw(service_uuids=[], local_name="Aranet2 ABCDE"),
+        ):
+            assert len(reg.match(raw)) == 1

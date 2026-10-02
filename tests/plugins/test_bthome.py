@@ -455,19 +455,91 @@ class TestBTHomeButtonEvent:
 
 
 class TestBTHomeDimmerEvent:
-    def test_dimmer_clockwise(self, parser):
-        payload = bytes([DEVICE_INFO_V2, 0x3C, 3, 0x00])
+    # BTHome spec + shelly-smartcontrol report (BTHome.java:39-41): byte 0 is
+    # the event (0 none, 1 rotate left, 2 rotate right), byte 1 is the step
+    # count. The previous [steps][direction] decode was backwards.
+    def test_dimmer_rotate_right(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x02, 3])
         raw = make_raw(service_data={BTHOME_UUID: payload})
         result = parser.parse(raw)
         assert result is not None
-        assert result.metadata["dimmer_event"] == {"steps": 3, "direction": "clockwise"}
+        assert result.metadata["dimmer_event"] == {
+            "event": "rotate_right", "steps": 3, "direction": "clockwise"}
 
-    def test_dimmer_counter_clockwise(self, parser):
-        payload = bytes([DEVICE_INFO_V2, 0x3C, 5, 0x01])
+    def test_dimmer_rotate_left(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x01, 5])
         raw = make_raw(service_data={BTHOME_UUID: payload})
         result = parser.parse(raw)
-        assert result is not None
-        assert result.metadata["dimmer_event"] == {"steps": 5, "direction": "counter_clockwise"}
+        assert result.metadata["dimmer_event"] == {
+            "event": "rotate_left", "steps": 5, "direction": "counter_clockwise"}
+
+    def test_dimmer_none(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x00, 0])
+        raw = make_raw(service_data={BTHOME_UUID: payload})
+        result = parser.parse(raw)
+        assert result.metadata["dimmer_event"] == {"event": "none", "steps": 0}
+
+
+class TestBTHomeShellyReportObjects:
+    """Objects from shelly-smartcontrol report btHomeMap (BTHome.java:156/160)."""
+
+    def _parse(self, parser, body):
+        raw = make_raw(service_data={BTHOME_UUID: bytes([DEVICE_INFO_V2]) + body})
+        return parser.parse(raw)
+
+    def test_rotation_signed(self, parser):
+        r = self._parse(parser, bytes([0x3F]) + struct.pack("<h", -123))
+        assert r.metadata["rotation"] == pytest.approx(-12.3)
+
+    def test_temperature_sint8(self, parser):
+        r = self._parse(parser, bytes([0x57, 0xFE]))
+        assert r.metadata["temperature_1"] == -2
+
+    def test_temperature_035(self, parser):
+        r = self._parse(parser, bytes([0x58, 0x64]))
+        assert r.metadata["temperature_035"] == pytest.approx(35.0)
+
+    @pytest.mark.parametrize("obj,name", [
+        (0x25, "presence"), (0x2B, "tamper"), (0x2C, "vibration"),
+    ])
+    def test_binary_objects(self, parser, obj, name):
+        r = self._parse(parser, bytes([obj, 1]))
+        assert r.metadata[name] == 1
+
+    def test_acceleration_and_gyro(self, parser):
+        r = self._parse(parser, bytes([0x51]) + struct.pack("<H", 1500)
+                        + bytes([0x52]) + struct.pack("<H", 250))
+        assert r.metadata["acceleration"] == pytest.approx(1.5)
+        assert r.metadata["gyroscope"] == pytest.approx(0.25)
+
+    def test_device_type_and_firmware(self, parser):
+        body = (bytes([0xF0]) + struct.pack("<H", 0x0001)
+                + bytes([0xF1, 0x00, 0x01, 0x02, 0x04])
+                + bytes([0xF2, 0x00, 0x01, 0x01]))
+        r = self._parse(parser, body)
+        assert r.metadata["device_type_id"] == 1
+        assert r.metadata["firmware_version"] == "4.2.1.0"
+        assert r.metadata["firmware_version_short"] == "1.1.0"
+
+    def test_objects_after_new_ids_still_decode(self, parser):
+        """Unknown ids used to abort the loop; new ids must not desync it."""
+        r = self._parse(parser, bytes([0x2C, 0, 0x01, 77]))
+        assert r.metadata["battery"] == 77
+
+    def test_button_hold_released(self, parser):
+        r = self._parse(parser, bytes([0x3A, 0xFE]))
+        assert r.metadata["button_event"] == "hold_release"
+
+    def test_shelly_blu_button_full_advert(self, parser):
+        """Hand-built BLU Button advert: packet id, battery, button single."""
+        raw = make_raw(
+            service_data={"0000fcd2-0000-1000-8000-00805f9b34fb":
+                          bytes.fromhex("44" "0010" "0164" "3a01")},
+            local_name="SBBT-002C",
+        )
+        r = parser.parse(raw)
+        assert r.metadata == {"bthome_version": 2, "packet_id": 0x10,
+                              "battery": 100, "button_event": "press"}
 
 
 class TestBTHomeRegistration:
