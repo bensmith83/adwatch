@@ -7,8 +7,35 @@ Samsung TVs and soundbars broadcast BLE advertisements using Samsung's company I
 ## Identifiers
 
 - **Company ID:** `0x0075` (Samsung Electronics Co. Ltd.)
-- **Local name patterns:** `[TV] *`, `[AV] *`, `*Crystal UHD*`, `*Samsung*`
+- **Local name patterns:** `[TV] *`, `[AV] *`, `*Crystal UHD*`, `*The Frame*`, `*Samsung*`
 - **Device class:** `tv`, `soundbar`, `display`
+
+## "The Frame" (art-mode TV line) — name recognition (2026-07-06)
+
+Samsung's **The Frame** TVs advertise under CID `0x0075` with manufacturer
+**type bytes `0218`** and a self-identifying local name `<size>" The Frame`
+(e.g. `65" The Frame`). They are matched **by the localName substring
+`The Frame`, never by the manufacturer bytes** — see the warning below.
+
+| Field | Value |
+|---|---|
+| Match rule | `localName` contains `The Frame` (full substring) |
+| `product_line` | `The Frame` |
+| `model` | the raw local name (e.g. `65" The Frame`) |
+| `screen_size_inches` | parsed from the leading `NN"` (e.g. `65`) |
+| Device class | `tv` |
+
+**Why not the `0218` type byte.** In one live corpus, **123 records** started
+`7500 0218`, spanning Crystal UHD sets, SmartThings appliances, and other TVs;
+even the deeper sub-type `0218 34a1` is emitted by both a Frame and a
+`65" Crystal UHD`. No manufacturer byte distinguishes the model — matching
+`0218` (or `0218 34a1`) would misclassify those other models as The Frame.
+The full `The Frame` name substring is the only false-positive-safe
+discriminator (a bare `Frame` is intentionally *not* matched). A Frame TV
+also emits a `4204` frame that this parser already recognizes; when the name
+is present the `product_line`/`screen_size_inches` enrichment applies to
+either frame, and the nameless `0218` sibling frame is deliberately left
+unparsed.
 
 ## Manufacturer Data Format
 
@@ -58,6 +85,7 @@ Samsung TVs and soundbars broadcast BLE advertisements using Samsung's company I
 | `[TV] *` | tv |
 | `[AV] *` | soundbar |
 | `*Crystal UHD*` | tv |
+| `*The Frame*` | tv (`product_line = The Frame`) |
 | No name | unknown_samsung |
 
 ## References

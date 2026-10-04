@@ -479,6 +479,11 @@ class TestBTHomeDimmerEvent:
         result = parser.parse(raw)
         assert result.metadata["dimmer_event"] == {"event": "none", "steps": 0}
 
+    def test_dimmer_unknown_event_kept_raw(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x3C, 0x07, 2])
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["dimmer_event"] == {"event": 0x07, "steps": 2}
+
 
 class TestBTHomeShellyReportObjects:
     """Objects from shelly-smartcontrol report btHomeMap (BTHome.java:156/160)."""
@@ -540,6 +545,16 @@ class TestBTHomeShellyReportObjects:
         r = parser.parse(raw)
         assert r.metadata == {"bthome_version": 2, "packet_id": 0x10,
                               "battery": 100, "button_event": "press"}
+
+
+class TestBTHomeEnergyObject:
+    """0x0A is energy (uint24, 0.001 kWh), 0x0B is power (uint24, 0.01 W)."""
+
+    def test_energy_0x0a(self, parser):
+        payload = bytes([DEVICE_INFO_V2, 0x0A]) + (1346).to_bytes(3, "little")
+        result = parser.parse(make_raw(service_data={BTHOME_UUID: payload}))
+        assert result.metadata["energy"] == pytest.approx(1.346)
+        assert "power" not in result.metadata
 
 
 class TestBTHomeRegistration:

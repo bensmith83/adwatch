@@ -3,11 +3,16 @@
 Per apk-ble-hunting/reports/qingniu-renpho_passive.md: Qingniu's OEM
 firmware powers many sub-brand scales (Renpho, Yolanda, JiaHua, Dretec,
 Wbird, Sunnyway, JiaBao, Beryl). The brand is encoded in the BLE
-local-name prefix; the canonical CID is Qingniu's SIG-assigned
-``0x0157``. Some hardware also exposes a live weight preview in
-manufacturer-data (kg/lb selector + stable bit + LE16 weight in 100g
-units). The legacy Renpho-branded SIG CID ``0x06D0`` is also kept for
-backwards compatibility with existing installs.
+local-name prefix. The Renpho-branded SIG CID ``0x06D0`` (Etekcity) is
+matched as well.
+
+CID ``0x0157`` is deliberately NOT claimed. An earlier version called it
+"Qingniu's SIG-assigned CID" and decoded a weight preview from it, but the
+Bluetooth SIG Assigned Numbers registry (company_identifiers.yaml, and this
+repo's own ``_bt_company_ids.py``) assigns ``0x0157`` to Anhui Huami
+Information Technology (Zepp/Amazfit). Every ``0x0157`` frame in the
+NearSight corpus is a Huami wearable (``57 01 02 ...``), so that decode
+mislabelled watches as scales; those frames belong to ``huami_amazfit``.
 
 Service UUIDs vary by hardware vintage: ``0xFFF0``, ``0xFFE0``,
 ``0xABF0``, and SIG WSP ``0x181D`` are all observed.
@@ -19,11 +24,9 @@ import re
 from adwatch.models import RawAdvertisement, ParseResult
 from adwatch.registry import register_parser
 
-# CIDs:
-#   0x06D0 — Renpho-branded SIG registration (legacy)
-#   0x0157 — Qingniu Inc. SIG registration (canonical OEM)
+# CID 0x06D0 — Renpho/Etekcity SIG registration. (0x0157 is Anhui Huami,
+# not Qingniu — see the module docstring.)
 RENPHO_COMPANY_ID = 0x06D0
-QINGNIU_COMPANY_ID = 0x0157
 
 # Service UUIDs across hardware vintages.
 QINGNIU_SERVICE_UUIDS = ["fff0", "ffe0", "abf0", "181d"]
@@ -73,18 +76,18 @@ _BRAND_FROM_PREFIX = {
 
 @register_parser(
     name="renpho",
-    company_id=[RENPHO_COMPANY_ID, QINGNIU_COMPANY_ID],
+    company_id=RENPHO_COMPANY_ID,
     service_uuid=QINGNIU_SERVICE_UUIDS,
     local_name_pattern=_NAME_PATTERN,
     description="Renpho / Qingniu OEM scales (Yolanda/Dretec/Wbird/JiaHua/etc.)",
-    version="2.0.0",
+    version="2.1.0",
     core=False,
 )
 class RenphoParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
         local_name = raw.local_name or ""
         cid = raw.company_id
-        cid_hit = cid in (RENPHO_COMPANY_ID, QINGNIU_COMPANY_ID)
+        cid_hit = cid == RENPHO_COMPANY_ID
 
         normalized = [u.lower() for u in (raw.service_uuids or [])]
         uuid_hit = False
@@ -122,28 +125,11 @@ class RenphoParser:
                     metadata["model_code"] = matched[len(prefix):]
                     break
 
-        if cid == QINGNIU_COMPANY_ID:
-            metadata["qingniu_cid"] = True
-            payload = raw.manufacturer_payload or b""
-            if len(payload) >= 3:
-                weight_raw = int.from_bytes(payload[0:2], "little")
-                metadata["weight_kg"] = round(weight_raw / 10.0, 2)
-                flags = payload[2]
-                unit_bits = flags & 0x0F
-                unit_map = {0: "kg", 1: "lb", 2: "jin"}
-                metadata["unit"] = unit_map.get(unit_bits, f"raw_{unit_bits}")
-                metadata["stable"] = bool(flags & 0x10)
-                if len(payload) >= 10:
-                    mac_tail = payload[4:10]
-                    metadata["embedded_mac"] = ":".join(f"{b:02X}" for b in reversed(mac_tail))
-
         if cid == RENPHO_COMPANY_ID:
             metadata["renpho_cid"] = True
 
-        # Identity preference: embedded MAC tail (when present) > model+mac > mac+name
-        if metadata.get("embedded_mac"):
-            id_basis = f"renpho:{metadata['embedded_mac']}"
-        elif local_name:
+        # Identity: mac+name, falling back to mac alone.
+        if local_name:
             id_basis = f"{raw.mac_address}:{local_name}"
         else:
             id_basis = f"{raw.mac_address}:renpho"

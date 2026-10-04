@@ -27,7 +27,7 @@ should be tightened or split once we capture one.
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Company ID | *(none)* | Axon has no SIG-assigned company ID; manufacturer data does not route. |
+| Company ID | `0x034D` | SIG-assigned to "TASER International, Inc.". (This doc originally said Axon had no SIG company ID — a 2026-08-13 corpus capture disproved that; see "Manufacturer-data frame" below.) |
 | MAC OUI | `00:25:DF` | IEEE block assigned to Axon Enterprise, Inc. (Scottsdale AZ). Public address, stable per unit. |
 | GAP local name | `TASER` | Exact uppercase, 5 chars. Read from `0x2A00` Device Name characteristic; also the Manufacturer Name (`0x2A29`). |
 | Appearance | `0x0200` Generic Tag | Read from `0x2A01`. Not distinctive on its own. |
@@ -44,8 +44,25 @@ shared with Axon body cams, dock stations, fleet hardware, etc.
 Read from `0x2A25` Serial Number String. Observed format: a
 single letter prefix + 8 digits, e.g. `X87004693`. The `X` prefix
 is documented by Axon for civilian-line serials; the digits encode
-the unit's identity. Not available passively — requires a GATT
-connection.
+the unit's identity. Also available **passively** via the 0x034D
+manufacturer frame below.
+
+## Manufacturer-data frame (CID 0x034D, captured 2026-08-13 sweep)
+
+One real-world frame (2 sightings, 2026-08-08, same scene as the
+`axon-fe6b.md` fleet capture):
+
+```
+4d 03 | 02 | 58 38 37 30 30 34 39 30 39 | 01 02 10 3b 33 00 04 02 01 20 00 00 00 00
+ CID    type      "X87004909"                        tail (raw, uninterpreted)
+```
+
+* 26 bytes total; frame-type `0x02` at [2].
+* Bytes [3..12) are a printable ASCII serial in exactly the civilian
+  `X`-prefix format above — broadcast in the clear, no GATT needed.
+* The parser claims CID `0x034D` **only** with this strict shape
+  (length 26 + type 0x02 + printable X-prefixed serial); other 0x034D
+  frames are left unclaimed until more shapes are captured.
 
 ## Firmware / Hardware
 

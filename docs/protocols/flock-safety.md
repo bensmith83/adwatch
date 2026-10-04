@@ -4,7 +4,7 @@
 
 Flock Safety manufactures ALPR (Automatic License Plate Reader) cameras and related surveillance hardware deployed by law enforcement and HOAs across the US. Their devices broadcast BLE advertisements that can be passively detected, primarily from the "Penguin" battery packs and "FS Ext Battery" units that power the cameras.
 
-adwatch detects Flock Safety hardware by matching the XUNTONG (`0x09C8`) BLE manufacturer company ID present in their advertisement packets. Additional classification is performed using BLE device names and known MAC address OUI prefixes.
+adwatch detects Flock Safety hardware from the XUNTONG (`0x09C8`) battery BLE chip combined with a Flock-distinctive signal. **`0x09C8` (XUNTONG) is a generic chip vendor shared with unrelated products, so the company ID alone is NOT sufficient** — matching the bare CID would false-positive on any XUNTONG device (e.g. a Bluray remote). As of the 2026-06-15 hardening, the parser matches only when there is a Flock-distinctive **local name** (`FS Ext Battery`, `Penguin-…`, `Pigvision`, `Flock…`) **OR** the XUNTONG CID **plus** a `TN7…` serial in the manufacturer payload. Device names and known MAC OUI prefixes are then used for classification (the OUI check is best-effort: under iOS CoreBluetooth the on-air MAC is not exposed, so it is usually unavailable).
 
 ## Device Types
 

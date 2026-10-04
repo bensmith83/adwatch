@@ -8,8 +8,8 @@ from adwatch.registry import ParserRegistry, register_parser
 
 from adwatch.plugins.oura import (
     OuraParser, OURA_COMPANY_ID,
-    OURA_DATA_SERVICE_UUID, OURA_CHARGER_SERVICE_UUID, OURA_DFU_SERVICE_UUID,
-    HARDWARE_TYPES, RING_MODES,
+    OURA_DATA_SERVICE_UUID, OURA_CHARGER_SERVICE_UUID,
+    CYPRESS_BOOTLOADER_SERVICE_UUID, GENERATIONS,
 )
 
 
@@ -29,7 +29,7 @@ def _register(registry):
     @register_parser(
         name="oura",
         company_id=OURA_COMPANY_ID,
-        service_uuid=(OURA_DATA_SERVICE_UUID, OURA_CHARGER_SERVICE_UUID, OURA_DFU_SERVICE_UUID),
+        service_uuid=(OURA_DATA_SERVICE_UUID, OURA_CHARGER_SERVICE_UUID),
         description="Oura",
         version="1.0.0",
         core=False,
@@ -72,28 +72,44 @@ class TestOuraParsing:
         result = self._parse(service_uuids=[OURA_CHARGER_SERVICE_UUID])
         assert result.metadata["device_kind"] == "charger_puck"
 
-    def test_dfu_mode(self):
-        result = self._parse(service_uuids=[OURA_DFU_SERVICE_UUID])
-        assert result.metadata["device_kind"] == "ring"
-        assert result.metadata["mode"] == "BOOTLOADER"
+    def test_cypress_bootloader_uuid_alone_is_not_oura(self):
+        """00060000-f8ce-11e4-abf4-0002a5d5c51b is Cypress's generic
+        bootloader (OTA/DFU) service, shared by any PSoC/Cypress product —
+        too generic to identify an Oura ring."""
+        assert self._parse(service_uuids=[CYPRESS_BOOTLOADER_SERVICE_UUID]) is None
 
-    def test_mode_and_hwtype_nibbles(self):
-        # payload[1] = (hwtype << 4) | mode = (0x02 << 4) | 0x01 = 0x21
-        result = self._parse(manufacturer_data=_mfr(bytes([0x00, 0x21])))
-        assert result.metadata["mode_code"] == 1
-        assert result.metadata["mode"] == "OPERATING"
-        assert result.metadata["hardware_type_code"] == 2
-        assert result.metadata["hardware_type"] == "GEN4"
+    def test_cypress_bootloader_uuid_not_registered(self):
+        from adwatch.registry import _default_registry
+        entry = [e for e in _default_registry.get_entries() if e["name"] == "oura"][0]
+        uuids = [u.lower() for u in entry["service_uuid"]]
+        assert CYPRESS_BOOTLOADER_SERVICE_UUID not in uuids
 
-    def test_color_and_i_nibbles(self):
-        # payload[2] = (color << 4) | i = (5 << 4) | 3 = 0x53
-        result = self._parse(manufacturer_data=_mfr(bytes([0x00, 0x00, 0x53])))
-        assert result.metadata["i_nibble"] == 3
-        assert result.metadata["color_code"] == 5
+    # Name-matched corpus captures (NearSight telemetry, 2026-09-29):
+    #   b2 02 | 04 40 5a 06  "Oura Ring Gen3"
+    #   b2 02 | 04 60 5b 01  "Oura Ring 4"
+    #   b2 02 | 04 70 1b 01  "Oura Ring 5"
+    @pytest.mark.parametrize("hexframe,name,gen_byte,generation,rev", [
+        ("b20204405a06", "Oura Ring Gen3", 0x40, "Gen 3", 0x065A),
+        ("b20204605b01", "Oura Ring 4", 0x60, "Ring 4", 0x015B),
+        ("b20204701b01", "Oura Ring 5", 0x70, "Ring 5", 0x011B),
+    ])
+    def test_corpus_generation_byte(self, hexframe, name, gen_byte, generation, rev):
+        result = self._parse(manufacturer_data=bytes.fromhex(hexframe), local_name=name)
+        md = result.metadata
+        assert md["frame_type"] == 0x04
+        assert md["generation_byte"] == gen_byte
+        assert md["generation"] == generation
+        assert md["fw_revision"] == rev
+        for stale in ("hardware_type", "mode", "color_code", "design_code", "i_nibble"):
+            assert stale not in md
 
-    def test_design_code(self):
-        result = self._parse(manufacturer_data=_mfr(bytes([0x00, 0x00, 0x00, 0x07])))
-        assert result.metadata["design_code"] == 7
+    def test_unknown_generation_byte_raw(self):
+        result = self._parse(manufacturer_data=bytes.fromhex("b20204621801"))
+        assert result.metadata["generation_byte"] == 0x62
+        assert "generation" not in result.metadata
+
+    def test_generation_table(self):
+        assert GENERATIONS == {0x40: "Gen 3", 0x60: "Ring 4", 0x70: "Ring 5"}
 
     def test_returns_none_unrelated(self):
         assert self._parse(local_name="Other") is None

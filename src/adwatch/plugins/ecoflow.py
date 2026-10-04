@@ -34,9 +34,14 @@ from adwatch.models import RawAdvertisement, ParseResult
 from adwatch.registry import register_parser
 
 ECOFLOW_COMPANY_ID = 0xB5B5
-# All three IDs the app installs scan filters for
-# (EFSmartDeviceCenterManager.java:105-107).
-ECOFLOW_COMPANY_IDS = (0xB5B5, 0xA4A8, 0x0BA9)
+# The app installs scan filters for three IDs
+# (EFSmartDeviceCenterManager.java:105-107): 0xB5B5, 0xA4A8 and 0x0BA9.
+# 0x0BA9 is NOT registered here: the Bluetooth SIG Assigned Numbers registry
+# (company_identifiers.yaml; _bt_company_ids.py) assigns it to Allterco
+# Robotics (Shelly), and every 0x0BA9 frame in the NearSight corpus is a
+# Shelly BLU device. The app presumably filters on it for a Shelly-integrated
+# accessory; those frames belong to shelly_blu.
+ECOFLOW_COMPANY_IDS = (0xB5B5, 0xA4A8)
 
 # Exact local name used by the telemetry-free "home" device class
 # (cn/e.java:165, el/i.java:142-146) — productType 1001, model 1.
@@ -65,7 +70,7 @@ SERIAL_PREFIX_MAP = {
     company_id=ECOFLOW_COMPANY_IDS,
     local_name_pattern=r"^(EF-|ECO_HOME$)",
     description="EcoFlow power stations",
-    version="1.1.0",
+    version="1.2.0",
     core=False,
 )
 class EcoFlowParser:

@@ -20,7 +20,7 @@ Matter commissioning ads are **transient** — they only appear when a device is
 ```
 Offset  Size  Field
 ------  ----  -----
-0       1     OpCode (0x01 = Device Identification)
+0       1     OpCode (0x00 = Commissionable Node Discovery)
 1–2     2     Discriminator (12-bit) + Advertisement Version (4-bit), little-endian
 3–4     2     Vendor ID (16-bit, little-endian)
 5–6     2     Product ID (16-bit, little-endian)
@@ -29,7 +29,16 @@ Offset  Size  Field
 
 ### OpCode (byte 0)
 
-Only `0x01` (Device Identification) is processed. Other opcodes are ignored.
+Only `0x00` (Commissionable) is processed; `0x01..0xFF` are reserved by
+the Matter Core spec and are ignored.
+
+> **Correction (2026-08-13):** this doc and the parser originally
+> required opcode `0x01`. That value never matched a real device — the
+> parser had claimed zero of 59,876 corpus records — while real
+> commissionable frames (opcode `0x00`, e.g.
+> `00 53 09 87 13 2b 61 00` → discriminator 2387, VID 0x1387,
+> PID 0x612B) went unclaimed. Fixed against the spec and two real
+> captures.
 
 ### Discriminator (bytes 1–2)
 

@@ -219,6 +219,15 @@ and "Nrdic67380B" looks like an off-by-one Nordic-SDK default name.
 Single device, hobbyist signature, custom protocol. No parser yet —
 this would only ever match the one device we saw it on.
 
+**Update (2026-08-28 sweep):** this was one node of a family. Fourteen
+nodes with the same `F0C0` block shape (`[node_count] [01] [id ×6]
+[tail ×4]` — the "constant" block above is `06` nodes, version `01`, an id
+and a tail) and the same typed manufacturer frames were captured in one
+scene, and the `88 12 80 24 03 d5` sub-sequence noted above is a
+neighbour's node id. See `face-f0c0-mesh-node.md`; NearSight's
+`nrdic_face_beacon` v2 decodes the family and keys identity on the node
+id. Vendor still unidentified.
+
 ## `Lola's E.A5.WIFI` — Verifone-style POS terminal
 
 Observed: 2 captures, 1 device.

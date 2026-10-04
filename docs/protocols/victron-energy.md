@@ -140,6 +140,50 @@ decrypted = cipher.decrypt(pad(encrypted_data[1:], 16))
 identifier = SHA256("{mac}:{model_id}")[:16]
 ```
 
+## Product Advertisement, Header Only (CID `0x02E1`, 4-byte payload)
+
+2026-08-25 telemetry sweep: 14 records / 187 sightings from **five units in
+one installation**, every one advertising CID `0x02E1` with a manufacturer
+payload of exactly **four** bytes — the Instant Readout header truncated
+after the model id, with no readout type, nonce, key byte or encrypted
+body:
+
+```
+e1 02 | 10 | rr | mm mm
+CID     rec  rsv  model id LE
+```
+
+| Capture | Reserved | Model id | Product (victron-ble `MODEL_ID_MAPPING`) |
+|---------|----------|----------|------------------------------------------|
+| `e102100012c0` | `00` | `0xC012` | Cerbo GX |
+| `e102100289a3` | `02` | `0xA389` | SmartShunt 500A/50mV |
+| `e102100256a0` | `02` | `0xA056` | SmartSolar Charger MPPT 100/30 |
+| `e1021000eba0` | `00` | `0xA0EB` | Smart Lithium Battery 12.8V/200Ah |
+| `e1021000e8a3` | `00` | `0xA3E8` | Smart BMS 12-200 |
+
+The five ids describe a coherent off-grid / marine system (GX monitor,
+shunt, MPPT charger, lithium battery, BMS), which is the corroboration for
+reading the frame this way. Every unit also advertised a 128-bit service
+UUID on a shared base, `XXXXXXXX-880B-425B-B167-81ED6A15E913`, whose
+leading 32 bits echo the model id (`CD54C012-…` for the Cerbo GX,
+`CD55A389-…` for the SmartShunt, `CD54A0EB-…` for the battery); the parser
+surfaces it as `product_service_uuid` but does not gate on it.
+
+The reserved byte read `0x02` on the two Instant-Readout-capable products
+(MPPT, SmartShunt) and `0x00` on the three that carry no readout (GX,
+battery, BMS). Whether that byte is a capability flag, and whether the
+header-only shape means "Instant Readout disabled" or "product has no
+readout", is **not known** — the byte is reported raw as
+`reserved_byte_hex` on both the header-only and the full frames.
+
+Parser behaviour: `stream = product_advertisement`, `model_id`,
+`model_id_hex`, `model` (when the id is in the carried subset of the
+product table — the MPPT, Smart Lithium, BMV/SmartShunt, BMS and GX
+families), `reserved_byte_hex`, optional `product_service_uuid`. No
+`record_type` / `device_type` / `data_counter` — those bytes are absent.
+Identity is the same `mac:model_id` hash as Instant Readout. A 3-byte or
+shorter `0x10` frame is left unclaimed.
+
 ## Detection Significance
 
 - Extremely popular in off-grid, RV, marine, and solar communities

@@ -17,6 +17,30 @@ Hatch Baby Rest sound machines and night lights broadcast BLE advertisements for
 
 The Nordic DFU service UUID (`00001530-1212-efde-1523-785feabcd123`) is common to many Nordic-based IoT devices, but the combination with Hatch-specific UUIDs (`0224xxxx`, `0226xxxx`) is distinctive.
 
+### Manufacturer frame (1st-gen "RTj" / "RT\x00", CID 0x0434)
+
+1st-gen Rest units also emit a 24-byte manufacturer payload under SIG
+CID `0x0434` (Hatch Baby, Inc.) with ASCII section markers:
+
+```
+offset:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15..19 20 21 22 23
+bytes:   R  T  m  <seq 24-bit>  C  <state 4B>  S  <prog 2B>  E  zeros  P  ?  e  ?
+```
+
+Byte [2] (`m`) selects the flavor:
+
+* `0x6A` ('j') — the originally documented **RTj** frame; the sequence
+  field [3..6) is little-endian.
+* `0x00` — the **RT\x00** flavor (2026-08-13 sweep: 332 records / 472
+  sightings from one unit, alongside the usual 180F battery + 180A
+  service signature). Identical marker layout, but the sequence counter
+  is **big-endian**: the fastest-moving byte is [5] (~12 ticks/s, the
+  advertising cadence) while [3] stays put — the mirror image of RTj.
+
+The seven marker bytes (R, T, C, S, E, P, e) are the parser's real
+gate; CID 0x0434 is shared with other vendors, so the CID alone never
+claims a frame.
+
 ### What We Can Parse from Advertisements
 
 | Field | Source | Notes |

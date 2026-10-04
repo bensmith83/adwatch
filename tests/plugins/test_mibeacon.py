@@ -262,17 +262,15 @@ class TestMiBeaconMalformed:
         assert parser.parse(raw) is None
 
 
-class TestMiBeaconMotionIlluminance:
-    def test_motion_illuminance_value(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x0003, object_data=struct.pack("<I", 1500))
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
-        assert result.metadata["illuminance"] == 1500
+class TestMiBeaconMotion0x0003:
+    """HA xiaomi-ble obj0003: 0x0003 is a motion event (MUE4094RT), not
+    illuminance."""
 
-    def test_motion_illuminance_object_id(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x0003, object_data=struct.pack("<I", 1500))
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
+    def test_motion_event(self, parser):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x0003, object_data=b"\x01")
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["motion"] is True
+        assert "illuminance" not in result.metadata
         assert result.metadata["object_id"] == 0x0003
 
 
@@ -309,34 +307,48 @@ class TestMiBeaconSoilConductivity:
         assert result.metadata["soil_conductivity"] == 350
 
 
-class TestMiBeaconBatteryNew:
-    def test_battery_0x000A_value(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x000A, object_data=bytes([95]))
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
-        assert result.metadata["battery"] == 95
+class TestMiBeaconBodyTemperature0x000A:
+    """HA xiaomi-ble obj000a: 0x000A is body temperature (int16 LE / 100),
+    not a battery level."""
+
+    def test_body_temperature(self, parser):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x000A, object_data=struct.pack("<h", 3675))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["body_temperature"] == 36.75
+        assert "battery" not in result.metadata
 
 
-class TestMiBeaconDoorWindow:
-    def test_door_window_open(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x000F, object_data=bytes([0]))
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
-        assert result.metadata["door_window"] == "open"
+class TestMiBeaconMotionWithLight0x000F:
+    """HA xiaomi-ble obj000f: 0x000F is motion + uint24 LE illuminance
+    ("moving with light"), not door/window."""
 
-    def test_door_window_closed(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x000F, object_data=bytes([1]))
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
-        assert result.metadata["door_window"] == "closed"
-
-
-class TestMiBeaconMotion:
-    def test_motion_event(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x1001, object_data=b"")
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
+    def test_motion_with_illuminance(self, parser):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x000F, object_data=struct.pack("<I", 70000)[:3])
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
         assert result.metadata["motion"] is True
+        assert result.metadata["illuminance"] == 70000
+        assert "door_window" not in result.metadata
+
+
+class TestMiBeaconButton0x1001:
+    """HA xiaomi-ble obj1001: 0x1001 is the button object — button index,
+    value, press type (<BBB) — not motion."""
+
+    @pytest.mark.parametrize("press,name", [
+        (0, "press"), (1, "double_press"), (2, "long_press"),
+    ])
+    def test_button(self, parser, press, name):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x1001, object_data=bytes([1, 0, press]))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["button_index"] == 1
+        assert result.metadata["button_value"] == 0
+        assert result.metadata["button_press"] == name
+        assert "motion" not in result.metadata
+
+    def test_unknown_press_type_kept_raw(self, parser):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x1001, object_data=bytes([0, 5, 9]))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["button_press"] == 9
 
 
 class TestMiBeaconSleepState:
@@ -349,13 +361,21 @@ class TestMiBeaconSleepState:
         assert "no_motion" not in result.metadata
 
 
-class TestMiBeaconButton:
-    def test_button_event(self, parser):
-        frame = _build_frame(mac=FRAME_MAC, object_id=0x1005, object_data=struct.pack("<BB", 1, 3))
-        raw = make_raw(service_data={"fe95": frame})
-        result = parser.parse(raw)
-        assert result.metadata["button_event_type"] == 1
-        assert result.metadata["button_count"] == 3
+class TestMiBeaconPowerTemperature0x1005:
+    """HA xiaomi-ble obj1005: 0x1005 is power on/off (byte 0) + temperature
+    in whole degrees C (byte 1), not a button."""
+
+    def test_power_and_temperature(self, parser):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x1005, object_data=bytes([1, 45]))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["power"] is True
+        assert result.metadata["temperature"] == 45
+        assert "button_event_type" not in result.metadata
+
+    def test_power_off(self, parser):
+        frame = _build_frame(mac=FRAME_MAC, object_id=0x1005, object_data=bytes([0, 22]))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["power"] is False
 
 
 class TestMiBeaconDoorEvent:
