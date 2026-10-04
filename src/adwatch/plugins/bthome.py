@@ -57,7 +57,11 @@ BUTTON_EVENT_MAP = {
     0x05: "long_double_press",
     0x06: "long_triple_press",
     0x80: "hold_press",
+    0xFE: "hold_release",  # shelly-smartcontrol report, BTHome.java:32-38
 }
+
+DIMMER_EVENT_MAP = {0x00: "none", 0x01: "rotate_left", 0x02: "rotate_right"}
+_DIMMER_DIRECTION = {0x01: "counter_clockwise", 0x02: "clockwise"}
 
 # Object ID -> (name, length_bytes, format, scale)
 # format: 'u' = unsigned, 's' = signed
@@ -95,13 +99,24 @@ OBJECT_DEFS = {
     0x21: ("motion", 1, "u", 1),
     0x22: ("moving", 1, "u", 1),
     0x23: ("occupancy", 1, "u", 1),
+    0x25: ("presence", 1, "u", 1),
+    0x2B: ("tamper", 1, "u", 1),
+    0x2C: ("vibration", 1, "u", 1),
     0x2D: ("window", 1, "u", 1),
     0x2E: ("humidity", 1, "u", 1),
     0x2F: ("moisture", 1, "u", 1),
     0x3A: ("button_event", 1, "u", 1),
     0x3C: ("dimmer_event", 2, "u", 1),
+    0x3F: ("rotation", 2, "s", 0.1),
     0x45: ("temperature_01", 2, "s", 0.1),
     0x46: ("uv_index", 1, "u", 0.1),
+    0x51: ("acceleration", 2, "u", 0.001),
+    0x52: ("gyroscope", 2, "u", 0.001),
+    0x57: ("temperature_1", 1, "s", 1),
+    0x58: ("temperature_035", 1, "s", 0.35),
+    0xF0: ("device_type_id", 2, "u", 1),
+    0xF1: ("firmware_version", 4, "u", 1),
+    0xF2: ("firmware_version_short", 3, "u", 1),
 }
 
 
@@ -181,12 +196,24 @@ class BTHomeParser:
                 value = int.from_bytes(obj_bytes, "little")
                 if fmt == "s" and value >= 0x800000:
                     value -= 0x1000000
+            else:
+                value = int.from_bytes(obj_bytes, "little", signed=(fmt == "s"))
+
+            if name in ("firmware_version", "firmware_version_short"):
+                # LE bytes rendered most-significant first: 00 01 02 04 -> 4.2.1.0
+                metadata[name] = ".".join(str(b) for b in reversed(obj_bytes))
+                continue
 
             if name == "button_event":
                 value = BUTTON_EVENT_MAP.get(value, value)
             elif name == "dimmer_event":
-                event = DIMMER_EVENT_MAP.get(obj_bytes[0], obj_bytes[0])
-                metadata[name] = {"event": event, "steps": obj_bytes[1]}
+                # Byte 0 = event, byte 1 = steps (BTHome spec; Shelly
+                # BTHome.java:39-41).
+                event = obj_bytes[0]
+                dimmer = {"event": DIMMER_EVENT_MAP.get(event, event), "steps": obj_bytes[1]}
+                if event in _DIMMER_DIRECTION:
+                    dimmer["direction"] = _DIMMER_DIRECTION[event]
+                metadata[name] = dimmer
                 continue
 
             metadata[name] = value * scale if scale != 1 else value

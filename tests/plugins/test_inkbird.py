@@ -48,9 +48,22 @@ def _build_ibbq(*probes_raw):
     return data
 
 
-def _build_ibs_th(temp_raw, humidity_raw):
-    """Build manufacturer_data for IBS-TH: 2-byte company + temp (2B LE signed) + humidity (2B LE unsigned)."""
-    return FAKE_COMPANY_BYTES + struct.pack("<h", temp_raw) + struct.pack("<H", humidity_raw)
+def _build_ibs_th(temp_raw, humidity_raw, config=0, battery=87, flag=0):
+    """Build the full 9-byte IBS-TH manufacturer_data (Encoding A).
+
+    Per apk-ble-hunting inkbird-inkbirdapp_passive.md: IbsthPresenter feeds
+    BluetoothDataParser.parseAdvData the scan-record hex from byte 14
+    (substring(28)). For the "sps" advert (02 01 06 | 03 02 f0 ff |
+    04 09 's' 'p' 's' | 0a ff <9 bytes>) byte 14 is the FIRST byte of the
+    manufacturer data -- there is no SIG company ID, the "CID" bytes ARE the
+    temperature. Layout: temp int16 LE /100 | hum int16 LE /100 | config u8 |
+    2 reserved | battery u8 | data flag u8.
+    """
+    return (
+        struct.pack("<h", temp_raw)
+        + struct.pack("<h", humidity_raw)
+        + bytes([config, 0x00, 0x00, battery, flag])
+    )
 
 
 # --- Pre-built test data ---
@@ -175,8 +188,70 @@ class TestInkbirdFrameFields:
     def test_ibs_th_raw_payload_hex(self, parser):
         raw = make_raw(manufacturer_data=IBS_TH_DATA, local_name="sps")
         result = parser.parse(raw)
-        expected = IBS_TH_DATA[2:].hex()
+        expected = IBS_TH_DATA.hex()
         assert result.raw_payload_hex == expected
+
+
+class TestIBSTHEncodingA:
+    def test_hand_built_scan_record_offset_basis(self, parser):
+        """Pin the byte-14 scan-record basis to manufacturer_data[0]."""
+        mfr = _build_ibs_th(2134, 4567, battery=64)
+        record = (
+            bytes.fromhex("020106") + bytes.fromhex("0302f0ff")
+            + bytes([0x04, 0x09]) + b"sps" + bytes([len(mfr) + 1, 0xFF]) + mfr
+        )
+        str3 = record.hex()[28:]
+        assert bytes.fromhex(str3) == mfr
+        result = parser.parse(make_raw(manufacturer_data=mfr, local_name="sps"))
+        assert result.metadata["temperature"] == pytest.approx(21.34)
+        assert result.metadata["humidity"] == pytest.approx(45.67)
+        assert result.metadata["battery"] == 64
+
+    def test_sensor_config_external_probe(self, parser):
+        data = _build_ibs_th(-1250, 3000, config=1)
+        result = parser.parse(make_raw(manufacturer_data=data, local_name="sps"))
+        assert result.metadata["temperature"] == pytest.approx(-12.5)
+        assert result.metadata["sensor_config"] == "external_temp_internal_hum"
+
+    def test_must_read_flag(self, parser):
+        data = _build_ibs_th(2000, 5000, flag=6)
+        result = parser.parse(make_raw(manufacturer_data=data, local_name="sps"))
+        assert result.metadata["must_read"] is True
+
+    def test_tps_temperature_only(self, parser):
+        data = _build_ibs_th(1800, 9999)
+        result = parser.parse(make_raw(manufacturer_data=data, local_name="tps"))
+        assert result is not None
+        assert result.metadata["device_type"] == "ibs_th"
+        assert result.metadata["temperature"] == pytest.approx(18.0)
+        assert "humidity" not in result.metadata
+        assert result.storage_row["humidity"] is None
+
+
+class TestInkbirdNamedModels:
+    @pytest.mark.parametrize("name", [
+        "ITH-21-B", "ITH-11-B", "IBS-P02B", "IBS-Mini", "INT-11P-B", "IDT-34c-B",
+        "IBT-4WB", "ISC-029-BW", "BG-BT1W", "ITC-312", "Ink@IAM-T1",
+        "Inkbird@IBT-24SPH", "INKBIRD@IBT-4XB", "IHT-2PB", "COBB-11P-B",
+    ])
+    def test_model_name_presence(self, parser, name):
+        result = parser.parse(make_raw(manufacturer_data=b"\x01\x02\x03\x04", local_name=name))
+        assert result is not None
+        assert result.metadata["device_type"] == "inkbird_named"
+        assert result.metadata["model"] == name
+        assert result.storage_table is None
+
+    def test_named_model_without_mfr_data(self, parser):
+        result = parser.parse(make_raw(local_name="ITH-13-B"))
+        assert result is not None
+
+    def test_registry_name_pattern_covers_models(self):
+        from adwatch.plugins.inkbird import INKBIRD_NAME_PATTERN
+        import re
+        for n in ("sps", "tps", "iBBQ", "ITH-21-B", "Ink@IAM-T2", "ITC-312"):
+            assert re.match(INKBIRD_NAME_PATTERN, n)
+        for n in ("xBBQ", "GrillEye", "tpsx-other", "Thermo"):
+            assert not re.match(INKBIRD_NAME_PATTERN, n)
 
 
 # --- Identity ---
@@ -225,8 +300,8 @@ class TestInkbirdRejectsInvalid:
         assert parser.parse(raw) is None
 
     def test_too_short_ibs_th(self, parser):
-        # Need at least company ID (2) + temp (2) + humidity (2) = 6 bytes
-        raw = make_raw(manufacturer_data=FAKE_COMPANY_BYTES + b"\x01\x02", local_name="sps")
+        # Need at least temp (2) + humidity (2) = 4 bytes of manufacturer_data
+        raw = make_raw(manufacturer_data=b"\x01\x02\x03", local_name="sps")
         assert parser.parse(raw) is None
 
 

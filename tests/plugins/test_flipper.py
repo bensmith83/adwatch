@@ -121,3 +121,55 @@ class TestFlipperMalformed:
         """No service UUIDs or local name."""
         raw = make_raw()
         assert parser.parse(raw) is None
+
+
+# --- Enrichment from apk-ble-hunting flipperdevices-app report (2026-10-01) ---
+
+SERIAL_UUID = "8fe5b3d5-2e7f-4a98-2a48-7acc60fe0000"
+
+
+class TestFlipperReportEnrichment:
+    def _entry(self):
+        import adwatch.plugins.flipper  # noqa: F401  (registers on import)
+        from adwatch.registry import _default_registry
+        entry = next(e for e in _default_registry._parsers if e["name"] == "flipper")
+        return lambda raw: _default_registry._entry_matches(entry, raw)
+
+    def test_serial_service_uuid_matches_parse(self, parser):
+        raw = make_raw(service_uuids=[SERIAL_UUID])
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["serial_service"] is True
+
+    def test_oui_only_matches_parse(self, parser):
+        raw = make_raw(mac_address="80:E1:26:12:34:56", address_type="public")
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["flipper_oui"] is True
+
+    def test_registry_matches_serial_uuid_and_oui(self):
+        m = self._entry()
+        assert m(make_raw(service_uuids=[SERIAL_UUID.upper()]))
+        assert m(make_raw(mac_address="80:e1:26:aa:bb:cc"))
+        assert not m(make_raw(mac_address="80:E1:27:aa:bb:cc"))
+
+    def test_module_constants(self):
+        import adwatch.plugins.flipper as mod
+        assert SERIAL_UUID in mod.FLIPPER_SERVICE_UUIDS
+        assert "3081" in mod.FLIPPER_SERVICE_UUIDS
+        assert mod.FLIPPER_OUI == "80:E1:26"
+
+    def test_flipper_name_suffix_extracted(self, parser):
+        raw = make_raw(local_name="Flipper Zqx3")
+        result = parser.parse(raw)
+        assert result.metadata["flipper_name"] == "Zqx3"
+        assert result.metadata["device_name"] == "Flipper Zqx3"
+
+    def test_bare_flipper_name_no_suffix(self, parser):
+        raw = make_raw(local_name="Flipper")
+        result = parser.parse(raw)
+        assert "flipper_name" not in result.metadata
+
+    def test_non_oui_mac_flag_false(self, parser):
+        raw = make_raw(local_name="Flipper Zqx3")
+        assert parser.parse(raw).metadata["flipper_oui"] is False

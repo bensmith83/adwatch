@@ -1,6 +1,7 @@
 """Inkbird Sensors BLE advertisement parser (iBBQ / IBS-TH)."""
 
 import hashlib
+import re
 import struct
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
@@ -18,13 +19,38 @@ IBBQ_ABSENT_VALUES = (DISCONNECTED_VALUE, -10, -1)
 MIN_IBBQ_PAYLOAD = 2  # at least 1 probe (2 bytes)
 MIN_IBS_TH_PAYLOAD = 4  # temp (2) + humidity (2)
 
+# Encoding A (classic IBS-TH "sps"/"tps") -- apk-ble-hunting
+# inkbird-inkbirdapp_passive.md, BluetoothDataParser.parseAdvData fed
+# scanRecord hex .substring(28) (= byte 14) by IbsthPresenter.java:68. For the
+# sps advert (flags | 0xFFF0 UUID | name "sps" | 0x0A 0xFF <9 bytes>) byte 14
+# is manufacturer_data[0]: no SIG company ID, the "CID" bytes ARE temperature.
+#   [0:2] temp int16 LE /100 C   [2:4] hum int16 LE /100 %RH
+#   [4] sensor config            [7] battery %    [8] data flag (6 = must read)
+IBS_TH_SENSOR_CONFIG = {
+    0: "internal",
+    1: "external_temp_internal_hum",
+    2: "internal_temp_external_hum",
+    3: "external_temp_external_hum",
+}
+
+# Exact-name whitelist / prefix rules from InkBluetoothScanManager.java:89-231.
+# Only sps/tps have a pinned advert layout; the rest are identified by model
+# name only (their byte-14 basis depends on a record layout we can't pin).
+# iBBQ is also claimed by plugins/ibbq.py (pre-existing overlap).
+INKBIRD_NAMED_MODEL_PATTERN = (
+    r"ITH-|IBS-|IHT-|INT-|IDT-|INDT-|IBT-|ISC-|COBB-|ISVT-|BG-BT|ITC-312"
+    r"|Ink@IAM-T|Inkbird@IBT-|INKBIRD@IBT-"
+)
+INKBIRD_NAME_PATTERN = rf"^(iBBQ|sps|tps$|{INKBIRD_NAMED_MODEL_PATTERN})"
+_NAMED_RE = re.compile(rf"^({INKBIRD_NAMED_MODEL_PATTERN})")
+
 
 @register_parser(
     name="inkbird",
     service_uuid="0000fff0-0000-1000-8000-00805f9b34fb",
-    local_name_pattern=r"^(iBBQ|sps)",
+    local_name_pattern=INKBIRD_NAME_PATTERN,
     description="Inkbird Sensors",
-    version="1.0.0",
+    version="1.1.0",
     core=False,
 )
 class InkbirdParser:
@@ -35,12 +61,26 @@ class InkbirdParser:
         try:
             if raw.local_name.startswith("iBBQ"):
                 return self._parse_ibbq(raw)
-            elif raw.local_name.startswith("sps"):
+            elif raw.local_name.startswith("sps") or raw.local_name == "tps":
                 return self._parse_ibs_th(raw)
+            elif _NAMED_RE.match(raw.local_name):
+                return self._parse_named(raw)
         except struct.error:
             return None
 
         return None
+
+    def _parse_named(self, raw: RawAdvertisement) -> ParseResult:
+        id_hash = hashlib.sha256(raw.mac_address.encode()).hexdigest()[:16]
+        mfr = raw.manufacturer_data or b""
+        return ParseResult(
+            parser_name="inkbird",
+            beacon_type="inkbird",
+            device_class="sensor",
+            identifier_hash=id_hash,
+            raw_payload_hex=mfr.hex(),
+            metadata={"device_type": "inkbird_named", "model": raw.local_name},
+        )
 
     def _parse_ibbq(self, raw: RawAdvertisement) -> ParseResult | None:
         if not raw.manufacturer_data or len(raw.manufacturer_data) < IBBQ_HEADER_LEN:
@@ -94,20 +134,25 @@ class InkbirdParser:
         )
 
     def _parse_ibs_th(self, raw: RawAdvertisement) -> ParseResult | None:
-        if not raw.manufacturer_data or len(raw.manufacturer_data) < 2:
+        mfr = raw.manufacturer_data
+        if not mfr or len(mfr) < MIN_IBS_TH_PAYLOAD:
             return None
 
-        payload = raw.manufacturer_data[2:]
-        if len(payload) < MIN_IBS_TH_PAYLOAD:
-            return None
+        temp_only = raw.local_name == "tps"
+        temperature = struct.unpack_from("<h", mfr, 0)[0] / 100.0
+        humidity = None if temp_only else struct.unpack_from("<h", mfr, 2)[0] / 100.0
 
-        temp_raw = struct.unpack_from("<h", payload, 0)[0]
-        humidity_raw = struct.unpack_from("<H", payload, 2)[0]
+        metadata: dict = {"device_type": "ibs_th", "temperature": temperature}
+        if humidity is not None:
+            metadata["humidity"] = humidity
+        if len(mfr) >= 5 and not temp_only:
+            metadata["sensor_config"] = IBS_TH_SENSOR_CONFIG.get(mfr[4], f"unknown_{mfr[4]}")
+        if len(mfr) >= 8:
+            metadata["battery"] = mfr[7]
+        if len(mfr) >= 9:
+            metadata["must_read"] = mfr[8] == 6
 
         id_hash = hashlib.sha256(raw.mac_address.encode()).hexdigest()[:16]
-
-        temperature = temp_raw / 100.0
-        humidity = humidity_raw / 100.0
 
         storage_row = {
             "timestamp": raw.timestamp,
@@ -122,7 +167,7 @@ class InkbirdParser:
             "probe_4": None,
             "identifier_hash": id_hash,
             "rssi": raw.rssi,
-            "raw_payload_hex": payload.hex(),
+            "raw_payload_hex": mfr.hex(),
         }
 
         return ParseResult(
@@ -130,12 +175,8 @@ class InkbirdParser:
             beacon_type="inkbird",
             device_class="sensor",
             identifier_hash=id_hash,
-            raw_payload_hex=payload.hex(),
-            metadata={
-                "device_type": "ibs_th",
-                "temperature": temperature,
-                "humidity": humidity,
-            },
+            raw_payload_hex=mfr.hex(),
+            metadata=metadata,
             event_type="inkbird_reading",
             storage_table="inkbird_readings",
             storage_row=storage_row,

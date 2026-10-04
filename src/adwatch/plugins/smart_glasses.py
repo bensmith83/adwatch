@@ -9,9 +9,22 @@ Known company IDs:
   0x058E - Meta Platforms Technologies, LLC
   0x0D53 - Luxottica Group S.p.A (Meta Ray-Ban manufacturer)
   0x03C2 - Snapchat, Inc. (Snap Spectacles)
+
+Ray-Ban Meta V2 header (apk-ble-hunting facebook-stella report, native
+ManufacturerData.deserialize in libstartup.so), CID 0x01AB, post-CID payload
+len >= 14: [0]=0x80 V2 marker, [1-2]=model id u16 LE (0x0601 Ray-Ban Meta),
+[3]=pairing seed, [4] bit0=hasOwner, [5-13]=9-byte cleartext device id.
+
+Even Realities G1 (apk-ble-hunting even-g1 report, ``w7/l.java:504-524``):
+each pair is TWO peripherals (left/right temple) found by local name only,
+``Even G1_<id>_L`` / ``Even G1_<id>_R`` (field captures also show a trailing
+``_<token>``). No mfr/service-data telemetry. The NUS UUID 6e400001-... is
+generic Nordic and only recorded as corroboration, never matched on.
+Identity = the per-temple name (stable, independent of MAC rotation).
 """
 
 import hashlib
+import re
 
 from adwatch.models import RawAdvertisement, ParseResult, PluginUIConfig, WidgetConfig
 from adwatch.registry import register_parser
@@ -25,16 +38,33 @@ MANUFACTURER_NAMES = {
     0x03C2: "Snapchat",
 }
 
+META_COMPANY_ID = 0x01AB
+META_V2_MARKER = 0x80
+META_MODEL_NAMES = {
+    0x0601: "Ray-Ban Meta",
+}
+
+EVEN_G1_NAME_RE = re.compile(
+    r"^Even G1(?:_(?P<pair_id>[^_]+)_(?P<side>[LR])(?:_(?P<suffix>\S+))?)?$"
+)
+NUS_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+
 
 @register_parser(
     name="smart_glasses",
     company_id=SMART_GLASSES_COMPANY_IDS,
-    description="Smart glasses BLE advertisements (Meta Ray-Ban, Snap Spectacles)",
-    version="1.0.0",
+    local_name_pattern=r"^Even G1",
+    description="Smart glasses BLE advertisements (Meta Ray-Ban, Snap Spectacles, Even G1)",
+    version="1.1.0",
     core=False,
 )
 class SmartGlassesParser:
     def parse(self, raw: RawAdvertisement) -> ParseResult | None:
+        if raw.local_name:
+            m = EVEN_G1_NAME_RE.match(raw.local_name)
+            if m:
+                return self._parse_even_g1(raw, m)
+
         if not raw.manufacturer_data or len(raw.manufacturer_data) < 3:
             return None
 
@@ -46,6 +76,27 @@ class SmartGlassesParser:
         id_hash = hashlib.sha256(
             f"{raw.mac_address}:{payload.hex()}".encode()
         ).hexdigest()[:16]
+        metadata = {
+            "manufacturer": MANUFACTURER_NAMES.get(company_id, "Unknown"),
+            "company_id": f"0x{company_id:04x}",
+            "payload_hex": payload.hex(),
+        }
+
+        if (company_id == META_COMPANY_ID and len(payload) >= 14
+                and payload[0] == META_V2_MARKER):
+            model_id = int.from_bytes(payload[1:3], "little")
+            device_id = payload[5:14].hex()
+            metadata.update({
+                "meta_format": "v2",
+                "model_id": model_id,
+                "model_name": META_MODEL_NAMES.get(model_id, "Unknown Meta device"),
+                "pairing_seed": payload[3],
+                "has_owner": bool(payload[4] & 0x01),
+                "device_id": device_id,
+            })
+            id_hash = hashlib.sha256(
+                f"meta_glasses:{device_id}".encode()
+            ).hexdigest()[:16]
 
         return ParseResult(
             parser_name="smart_glasses",
@@ -53,11 +104,31 @@ class SmartGlassesParser:
             device_class="wearable",
             identifier_hash=id_hash,
             raw_payload_hex=payload.hex(),
-            metadata={
-                "manufacturer": MANUFACTURER_NAMES.get(company_id, "Unknown"),
-                "company_id": f"0x{company_id:04x}",
-                "payload_hex": payload.hex(),
-            },
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _parse_even_g1(raw: RawAdvertisement, m: re.Match) -> ParseResult:
+        metadata: dict = {
+            "manufacturer": "Even Realities",
+            "model_name": "Even G1",
+            "device_name": raw.local_name,
+        }
+        if m.group("pair_id"):
+            metadata["pair_id"] = m.group("pair_id")
+            metadata["side"] = "left" if m.group("side") == "L" else "right"
+        if m.group("suffix"):
+            metadata["name_suffix"] = m.group("suffix")
+        if NUS_SERVICE_UUID in (raw.service_uuids or []):
+            metadata["nus_service"] = True
+        id_hash = hashlib.sha256(f"even_g1:{raw.local_name}".encode()).hexdigest()[:16]
+        return ParseResult(
+            parser_name="smart_glasses",
+            beacon_type="smart_glasses",
+            device_class="wearable",
+            identifier_hash=id_hash,
+            raw_payload_hex=raw.manufacturer_data.hex() if raw.manufacturer_data else "",
+            metadata=metadata,
         )
 
     def storage_schema(self):
@@ -113,7 +184,7 @@ class SmartGlassesParser:
                     config={
                         "text": "Detection is based on Bluetooth SIG company IDs shared across all products from each manufacturer. "
                         "Matches may include other devices such as VR headsets, earbuds, or phones — not just smart glasses. "
-                        "Manufacturers tracked: Meta Platforms (Ray-Ban Meta), Luxottica, Snapchat (Spectacles).",
+                        "Manufacturers tracked: Meta Platforms (Ray-Ban Meta), Luxottica, Snapchat (Spectacles); Even Realities G1 by device name.",
                     },
                 ),
                 WidgetConfig(

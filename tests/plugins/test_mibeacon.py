@@ -231,10 +231,16 @@ class TestMiBeaconMACHandling:
 
 
 class TestMiBeaconEncrypted:
-    def test_encrypted_returns_none(self, parser):
-        """Encrypted frames should be skipped (return None)."""
+    def test_encrypted_returns_header_only(self, parser):
+        """Header (FC/product/counter/MAC) is cleartext even when encrypted;
+        only the event payload is AES-CCM (xiaomi-wearable_passive.md)."""
         raw = make_raw(service_data={"fe95": ENCRYPTED_FRAME})
-        assert parser.parse(raw) is None
+        result = parser.parse(raw)
+        assert result is not None
+        assert result.metadata["encrypted"] is True
+        assert result.metadata["mac"] == FRAME_MAC
+        assert result.metadata["device_type"] == 0x0098
+        assert "temperature" not in result.metadata
 
 
 class TestMiBeaconMalformed:
@@ -482,7 +488,9 @@ class TestMiBeaconWatchflowerAudit:
     def test_encryption_is_frame_control_bit3(self, parser):
         frame = _build_frame(mac=FRAME_MAC, encrypted=True,
                              object_id=0x1004, object_data=TEMP_VALUE)
-        assert parser.parse(make_raw(service_data={"fe95": frame})) is None
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["encrypted"] is True
+        assert "temperature" not in result.metadata
 
     def test_bit7_is_mesh_not_encryption(self, parser):
         """Bit 7 is isMeshed; a mesh frame must still decode."""
@@ -739,3 +747,110 @@ class TestMiBeaconYeelightAudit:
         frame = self._frame(self._fc(has_capability=False))
         result = parser.parse(make_raw(service_data={"fe95": frame}))
         assert "unprovisioned" not in result.metadata
+
+
+class TestMiBeaconWearableEnrichment:
+    """Additions from reports/xiaomi-wearable_passive.md (Mi Fitness
+    BeaconRecognizer.java / AdvPacket.java)."""
+
+    @staticmethod
+    def _hdr(fc, product=0x1234, counter=7):
+        return struct.pack("<HHB", fc, product, counter)
+
+    MAC_BYTES = bytes(reversed(bytes.fromhex("112233445566")))
+
+    def test_bond_new_is_frame_control_bit2(self, parser):
+        frame = self._hdr((1 << 2) | (5 << 12))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["bond_new"] is True
+        frame = self._hdr(5 << 12)
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert result.metadata["bond_new"] is False
+
+    def test_encrypted_flag_false_on_cleartext(self, parser):
+        result = parser.parse(make_raw(service_data={"fe95": TEMP_FRAME}))
+        assert result.metadata["encrypted"] is False
+
+    def test_encrypted_v5_tail_counter_and_mic(self, parser):
+        fc = (1 << 3) | (1 << 4) | (1 << 6) | (5 << 12)
+        cipher = bytes.fromhex("deadbeef")
+        frame = (self._hdr(fc) + self.MAC_BYTES + cipher
+                 + bytes.fromhex("010203") + bytes.fromhex("a1a2a3a4"))
+        result = parser.parse(make_raw(service_data={"fe95": frame}))
+        m = result.metadata
+        assert m["encrypted"] is True
+        assert m["mac"] == "11:22:33:44:55:66"
+        assert m["encrypted_payload_hex"] == "deadbeef"
+        assert m["ext_frame_counter"] == 0x030201
+        assert m["mic_hex"] == "a1a2a3a4"
+        assert "object_id" not in m
+
+    def test_encrypted_v3_one_byte_mic(self, parser):
+        fc = (1 << 3) | (1 << 6) | (3 << 12)
+        frame = self._hdr(fc) + bytes.fromhex("cafe") + bytes.fromhex("0a0000") + b"\x99"
+        m = parser.parse(make_raw(service_data={"fe95": frame})).metadata
+        assert m["encrypted_payload_hex"] == "cafe"
+        assert m["ext_frame_counter"] == 10
+        assert m["mic_hex"] == "99"
+
+    def test_encrypted_identity_uses_frame_mac(self, parser):
+        fc = (1 << 3) | (1 << 4) | (5 << 12)
+        frame = self._hdr(fc) + self.MAC_BYTES
+        r = parser.parse(make_raw(service_data={"fe95": frame}))
+        assert r.identifier_hash == hashlib.sha256(b"11:22:33:44:55:66").hexdigest()[:16]
+
+    def test_mesh_field_decoded(self, parser):
+        fc = (1 << 7) | (4 << 12)
+        # byte1: pbType=2 (bits0-1), state=1 (bits2-3), version=3 (bits4-7)
+        frame = self._hdr(fc) + bytes([0x36, 0x00])
+        m = parser.parse(make_raw(service_data={"fe95": frame})).metadata
+        assert m["mesh_pb_type"] == 2
+        assert m["mesh_state"] == 1
+        assert m["mesh_version"] == 3
+
+    def test_mesh_field_on_encrypted_frame(self, parser):
+        fc = (1 << 3) | (1 << 7) | (1 << 6) | (5 << 12)
+        frame = (self._hdr(fc) + bytes.fromhex("beef") + bytes.fromhex("010000")
+                 + bytes.fromhex("00112233") + bytes([0x36, 0x00]))
+        m = parser.parse(make_raw(service_data={"fe95": frame})).metadata
+        assert m["mesh_state"] == 1
+        assert m["mic_hex"] == "00112233"
+        assert m["encrypted_payload_hex"] == "beef"
+
+    def test_io_capability_nibbles(self, parser):
+        fc = (1 << 5) | (5 << 12)
+        # inputCap = 1 SIX_NUMBER, outputCap = 8 QR_CODE
+        frame = self._hdr(fc) + bytes([0x20]) + bytes([0x81, 0x00])
+        m = parser.parse(make_raw(service_data={"fe95": frame})).metadata
+        assert m["io_input_capability"] == 1
+        assert m["io_input_capability_name"] == "six_number"
+        assert m["io_output_capability"] == 8
+        assert m["io_output_capability_name"] == "qr_code"
+
+    def test_capability_net_status(self, parser):
+        fc = (1 << 5) | (5 << 12)
+        frame = self._hdr(fc) + bytes([0x80 | 0x01])
+        m = parser.parse(make_raw(service_data={"fe95": frame})).metadata
+        assert m["net_status"] == 2
+
+    @pytest.mark.parametrize("name", [
+        "Xiaomi Smart Band 8", "Mi Band 7", "Xiaomi Watch S3", "Redmi Watch 3",
+        "Redmi Smart Band 2",
+    ])
+    def test_wearable_name_sets_device_class(self, parser, name):
+        frame = self._hdr((1 << 4) | (5 << 12)) + self.MAC_BYTES
+        r = parser.parse(make_raw(service_data={"fe95": frame}, local_name=name))
+        assert r.device_class == "wearable"
+        assert r.metadata["wearable_model"] == name
+
+    def test_non_wearable_name_keeps_sensor(self, parser):
+        r = parser.parse(make_raw(service_data={"fe95": TEMP_FRAME}, local_name="LYWSD03MMC"))
+        assert r.device_class == "sensor"
+        assert "wearable_model" not in r.metadata
+
+    def test_pairing_mode_flag(self, parser):
+        """bondNew or (!registered) => device surfaced as in pairing window."""
+        frame = self._hdr((1 << 2) | (5 << 12))
+        assert parser.parse(make_raw(service_data={"fe95": frame})).metadata["pairing_mode"] is True
+        frame = self._hdr((1 << 8) | (5 << 12))
+        assert parser.parse(make_raw(service_data={"fe95": frame})).metadata["pairing_mode"] is False

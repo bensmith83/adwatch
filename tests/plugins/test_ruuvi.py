@@ -82,7 +82,7 @@ POS_ACCEL_DATA = _build_rawv2(accel_x=1000, accel_y=500, accel_z=2000)
 NEG_ACCEL_DATA = _build_rawv2(accel_x=-1000, accel_y=-500, accel_z=-2000)
 
 # Wrong format byte
-WRONG_FORMAT_DATA = _build_rawv2(format_byte=0x03)
+WRONG_FORMAT_DATA = _build_rawv2(format_byte=0x07)  # unknown format
 
 # Wrong company ID
 WRONG_COMPANY_DATA = bytes([0x4C, 0x00]) + bytes([0x05]) + b"\x00" * 21
@@ -309,3 +309,154 @@ class TestRuuviStructSafety:
             result = parser.parse(raw)
 
         assert result is None
+
+
+# --- Enrichment per apk-ble-hunting ruuvi-station_passive.md ---
+# Offsets in the app's decoders are relative to the data-format byte that
+# follows FF 99 04 in the raw record == manufacturer_payload[0].
+
+import math
+
+
+class TestRuuviOffsetBasis:
+    def test_hand_built_scan_record(self, parser):
+        mfr = _build_rawv2()
+        record = bytes.fromhex("020106") + bytes([len(mfr) + 1, 0xFF]) + mfr
+        i = record.index(bytes([0xFF, 0x99, 0x04])) + 3  # getActualDataOffset
+        assert record[i] == 0x05
+        assert record[i:] == mfr[2:]
+        result = parser.parse(make_raw(manufacturer_data=mfr))
+        assert result.metadata["data_format"] == 5
+        assert result.metadata["temperature"] == pytest.approx(1.78)
+
+
+class TestRuuviFormat5Sentinels:
+    def test_invalid_sentinels_omitted(self, parser):
+        data = _build_rawv2(temperature=-32768, humidity=0xFFFF, pressure=0xFFFF,
+                            power_info=(2047 << 5) | 31)
+        result = parser.parse(make_raw(manufacturer_data=data))
+        for k in ("temperature", "humidity", "pressure", "voltage", "tx_power"):
+            assert k not in result.metadata
+        assert result.metadata["movement_counter"] == 66
+
+
+class TestRuuviFormat3:
+    def _data(self, hum=0x65, temp_int=0x81, temp_frac=0x45, pressure=0xC8C5,
+              ax=-1000, ay=0, az=1000, batt=2899):
+        return (COMPANY_ID_BYTES + bytes([0x03, hum, temp_int, temp_frac])
+                + struct.pack(">Hhhh", pressure, ax, ay, az) + struct.pack(">H", batt))
+
+    def test_decode(self, parser):
+        result = parser.parse(make_raw(manufacturer_data=self._data()))
+        m = result.metadata
+        assert m["data_format"] == 3
+        assert m["humidity"] == pytest.approx(50.5)
+        assert m["temperature"] == pytest.approx(-1.69)
+        assert m["pressure"] == 0xC8C5 + 50000
+        assert m["accel_x"] == -1000 and m["accel_z"] == 1000
+        assert m["voltage"] == 2899
+        h = hashlib.sha256("AA:BB:CC:DD:EE:FF".encode()).hexdigest()[:16]
+        assert result.identifier_hash == h
+
+    def test_too_short(self, parser):
+        assert parser.parse(make_raw(manufacturer_data=self._data()[:10])) is None
+
+
+class TestRuuviFormatC5:
+    def test_decode(self, parser):
+        data = (COMPANY_ID_BYTES + bytes([0xC5]) + struct.pack(">hHHHBH",
+                -400, 20000, 51000, 0x9DC7, 9, 777))
+        m = parser.parse(make_raw(manufacturer_data=data)).metadata
+        assert m["data_format"] == 0xC5
+        assert m["temperature"] == pytest.approx(-2.0)
+        assert m["humidity"] == pytest.approx(50.0)
+        assert m["pressure"] == 101000
+        assert m["voltage"] == 2862
+        assert m["tx_power"] == -26
+        assert m["movement_counter"] == 9
+        assert m["measurement_sequence"] == 777
+        assert "accel_x" not in m
+
+
+class TestRuuviFormatE0:
+    def test_decode(self, parser):
+        body = struct.pack(">hhH", 4400, 18000, 51325)
+        body += struct.pack(">HHHHH", 12, 55, 60, 71, 845)
+        body += bytes([0x01, 0x05, 0x00, 0x20])  # VOC 9-bit = 261, NOx = 32
+        body += struct.pack(">H", 350) + bytes([90, 140]) + struct.pack(">H", 1234)
+        body += bytes([100])  # battery * 0.03 V
+        data = COMPANY_ID_BYTES + bytes([0xE0]) + body
+        m = parser.parse(make_raw(manufacturer_data=data)).metadata
+        assert m["data_format"] == 0xE0
+        assert m["temperature"] == pytest.approx(22.0)
+        assert m["humidity"] == pytest.approx(45.0)
+        assert m["pressure"] == 101325
+        assert m["pm1_0"] == pytest.approx(1.2)
+        assert m["pm2_5"] == pytest.approx(5.5)
+        assert m["pm4_0"] == pytest.approx(6.0)
+        assert m["pm10"] == pytest.approx(7.1)
+        assert m["co2"] == 845
+        assert m["voc"] == 261
+        assert m["nox"] == 32
+        assert m["luminosity"] == 350
+        assert m["sound_dba_avg"] == pytest.approx(45.0)
+        assert m["sound_dba_peak"] == pytest.approx(70.0)
+        assert m["measurement_sequence"] == 1234
+        assert m["voltage"] == 3000
+
+
+class TestRuuviFormatE1:
+    def test_decode(self, parser):
+        body = struct.pack(">hHH", 4400, 18000, 51325)
+        body += struct.pack(">HHHHH", 12, 55, 60, 71, 845)
+        body += bytes([130, 16])            # VOC (<<1 | flag b6), NOx (<<1 | flag b7)
+        body += (123456).to_bytes(3, "big")  # luminosity /100
+        body += bytes([100, 110, 120])        # dBA inst/avg/peak (<<1|flag)/5+18
+        body += (70000).to_bytes(3, "big")   # sequence 24-bit
+        body += bytes([0b01001000])          # flags: b3 inst LSB, b6 VOC LSB
+        data = COMPANY_ID_BYTES + bytes([0xE1]) + body
+        m = parser.parse(make_raw(manufacturer_data=data)).metadata
+        assert m["data_format"] == 0xE1
+        assert m["temperature"] == pytest.approx(22.0)
+        assert m["voc"] == 261
+        assert m["nox"] == 32
+        assert m["luminosity"] == pytest.approx(1234.56)
+        assert m["sound_dba_inst"] == pytest.approx((201) / 5 + 18)
+        assert m["sound_dba_avg"] == pytest.approx(220 / 5 + 18)
+        assert m["measurement_sequence"] == 70000
+        assert "voltage" not in m
+
+
+class TestRuuviFormatF0:
+    def test_decode(self, parser):
+        body = bytes([0xFB, 90, 113, 0, 127, 254, 10, 127, 50, 60, 254, 81])
+        data = COMPANY_ID_BYTES + bytes([0xF0]) + body
+        m = parser.parse(make_raw(manufacturer_data=data)).metadata
+        assert m["data_format"] == 0xF0
+        assert m["temperature"] == -5
+        assert m["humidity"] == pytest.approx(45.0)
+        assert m["pressure"] == 101300
+        assert m["pm1_0"] == pytest.approx(0.0)
+        assert m["pm2_5"] == pytest.approx(round(math.sqrt(1001) - 1, 2))
+        assert m["pm4_0"] == pytest.approx(1000.0)
+        assert m["co2"] == round(math.sqrt(40001) - 1)
+        assert m["sound_dba_avg"] == pytest.approx(40.5)
+
+
+class TestRuuviFormat6:
+    def test_decode(self, parser):
+        body = struct.pack(">hHHHH", 4400, 18000, 51325, 55, 845)
+        body += bytes([130, 16, 254, 100, 42])  # VOC, NOx, lum log, dBA, seq
+        body += bytes([0b01010000])              # flags b4 (dBA LSB), b6 (VOC LSB)
+        body += bytes([0xAA, 0xBB, 0xCC])        # MAC low 3 bytes
+        data = COMPANY_ID_BYTES + bytes([0x06]) + body
+        m = parser.parse(make_raw(manufacturer_data=data)).metadata
+        assert m["data_format"] == 6
+        assert m["temperature"] == pytest.approx(22.0)
+        assert m["pm2_5"] == pytest.approx(5.5)
+        assert m["co2"] == 845
+        assert m["voc"] == 261
+        assert m["nox"] == 32
+        assert m["luminosity"] == pytest.approx(65535.0)
+        assert m["sound_dba_avg"] == pytest.approx(201 / 5 + 18)
+        assert m["measurement_sequence"] == 42
