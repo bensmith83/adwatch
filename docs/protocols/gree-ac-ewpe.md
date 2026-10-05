@@ -87,6 +87,36 @@ AND mfg[11..16] == 00 00 00 00 00 00
 The 4-byte magic at offset 4..7 plus the 6-zero pad at offset 11..16
 makes the false-positive rate near zero for the structural test.
 
+### Second frame shape: nameless CID 0x0D23 (v1.1, 2026-10-05 sweep)
+
+The same GR-AC units also emit a **nameless** 17-byte manufacturer frame
+under **Gree's own SIG company ID 0x0D23** (Gree Electric Appliances) —
+21 records / 48 sightings across nine capture days (2026-06-14 →
+2026-10-01). The link to this parser's units: three of the
+`c0 39 37`-subtype records were parsed on-device by `gree_ac`; the merged
+telemetry corpus strips local names, and the CID-0x005D structural test
+above cannot match a `23 0d …` frame, so those on-device ads carried
+`GR-AC_*` names.
+
+```
+[0..2)   23 0d        CID 0x0D23 LE (Gree Electric Appliances)
+[2..4)   00 00        constant
+[4]      01           constant
+[5..8)   subtype      00 00 00 (14 records) / c0 39 37 (7 records)
+[8..11)  unit id      3 bytes, per unit (recurs across capture days)
+[11..17) 00 ×6        constant padding
+```
+
+Real frames: `230d00000100000019e8c7000000000000` (subtype `00 00 00`),
+`230d000001c0393783c52a000000000000` (subtype `c0 39 37`, the
+on-device-named shape).
+
+Gate: CID + 17 bytes + `00 00 01` header + observed subtype + zero pad.
+Identity is namespaced away from `mac4` (the shapes never co-claim):
+`stable_key = gree_ac:0d23:<unit id>`. The subtype's meaning is unknown
+(both shapes come from the same product family; possibly a
+paired/unpaired or firmware split).
+
 ### What We Can Parse
 
 | Field | Source | Notes |
