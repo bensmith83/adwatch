@@ -38,12 +38,30 @@ Primary LEDnetWF company-ids (BE-read of bytes 1–2):
 
 | CID (BE) | Use |
 |----------|-----|
+| `0x5A4C` | Bouffalo-silicon product line (2026-10-07 sweep; svc-channel MACs verify) |
 | `0x5A50` | LEDnetWF primary |
 | `0x5A51` | LEDnetWF primary |
 | `0x5A52` | LEDnetWF primary (seen in our captures) |
 
 Other Zengge sub-lines use `0x5A20`–`0x5A4F`; we don't route
 them to this parser.
+
+### `sta = 0x01` firmware reads as LE CID `0x5A01`
+
+The 2026-10-07 nightly sweep found a second on-wire prefix: frames
+starting `01 5a …` (`sta = 0x01`), which CoreBluetooth reads as LE
+company id **0x5A01** (an unassigned SIG value — the same fictional-
+CID artifact as `0x5A00`). v1.1 of the parser routes CID 0x5A01
+alongside 0x5A00. On this firmware the `ble_version` byte runs
+`0x23`/`0x24` and the BE product ids seen are `0x0064` / `0x0060` /
+`0x0035` / `0x0006`.
+
+**Caution — placeholder MAC field on the 0x5A4C line:** bytes 4–9
+read `61:01:50:0f:00:00` (and `61:19:40:0f:00:00` etc.) — identical
+across every unit of the product line, trailing zeros, unassigned
+OUI. It is **not** a per-unit MAC; decode it for forensics but never
+key identity on it. The unit's real factory MAC travels on the
+service-data channel below.
 
 ## Wire Format ("Format A", 29 bytes)
 
@@ -75,6 +93,43 @@ them to this parser.
 The "state region" looks like an obvious counted sequence (`09 01
 02 03 … a1 a2 a3 a4 a5 a6`) in our captures — that's coincidence,
 not structure. On v1 firmware those bytes are uninitialized.
+
+## Service-Data Channel (key 0x5A01, 14 bytes) — v1.1
+
+The `sta = 0x01` units also broadcast a service-data AD structure
+keyed `0x5A01` (the same on-wire `01 5a` prefix the mfg channel
+leads with). The value mirrors the Format-A fields in a different
+order and — critically — carries the unit's **real factory MAC**:
+
+```
+4c 07 08 65 f0 ed 89 8b 00 35 1e 0a 05 00
+└┬┘ └┬┘ └──────────┬───────┘ └┬┘ └───┬───┘ └┬┘
+ │   │             │          │      │       └── 0x00
+ │   │             │          │      └── opaque per-firmware word
+ │   │             │          │         (35 1e 0a 05 ×6 units,
+ │   │             │          │          35 d4 0a 01 / b8 3b 09 01 /
+ │   │             │          │          b6 1a 09 01 — semantics
+ │   │             │          │          unconfirmed, reported raw)
+ │   │             │          └── 0x00
+ │   │             └── factory MAC (6 bytes)
+ │   └── 0x07 frame marker (constant on all captures)
+ └── cid-low byte (0x4C/0x50/0x52 → company_id BE 0x5A00|low)
+```
+
+| Offset | Bytes | Field | Notes |
+|--------|-------|-------|-------|
+| 0 | 1 | cid-low | `0x4C` / `0x50` / `0x52` → BE company id `0x5A00\|low` |
+| 1 | 1 | marker | `0x07` constant |
+| 2–7 | 6 | factory MAC | OUI-verified: `08:65:F0` = **JM Zengge Co., Ltd**; `B4:C2:E0` / `C8:90:A8` = **Bouffalo Lab (Nanjing)** — the BL602-class silicon |
+| 8 | 1 | zero | `0x00` |
+| 9–12 | 4 | opaque word | per-product-line constants; reported as `svc_tail_hex` |
+| 13 | 1 | zero | `0x00` |
+
+Records frequently carry **both** channels at once. When they do,
+the svc MAC is the identity anchor (the mfg MAC field is the
+placeholder described above). Full-history evidence (2026-10-07
+sweep): 13 devices / 251 sightings / 2026-07-10 → 2026-10-06, 7
+devices advertising both channels.
 
 ## Product-ID Lookup (selected — far from exhaustive)
 
@@ -119,14 +174,16 @@ radio MAC carried in the manufacturer data.
 ## Identity Hashing
 
 ```
-identifier_hash = SHA256(name_suffix)[:16]   # preferred — stable
-identifier_hash = SHA256(mac_address)[:16]   # fallback when name absent
+identifier_hash = SHA256(svc factory MAC)[:16]   # v1.1 — preferred when the 0x5A01 svc channel is present
+identifier_hash = SHA256(name_suffix)[:16]       # stable — classic name-bearing bulbs
+identifier_hash = SHA256(mac_address)[:16]       # fallback when neither is present
 ```
 
-Name suffix is preferred because it represents the device's
-primary radio identifier, which is stable across BLE MAC
-rotation; falling back to the BLE MAC loses identity if the
-device rotates.
+The svc-channel factory MAC is preferred because it is the unit's
+real radio identifier and survives the BLE address rotation these
+controllers do; the name suffix is equally durable for the classic
+LEDnetWF-named bulbs (which never carry the svc channel); falling
+back to the BLE MAC loses identity if the device rotates.
 
 ## Captured Examples
 
