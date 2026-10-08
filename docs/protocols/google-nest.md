@@ -6,36 +6,122 @@ Google Nest devices (thermostats, cameras, speakers, displays, doorbells) broadc
 
 ## BLE Advertisement Format
 
-### Identification
-
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Service UUID | `0xFEAF` | Nest Labs Inc. (BLE SIG assigned) |
-| Local name | Short alphanumeric code | e.g. `NW3J0`, `NJXAS` — not human-readable |
+| Service UUID | `0xFEAF` | Nest Labs Inc. (Bluetooth SIG member UUID). OpenWeave advertises its WoBLE service data under it |
+| Service data | Weave BLE service-data block | Layout below |
+| Local name | `N` + 4 characters | Opaque per-unit "device code". It is not a Weave pairing code (see below) |
 
-### What We Can Parse from Advertisements
+### Service data: Weave BLE service-data blocks
 
-| Field | Source | Notes |
-|-------|--------|-------|
-| Nest device present | service_uuid match | Google Nest device nearby |
-| Device code | local_name | Short code, not a readable product name |
+The FEAF service data is one Weave BLE service-data block. Byte 0 is the
+block length, counting every byte after itself. Byte 1 is the block type.
+OpenWeave (`src/ble/WeaveBleServiceData.h`) defines two types: `0x01` device
+identification and `0x02` token identification.
 
-### What We Cannot Parse from Advertisements
+#### Block type 0x01: `WeaveBLEDeviceIdentificationInfo` (17 bytes)
 
-- Specific product type (thermostat vs. camera vs. speaker)
-- Device model or generation
-- Setup state
-- Any sensor readings
+| Offset | Size | Field | Notes |
+|--------|------|-------|-------|
+| 0 | 1 | BlockLen | `0x10` (16 bytes follow) |
+| 1 | 1 | BlockType | `0x01` |
+| 2 | 1 | MajorVersion | `0` in every capture |
+| 3 | 1 | MinorVersion | `2` on Nest Labs and Google units. `1` on the one third-party vendor seen, which matches the openweave device layer's own `kMinorVersion = 1` |
+| 4-5 | 2 | DeviceVendorId | uint16 LE. `0x235A` Nest Labs, `0xE100` Google, `0xE727` Yale (`src/lib/core/WeaveVendorIdentifiers.hpp`) |
+| 6-7 | 2 | DeviceProductId | uint16 LE, scoped to the vendor |
+| 8-15 | 8 | DeviceId | uint64 LE. The unit's Weave node id (`FabricState.LocalNodeId`), usually a vendor OUI followed by a serial. It is per unit and permanent: one corpus frame stayed byte-identical across 88 rotated BLE addresses |
+| 16 | 1 | PairingStatus | `0` unpaired, `1` paired to a Nest service account (`IsPairedToAccount()` in the openweave device layer, which checks for a stored `PairedAccountId`). `2` also occurs and has no defined meaning |
 
-## Local Name Pattern
-
-Nest devices use short alphanumeric codes as local names (e.g. `NW3J0`, `NJXAS`). These don't reveal the product type. The code may be derived from the device's serial number or setup token.
-
-## Identity Hashing
+Example (Nest Labs vendor, product `0x0017`, paired, device id zeroed):
 
 ```
-identifier = SHA256(mac_address)[:16]
+10 01 00 02 5a 23 17 00  xx xx xx xx xx xx xx xx  01
+^^ ^^ ^^ ^^ ^^^^^ ^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^  ^^
+len  type  ver  vendor   product   device id (LE)      pairing
 ```
+
+#### Block type 0x03 (20 bytes, BlockLen `0x13`)
+
+OpenWeave does not define this type. In the corpus:
+
+- Bytes 2-3 are fixed for a given advertiser.
+- Byte 4 behaves like a counter.
+- Bytes 5-6 take only a few values.
+- Bytes 7-19 change on every frame.
+
+The block is undecoded. It is 80% of the FEAF frames in the corpus (950
+distinct frames, against 235 for type 0x01).
+
+### Product ids
+
+The only public product-id table is openweave's
+`src/lib/profiles/vendor/nestlabs/device-description/NestProductIdentifiers.hpp`.
+It covers the Nest Labs vendor and gives codenames, not retail names:
+
+| Id | Codename | Retail product | Evidence |
+|----|----------|----------------|----------|
+| 0x0001-0x0004 | Diamond / Diamond2 (+ backplates) | — | codename only |
+| 0x0005, 0x001E, 0x001F | Topaz (deprecated in the header in favour of the two Topaz1 ids) / Topaz1LinePowered / Topaz1BatteryPowered | Nest Protect (1st gen) | Google Help: Technical Info "Model: Topaz 1.x" = 1st gen. Not seen in corpus |
+| 0x0006, 0x0007, 0x000F | Amber backplate / Amber Heat Link / Amber2 Heat Link | — | codename only |
+| **0x0009** | **Topaz2** (deprecated in the header in favour of the two Topaz2 ids) | **Nest Protect (2nd gen)** | Google Help "How to tell which Nest Protect you have": Technical Info "Model: Topaz 2.x" = 2nd gen |
+| **0x000A** | **Diamond3** | **Nest Learning Thermostat** (generation not publicly stated) | `diamond3` is a board in Nest's nest-learning-thermostat open-source release |
+| 0x000B | Diamond3Backplate | — | |
+| 0x000D, 0x0010-0x0012 | Quartz / SmokyQuartz / Quartz2 / BlackQuartz | — | codename only |
+| 0x0014, 0x0015 | Onyx / OnyxBackplate | — | codename only |
+| 0x0020, 0x0021 | Topaz2LinePowered / Topaz2BatteryPowered | Nest Protect (2nd gen) | same Google Help source. Not seen in corpus |
+
+No public source maps Google (`0xE100`) product ids. NearSight shows those
+as "Nest product 0x000C" rather than guessing.
+
+Corpus (distinct type-0x01 frames, so roughly distinct units):
+
+| Vendor | Product | Frames | PairingStatus seen |
+|--------|---------|--------|--------------------|
+| Google 0xE100 | 0x000C | 100 | 99×1, 1×0 |
+| Google 0xE100 | 0x0008 | 38 | 34×1, 1×0, 3×2 |
+| Google 0xE100 | 0x000F | 29 | 1 |
+| Google 0xE100 | 0x0019 | 19 | 1 |
+| Google 0xE100 | 0x0010 | 5 | 1 |
+| Google 0xE100 | 0x0006 | 2 | 1 |
+| Nest Labs 0x235A | 0x0009 (Nest Protect 2nd gen) | 13 | all 0 |
+| Nest Labs 0x235A | 0x0017 | 8 | 6×1, 2×0 |
+| Nest Labs 0x235A | 0x0016 | 5 | 1 |
+| Nest Labs 0x235A | 0x000A (Nest Learning Thermostat) | 3 | all 0 |
+| Nest Labs 0x235A | 0x0011 (Quartz2) | 2 | 1 |
+| Nest Labs 0x235A | 0x0014 (Onyx) | 1 | 2 |
+| unknown 0x131A | 0x0002 (block v0.1) | 10 | all 0 |
+
+PairingStatus says whether the unit is paired to a Nest service account, so
+it only means "set up" for Nest Labs and Google products. NearSight makes no
+setup claim for any other vendor: all ten 0x131A units report `0`.
+
+Every Nest Protect and Learning Thermostat in the corpus reports `0`, even
+though they are installed alarms and thermostats. On those products the byte
+does not track setup, so NearSight makes no setup claim for them. That covers
+every Topaz id (1st and 2nd gen), including the ones not yet seen in the
+corpus, and Diamond3. On every other Nest Labs or Google product, `1` is
+shown as "Set up" and `0` as "Not set up yet".
+
+### Local name ("device code")
+
+- The name is always `N` followed by 4 characters. Across 53 corpus names,
+  those 4 characters use 0-9 and A-Z without I and O, so Q and Z both occur.
+- It is not a Weave pairing code. Those are 6 characters (9 for Kryptonite),
+  use the Verhoeff-32 alphabet `0123456789ABCDEFGHJKLMNPRSTUVWXY` (no Q or Z),
+  and end in a check character (`src/lib/support/pairing-code`).
+- It is not the openweave device layer's default BLE name either. That name is
+  `NEST-` followed by the low 16 bits of the node id in hex.
+- It does not match any base-32, base-34 or base-36 rendering of the node id
+  (full id, low 32 bits or low 40 bits, either digit order) across 27
+  name+frame pairs.
+- Treat it as an opaque per-unit code that survives address rotation.
+
+## Identity
+
+- `identifier = SHA256(mac_address)[:16]`. This is unchanged.
+- The node id is deliberately not used as a cross-rotation identity key. It
+  is an OUI plus a serial with roughly 24-40 unknown bits, so any hash of it
+  that leaves the device can be brute-forced back to the id.
 
 ## Parser Match Paths (May 2026)
 
@@ -43,13 +129,14 @@ The Nest parser matches an advertisement under any of these conditions:
 
 1. **Service data on `FEAF`** (either the short-form key `"FEAF"` that
    CoreBluetooth gives on iOS, or the long-form 128-bit expansion
-   `0000FEAF-0000-1000-8000-00805F9B34FB`). When present, the 17-byte
-   payload is decoded into `frame_type`, `frame_version`, and
-   `device_variant` fields.
+   `0000FEAF-0000-1000-8000-00805F9B34FB`). When present, the
+   service-data block is decoded as described under "Service data"
+   above (block type, vendor id, product id, pairing status).
 
 2. **FEAF in the advertised service-UUID list** + **local name matching
-   a Nest pairing code** (`^[NR][0-9A-Z]{4}$`, e.g. `NJXAS`, `NW3J0`,
-   `R3DB1`, `N004Z`). This catches the common case where a mains-
+   a Nest device code** (`^[NR][0-9A-Z]{4}$`: `N` or `R` plus 4
+   characters; see "Local name" above, this is not a Weave pairing
+   code). This catches the common case where a mains-
    powered Nest device broadcasts only the FEAF UUID and its 5-char
    code, with no service data.
 
@@ -77,59 +164,25 @@ parse under the old serviceData-only logic.
 - Common in residential environments
 - Multiple Nest devices at one location is typical
 
-## Service Data Format (17 bytes)
-
-The FEAF service data payload is not publicly documented. Based on analysis of observed samples, the following partial structure has been inferred:
-
-| Offset | Size | Field | Notes |
-|--------|------|-------|-------|
-| 0-1 | 2 | header | Constant `0x10 0x01` — likely protocol version or message type |
-| 2 | 1 | unknown_1 | Constant `0x00` in all samples |
-| 3 | 1 | device_type? | Constant `0x02` — possibly device category |
-| 4-7 | 4 | variable_a | Changes between samples; possibly encodes device state (temperature, setpoint, mode) |
-| 8-11 | 4 | variable_b | Highly variable; possibly a counter, timestamp, or nonce |
-| 12 | 1 | unknown_2 | Constant `0x00` |
-| 13-14 | 2 | variable_c | Changes between samples |
-| 15 | 1 | variable_d | Changes between samples (`0x64`, `0x44`) |
-| 16 | 1 | trailer | Constant `0x01` |
-
-### Observed Samples
-
-```
-Sample 1: 10 01 00 02 00 e1 19 00  dc 0d 1c 52 00 66 16 64 01
-Sample 2: 10 01 00 02 00 e1 19 00  54 63 13 52 00 66 16 64 01
-Sample 3: 10 01 00 02 5a 23 17 00  f7 92 21 00 00 3b bb 44 01
-```
-
-Samples 1 and 2 share bytes 4-7 (`00e11900`) and bytes 13-15 (`661664`), suggesting the same device at different times. Sample 3 differs significantly (different device or state).
-
-**Speculative temperature encoding**: If bytes 4-5 encode temperature as LE uint16 in tenths of a degree Celsius, `0x00E1` (225) = 22.5°C (72.5°F) — a plausible indoor thermostat reading. Unconfirmed.
-
-The variable sections (bytes 8-11) may include encrypted or rolling-code elements. Nest devices use encryption for device-to-device communication (AES-based, via the Weave/Thread protocol stack).
-
-## Observed in adwatch (April 2026 Export)
-
-Six FEAF devices observed over ~18 days:
-
-| Local Name | Sighting Count | Notes |
-|------------|---------------|-------|
-| `NJXAS` | 1,774 | Highest count; long-term continuous advertising |
-| `NW3J0` | 1,766 | Similar count, likely co-located |
-| `NNCQR` | ~hundreds | Regular advertising |
-| `NRE6R` | ~hundreds | Regular advertising |
-| `N00V6` | ~hundreds | Regular advertising |
-| `N6TC1` | ~hundreds | Regular advertising |
-
-All share: FEAF service UUID only (no manufacturer data), "N" + 4 alphanumeric local names, 17-byte service data, random address type. Very high sighting counts indicate mains-powered devices broadcasting continuously.
-
 ## Future Work
 
-- Confirm temperature encoding hypothesis with controlled temperature measurements
-- Determine if different Nest product types (thermostat vs Protect vs sensor) produce distinguishable service data patterns
-- Map local_name code patterns to device types (if any pattern exists)
+- Map Google (0xE100) product ids. This needs captures from known devices,
+  for example from a Google Home app device list next to a scan.
+- Work out block type 0x03. The fixed bytes 2-3 might be a short per-unit
+  or per-home tag.
+- Find out what PairingStatus `2` means.
 
 ## References
 
 - [Bluetooth SIG — Service UUID 0xFEAF](https://www.bluetooth.com/specifications/assigned-numbers/) (assigned to Nest Labs Inc.)
 - [Nordic Semiconductor Bluetooth Numbers Database](https://github.com/NordicSemiconductor/bluetooth-numbers-database) — confirms FEAF = Nest Labs Inc
 - [Google Nest Thermostat technical specs](https://support.google.com/googlenest/answer/9230098) — confirms BLE 5.0 support
+- openweave-core `src/ble/WeaveBleServiceData.h`: https://github.com/openweave/openweave-core/blob/master/src/ble/WeaveBleServiceData.h
+- openweave-core `GenericConfigurationManagerImpl.ipp` (`_GetBLEDeviceIdentificationInfo`): https://github.com/openweave/openweave-core/blob/master/src/adaptations/device-layer/include/Weave/DeviceLayer/internal/GenericConfigurationManagerImpl.ipp
+- openweave-core `WeaveVendorIdentifiers.hpp`: https://github.com/openweave/openweave-core/blob/master/src/lib/core/WeaveVendorIdentifiers.hpp
+- openweave-core `NestProductIdentifiers.hpp`: https://github.com/openweave/openweave-core/blob/master/src/lib/profiles/vendor/nestlabs/device-description/NestProductIdentifiers.hpp
+- openweave-core pairing codes: https://github.com/openweave/openweave-core/blob/master/src/lib/support/pairing-code/PairingCodeUtils.h and https://github.com/openweave/openweave-core/blob/master/src/lib/support/verhoeff/Verhoeff32.cpp
+- openweave-core default BLE name: https://github.com/openweave/openweave-core/blob/master/src/adaptations/device-layer/include/Weave/DeviceLayer/WeaveDeviceConfig.h
+- Google Help, "How to tell which Nest Protect you have": https://support.google.com/googlenest/answer/9232605
+- Nest open source, nest-learning-thermostat u-boot `diamond3`: https://nest-open-source.googlesource.com/nest-learning-thermostat/5.1.9/u-boot/+/7d16fe590021414c36e66679c3ad4d10fd605056/bin/diamond3
+- Bluetooth SIG assigned numbers (0xFEAF = Nest Labs Inc.): https://www.bluetooth.com/specifications/assigned-numbers/
