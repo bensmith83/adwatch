@@ -49,7 +49,7 @@ class TestHunterWvomParser:
     def test_parses_by_local_name(self):
         parser = HunterWvomParser()
         raw = _make_raw(
-            local_name="WVOM-147516",
+            local_name="WVOM-123456",
             service_uuids=[WVOM_UUID],
         )
         result = parser.parse(raw)
@@ -61,12 +61,12 @@ class TestHunterWvomParser:
     def test_extracts_serial_number(self):
         parser = HunterWvomParser()
         raw = _make_raw(
-            local_name="WVOM-147516",
+            local_name="WVOM-123456",
             service_uuids=[WVOM_UUID],
         )
         result = parser.parse(raw)
-        assert result.metadata["serial_number"] == "147516"
-        assert result.metadata["device_name"] == "WVOM-147516"
+        assert result.metadata["serial_number"] == "123456"
+        assert result.metadata["device_name"] == "WVOM-123456"
 
     def test_parses_by_service_uuid_only(self):
         parser = HunterWvomParser()
@@ -87,7 +87,7 @@ class TestHunterWvomParser:
     def test_identifier_hash_stable(self):
         parser = HunterWvomParser()
         raw = _make_raw(
-            local_name="WVOM-147516",
+            local_name="WVOM-123456",
             service_uuids=[WVOM_UUID],
         )
         r1 = parser.parse(raw)
@@ -97,7 +97,7 @@ class TestHunterWvomParser:
 
     def test_different_devices_different_hashes(self):
         parser = HunterWvomParser()
-        raw1 = _make_raw(local_name="WVOM-147516", mac="AA:BB:CC:DD:EE:01")
+        raw1 = _make_raw(local_name="WVOM-123456", mac="AA:BB:CC:DD:EE:01")
         raw2 = _make_raw(local_name="WVOM-999999", mac="AA:BB:CC:DD:EE:02")
         r1 = parser.parse(raw1)
         r2 = parser.parse(raw2)
@@ -113,6 +113,6 @@ class TestHunterWvomRegistration:
 
     def test_matches_local_name(self):
         registry = _make_registry()
-        raw = _make_raw(local_name="WVOM-147516")
+        raw = _make_raw(local_name="WVOM-123456")
         matches = registry.match(raw)
         assert len(matches) >= 1

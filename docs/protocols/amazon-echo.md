@@ -4,12 +4,12 @@
 
 Amazon Echo and Alexa-enabled devices broadcast BLE advertisements for setup, companion app connectivity, and device discovery. Echo devices use service UUID `0xFE00` and are identified by their local name starting with "Echo".
 
-**Important:** UUID `0xFE00` is shared with Amazon Fire TV devices. The parser must disambiguate by local name -- Echo devices advertise with names like "Echo Pop-35U" or "Echo Dot-XXX", while Fire TV devices use "AFTMM" patterns or have no local name.
+**Important:** UUID `0xFE00` is shared with Amazon Fire TV devices. The parser must disambiguate by local name -- Echo devices advertise with names like "Echo Pop-XXX" or "Echo Dot-XXX", while Fire TV devices use "AFTMM" patterns or have no local name.
 
 ## Identifiers
 
 - **Service UUID:** `0xFE00` (16-bit)
-- **Local name pattern:** `Echo *` (e.g. "Echo Pop-35U", "Echo Dot-XXX", "Echo Show-XXX")
+- **Local name pattern:** `Echo *` (e.g. "Echo Pop-XXX", "Echo Dot-XXX", "Echo Show-XXX")
 - **Company ID:** Not present in advertisement
 - **Device class:** `smart_speaker`
 
@@ -50,7 +50,7 @@ Both Echo and Fire TV devices use service UUID `0xFE00`. To distinguish:
 |-------|--------|-------|
 | Device presence | service_uuid + local_name | Echo device nearby |
 | Device model | local_name | Pop, Dot, Show, Studio, etc. |
-| Short device ID | local_name suffix | e.g. "35U" from "Echo Pop-35U" |
+| Short device ID | local_name suffix | e.g. "XXX" from "Echo Pop-XXX" |
 
 ### What We Cannot Parse (requires GATT)
 
@@ -69,7 +69,7 @@ Echo devices advertise with the product line followed by a short alphanumeric su
 Echo {model}-{suffix}
 ```
 
-Examples: `Echo Pop-35U`, `Echo Dot-4KM`, `Echo Show-8R2`, `Echo Studio-A1B`
+Examples: `Echo Pop-XXX`, `Echo Dot-XXX`, `Echo Show-XXX`, `Echo Studio-A1B`
 
 ## Known Models
 
@@ -86,18 +86,18 @@ Examples: `Echo Pop-35U`, `Echo Dot-4KM`, `Echo Show-8R2`, `Echo Studio-A1B`
 ```
 Echo Pop:
   Service UUID: fe00
-  Local name: Echo Pop-35U
-  Service data (fe00): 01a3b7c4e8f21d6a9053b8e4c7f2a1d50e42a1b6
+  Local name: Echo Pop-XXX
+  Service data (fe00): 01xxxxxxxxf21d6a9053b8e4c7f2a1d50e42a1b6
 
 Echo Dot:
   Service UUID: fe00
-  Local name: Echo Dot-4KM
-  Service data (fe00): 01f8d2a1b6c94e7320a1d8f3b5e6c0a47252c3d8
+  Local name: Echo Dot-XXX
+  Service data (fe00): 01xxxxxxxxc94e7320a1d8f3b5e6c0a47252c3d8
 
 Echo Show:
   Service UUID: fe00
-  Local name: Echo Show-8R2
-  Service data (fe00): 01c7e5f3a2d8b14960f2c8a7e3d1b59a4163e4f9
+  Local name: Echo Show-XXX
+  Service data (fe00): 01xxxxxxxxd8b14960f2c8a7e3d1b59a4163e4f9
 ```
 
 ## Identity Hashing

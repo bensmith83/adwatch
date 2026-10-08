@@ -30,8 +30,8 @@ Two captures of the same physical seat, observed within minutes of
 each other at RSSI -91 / -92 (i.e. nearby, same device):
 
 ```
-c5 04 04 85 80 01 ff 8b 92 14 70 ef       (38 sightings)
-c5 04 04 84 80 01 ff 8b 92 14 70 ef       (7 sightings)
+c5 04 04 85 80 01 ff xx xx xx xx xx       (38 sightings)
+c5 04 04 84 80 01 ff xx xx xx xx xx       (7 sightings)
 └─┬─┘ └─┬─┘ └┬┘ └────────┬────────┘
  cid   hdr  state    device-id (5 bytes)
 ```
@@ -41,7 +41,7 @@ c5 04 04 84 80 01 ff 8b 92 14 70 ef       (7 sightings)
 | 0                 | `04`         | Header / frame-type (constant in observed samples) |
 | 1                 | `85` / `84`  | State byte — varies between captures (posture state? sensor toggle? counter) |
 | 2–4               | `80 01 ff`   | Flags / config (constant) |
-| 5–9               | `8b 92 14 70 ef` | Per-unit device identifier (stable across captures) |
+| 5–9               | `xx xx xx xx xx` | Per-unit device identifier (stable across captures) |
 
 The single-bit difference between `0x84` and `0x85` at offset 1 looks
 like a state-change flag (e.g. "occupied" / "vacant" or sensor
@@ -54,7 +54,7 @@ cannot be confirmed.
 identifier_hash = SHA256("smart_seat:{device_id_hex}")[:16]
 ```
 
-The 5-byte device identifier (`8b 92 14 70 ef` in the captured sample)
+The 5-byte device identifier (`xx xx xx xx xx` in the captured sample)
 is stable per unit, so it gives per-physical-seat granularity without
 depending on the BLE MAC (which may rotate).
 

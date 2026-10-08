@@ -41,7 +41,7 @@ TP359_MFGR_DATA = bytes([0xC2, 0xCE, 0xFF, 0x46, 0x00, 0x13, 0x01])
 class TestThermoProParsing:
     def test_parse_tp357_returns_result(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -50,7 +50,7 @@ class TestThermoProParsing:
 
     def test_parser_name(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -58,7 +58,7 @@ class TestThermoProParsing:
 
     def test_device_class_sensor(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -66,7 +66,7 @@ class TestThermoProParsing:
 
     def test_extracts_temperature(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -74,7 +74,7 @@ class TestThermoProParsing:
 
     def test_extracts_humidity(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -82,7 +82,7 @@ class TestThermoProParsing:
 
     def test_extracts_model_from_local_name(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -90,7 +90,7 @@ class TestThermoProParsing:
 
     def test_negative_temperature(self, parser):
         raw = make_raw(
-            local_name="TP359 (6708)",
+            local_name="TP359 (CD34)",
             manufacturer_data=TP359_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -100,18 +100,18 @@ class TestThermoProParsing:
     def test_identity_hash_from_local_name(self, parser):
         """Identity = SHA256('thermopro:{local_name}')[:16]."""
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
         expected = hashlib.sha256(
-            "thermopro:TP357 (2B54)".encode()
+            "thermopro:TP357 (AB12)".encode()
         ).hexdigest()[:16]
         assert result.identifier_hash == expected
 
     def test_identity_hash_format(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -120,7 +120,7 @@ class TestThermoProParsing:
 
     def test_different_local_names_different_hashes(self, parser):
         raw1 = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         raw2 = make_raw(
@@ -135,7 +135,7 @@ class TestThermoProParsing:
 class TestThermoProVariousModels:
     def test_tp359_model(self, parser):
         raw = make_raw(
-            local_name="TP359 (6708)",
+            local_name="TP359 (CD34)",
             manufacturer_data=TP359_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -151,7 +151,7 @@ class TestThermoProVariousModels:
 
     def test_model_with_suffix(self, parser):
         raw = make_raw(
-            local_name="TP357S (3104)",
+            local_name="TP357S (EF56)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)
@@ -175,14 +175,14 @@ class TestThermoProMalformed:
 
     def test_returns_none_no_manufacturer_data(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=None,
         )
         assert parser.parse(raw) is None
 
     def test_returns_none_short_manufacturer_data(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=b"\xC2\xD7",
         )
         assert parser.parse(raw) is None
@@ -221,7 +221,7 @@ class TestThermoProUIConfig:
 class TestThermoProStorageRow:
     def test_parse_produces_storage_row(self, parser):
         raw = make_raw(
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             manufacturer_data=TP357_MFGR_DATA,
         )
         result = parser.parse(raw)

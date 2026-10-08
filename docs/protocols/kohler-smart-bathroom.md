@@ -55,7 +55,7 @@ ad frames that drop one signal are still recovered.
 
 ```
 [0..1] 88 0E         CID 0x0E88 LE
-[2..5] XX XX XX XX   per-device static token (e.g. 85 80 b7 94)
+[2..5] XX XX XX XX   per-device static token (captured value redacted)
 [6..7] 00 00         reserved zeros
 ```
 

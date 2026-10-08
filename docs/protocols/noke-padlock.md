@@ -25,7 +25,7 @@ in the advertisement.
 | Company ID | `0x038B` (little-endian `8B 03`) | BT SIG-registered to **Noke** |
 | Manufacturer data | `8B 03 59 19 02 00 01` / `8B 03 49 19 02 00 01` | 5-byte payload after CID; first byte varies per lock (likely state/flags), trailing 4 bytes are stable across the captured fleet |
 | Service UUID | `1BC50001-0200-D29E-E511-446C609DB825` | Noke vendor-defined GATT service (not registered in BT SIG `member_uuids.yaml`) |
-| Local name | `NOKE3K_<12-hex>` | e.g. `NOKE3K_C7E6B0C67538`. Only emitted by a subset of units / firmware builds; usually absent on subsequent rotations |
+| Local name | `NOKE3K_<12-hex>` | e.g. `NOKE3K_XXXXXXXXXXXX`. Only emitted by a subset of units / firmware builds; usually absent on subsequent rotations |
 | Service data | (absent in observed captures) | — |
 | Address type | `random` | rotating private address |
 | RSSI | -91 to -101 (observed) | small padlocks at storage-corridor distance scan weakly |
@@ -38,7 +38,7 @@ in the advertisement.
 | Product family | hard-coded | `Noke smart padlock` |
 | Device class | hard-coded | `padlock` |
 | Hardware generation | localName prefix | `3K` when name begins with `NOKE3K_` |
-| Factory ID | localName tail | 12-hex stable per-unit ID (`C7E6B0C67538`) — survives MAC rotation |
+| Factory ID | localName tail | 12-hex stable per-unit ID (`XXXXXXXXXXXX`) — survives MAC rotation |
 | Vendor service UUID | `serviceUUIDs` | Presence-only |
 | `state_byte_0` | manufacturer payload | First byte after CID (e.g. `0x59`, `0x49`) — likely a status / flags byte; meaning undocumented |
 | `meta_bytes_1_4` | manufacturer payload | Bytes 1..4 after CID (`19020001` in captures) — stable across units, exact meaning undocumented |
@@ -63,7 +63,7 @@ factory ID".
 
 The 12-hex tail of the `NOKE3K_` local name is a per-unit factory identifier
 that survives MAC rotation — multiple captures of the same physical lock
-show different random MACs but the same `NOKE3K_C7E6B0C67538` name. That
+show different random MACs but the same `NOKE3K_XXXXXXXXXXXX` name. That
 makes it the right key for cross-session correlation.
 
 ```

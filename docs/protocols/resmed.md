@@ -194,7 +194,7 @@ From a passive BLE scan export:
 
 | Field | Value |
 |-------|-------|
-| Local Name | `ResMed 111682`, `ResMed 828156` |
+| Local Name | `ResMed ######` (two units) |
 | Service UUID | `FD56` |
 | Manufacturer Data | `8d0300` |
 | Address Type | random |

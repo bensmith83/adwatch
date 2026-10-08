@@ -124,5 +124,5 @@ to a single, documented project are bucketed; anything else falls into
 - Particle BLE NUS blueprint — <https://blueprints.particle.io/blueprint-beginner-ble-nus/>
 - Ruuvi NUS docs — <https://docs.ruuvi.com/communication/bluetooth-connection/nordic-uart-service-nus>
 - Pybricks firmware — <https://pybricks.com/>
-- Capture: `research/nearsight_export.json` — single `Claude-8E32` dev
+- Capture: `research/nearsight_export.json` — single `Claude-XXXX` dev
   board, 464 sightings, RSSI -34 to -99, classified as `custom`.

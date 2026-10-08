@@ -72,7 +72,7 @@ since IEEE OUI blocks span multiple chip generations over time.
 
 | Key | Example | Notes |
 |-----|---------|-------|
-| `device_mac` | `ac:cf:23:06:06:cb` | Full 6-byte MAC parsed from the name |
+| `device_mac` | `ac:cf:23:xx:xx:xx` | Full 6-byte MAC parsed from the name |
 | `oui_vendor` | `Espressif Inc.` | Generic OUI-based vendor (silicon) |
 | `silicon_vendor` | `Espressif Inc.` | Alias of `oui_vendor` — surfaced as a separate key so analytics can tell "silicon vendor (confident)" from "product brand (unknown)" |
 | `silicon_family` | `ESP8266 / ESP32 (legacy)` | Per-OUI Espressif chip-family hint |

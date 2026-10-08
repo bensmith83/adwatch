@@ -41,9 +41,9 @@ def _make_registry():
 
 class TestGetacBarcodeRegistry:
     def test_matches_local_name_pattern(self):
-        """Matches on local_name 'BC220267720008Getac' via name pattern."""
+        """Matches on local_name 'BC000000000001Getac' via name pattern."""
         registry = _make_registry()
-        ad = _make_ad(local_name="BC220267720008Getac")
+        ad = _make_ad(local_name="BC000000000001Getac")
         matches = registry.match(ad)
         assert len(matches) >= 1
 
@@ -59,43 +59,43 @@ class TestGetacBarcodeParser:
     def test_parser_name(self):
         """parser_name is 'getac'."""
         parser = GetacBarcodeParser()
-        ad = _make_ad(local_name="BC220267720008Getac")
+        ad = _make_ad(local_name="BC000000000001Getac")
         result = parser.parse(ad)
         assert result.parser_name == "getac"
 
     def test_beacon_type(self):
         """beacon_type is 'getac'."""
         parser = GetacBarcodeParser()
-        ad = _make_ad(local_name="BC220267720008Getac")
+        ad = _make_ad(local_name="BC000000000001Getac")
         result = parser.parse(ad)
         assert result.beacon_type == "getac"
 
     def test_device_class(self):
         """device_class is 'barcode_scanner'."""
         parser = GetacBarcodeParser()
-        ad = _make_ad(local_name="BC220267720008Getac")
+        ad = _make_ad(local_name="BC000000000001Getac")
         result = parser.parse(ad)
         assert result.device_class == "barcode_scanner"
 
     def test_serial_extraction(self):
-        """'BC220267720008Getac' -> metadata['serial'] == 'BC220267720008'."""
+        """'BC000000000001Getac' -> metadata['serial'] == 'BC000000000001'."""
         parser = GetacBarcodeParser()
-        ad = _make_ad(local_name="BC220267720008Getac")
+        ad = _make_ad(local_name="BC000000000001Getac")
         result = parser.parse(ad)
-        assert result.metadata["serial"] == "BC220267720008"
+        assert result.metadata["serial"] == "BC000000000001"
 
     def test_device_name_in_metadata(self):
-        """metadata['device_name'] == 'BC220267720008Getac'."""
+        """metadata['device_name'] == 'BC000000000001Getac'."""
         parser = GetacBarcodeParser()
-        ad = _make_ad(local_name="BC220267720008Getac")
+        ad = _make_ad(local_name="BC000000000001Getac")
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "BC220267720008Getac"
+        assert result.metadata["device_name"] == "BC000000000001Getac"
 
     def test_identity_hash(self):
         """Identity hash is SHA256(mac_address:getac)[:16]."""
         mac = "11:22:33:44:55:66"
         parser = GetacBarcodeParser()
-        ad = _make_ad(local_name="BC220267720008Getac", mac_address=mac)
+        ad = _make_ad(local_name="BC000000000001Getac", mac_address=mac)
         result = parser.parse(ad)
         expected = hashlib.sha256(f"{mac}:getac".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected

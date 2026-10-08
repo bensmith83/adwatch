@@ -51,13 +51,13 @@ custom / dev_board" to a real Rheem EcoNet HVAC identification.
 
 ### Name decode
 
-`EcoNet-ODU-W392520787`
+`EcoNet-ODU-W#########`
 - `UNIT` = `ODU` → outdoor unit (heat pump / AC condenser)
-- `SERIAL` = `W392520787` (literal `W` + digits; opaque per-unit serial)
+- `SERIAL` = `W#########` (literal `W` + digits; opaque per-unit serial)
 
-`EcoNet-FRN-W512518423`
+`EcoNet-FRN-W#########`
 - `UNIT` = `FRN` → furnace / indoor air handler
-- `SERIAL` = `W512518423`
+- `SERIAL` = `W#########`
 
 ### What we can surface
 

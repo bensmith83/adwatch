@@ -1,7 +1,7 @@
 """NOWATCH screenless EDA / stress wearable plugin.
 
 Per apk-ble-hunting/reports/nowatch-app_passive.md: the advertised name is
-``NOWATCH <model><serial>`` (e.g. ``NOWATCH MB2900897``). The app strips the
+``NOWATCH <model><serial>`` (e.g. ``NOWATCH MB1234567``). The app strips the
 ``NOWATCH `` prefix and uses the suffix verbatim as the device handle, so it
 is a stable per-unit identifier. No telemetry is advertised.
 """

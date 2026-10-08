@@ -34,7 +34,7 @@ passive scanner would see a fleet of them at all.
 ### Service data under `0xFD05` (18 bytes)
 
 ```
-06 c1 30 12 aa 78 26 ca a9 5a 5d 60 bc c7 d5 e9 b1 4d
+06 c1 30 xx xx xx 26 ca a9 5a 5d 60 bc c7 gg gg gg gg
 │  │  │  └──┬───┘ └─────────┬───────┘ └────┬────┘
 │  │  seq  tag id        opaque (8)      group tag (4)
 │  flags
@@ -48,33 +48,33 @@ frame type
 | 2 | 1 | sequence | advances by exactly 1 per frame of a tag, roughly every 5 minutes |
 | 3..5 | 3 | tag id | constant per tag; 36 distinct values |
 | 6..13 | 8 | opaque | fresh on every sequence step, identical within a step (14 sightings of one payload) — a MIC / ciphertext |
-| 14..17 | 4 | group tag | one of two values fleet-wide: `d5e9b14d` (20 tags), `3b624e28` (16 tags) |
+| 14..17 | 4 | group tag | one of two values fleet-wide: `gggggggg` (20 tags), `hhhhhhhh` (16 tags) |
 
 Real captures:
 
 ```
-06c13012aa7826caa95a5d60bcc7d5e9b14d   38 sightings
-06c13112aa78dac68e9139463f7fd5e9b14d   11 sightings — same tag, seq 0x30→0x31
-06c1b92f75c032352864c6b33e9d3b624e28   14 sightings — other group
-06c0d2a999f3530be0ce9dc041163b624e28    1 sighting  — flags 0xc0
+06c130xxxxxx26caa95a5d60bcc7gggggggg   38 sightings
+06c131xxxxxxdac68e9139463f7fgggggggg   11 sightings — same tag, seq 0x30→0x31
+06c1b9yyyyyy32352864c6b33e9dhhhhhhhh   14 sightings — other group
+06c0d2zzzzzz530be0ce9dc04116hhhhhhhh    1 sighting  — flags 0xc0
 ```
 
 One tag's five frames, with CoreBluetooth reporting the same peripheral
 identifier throughout (the address held while the payload changed):
 
 ```
-03:04  06c1 b7 2f75c0 42fb5e5fa3354bee 3b624e28
-03:09  06c1 b8 2f75c0 734f1b3ce3e331b2 3b624e28
-03:10  06c1 b9 2f75c0 32352864c6b33e9d 3b624e28
-03:20  06c1 ba 2f75c0 4cbeef200b1ed443 3b624e28
-03:26  06c1 bb 2f75c0 1f8c6ef322f69b4f 3b624e28
+03:04  06c1 b7 yyyyyy 42fb5e5fa3354bee hhhhhhhh
+03:09  06c1 b8 yyyyyy 734f1b3ce3e331b2 hhhhhhhh
+03:10  06c1 b9 yyyyyy 32352864c6b33e9d hhhhhhhh
+03:20  06c1 ba yyyyyy 4cbeef200b1ed443 hhhhhhhh
+03:26  06c1 bb yyyyyy 1f8c6ef322f69b4f hhhhhhhh
 ```
 
 ### Alternative reading (recorded, not adopted)
 
 Bytes 2..5 could be a single little-endian 32-bit counter whose low byte
-was all that moved in a 32-minute capture. The values (`0xc0752fb7`,
-`0xa1f17d5f`, …) are not plausible uptimes or Unix times, which is why
+was all that moved in a 32-minute capture. The values (the 3-byte tag id plus the sequence
+byte, read as one LE word) are not plausible uptimes or Unix times, which is why
 the `[seq][3-byte id]` reading was adopted — but if the counter reading
 is right, the "tag id" changes every 256 ticks (~21 h at 5 min/tick) and
 the stable key with it. A multi-day capture of one tag settles this.

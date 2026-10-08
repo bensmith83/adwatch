@@ -58,10 +58,10 @@ Examples:
 
 | Local name | Mfg data (hex) | Family | Serial |
 |---|---|---|---|
-| `tisCC` | `f900151c74a03fc2e5071b62636e0001000000603d0020603d00` | snfBeacon | `1c74a03fc2e5` |
-| `tisB0` | `f9001574eee908f536beca62636e0001000000603d0020603d00` | snfBeacon | `74eee908f536` |
-| `Bfs9A` | `f900155b59a9f76e7130d3150020800d0020a02f5d000b000000` | Bfs | `5b59a9f76e71` |
-| `BfsB0` | `f90015cb91e1075b87d403150020800d0020a52f5d000b000000` | Bfs | `cb91e1075b87` |
+| `tisCC` | `f90015xxxxxxxxxxxx071b62636e0001000000603d0020603d00` | snfBeacon | `xxxxxxxxxxxx` |
+| `tisB0` | `f90015yyyyyyyyyyyybeca62636e0001000000603d0020603d00` | snfBeacon | `yyyyyyyyyyyy` |
+| `Bfs9A` | `f90015zzzzzzzzzzzz30d3150020800d0020a02f5d000b000000` | Bfs | `zzzzzzzzzzzz` |
+| `BfsB0` | `f90015wwwwwwwwwwwwd403150020800d0020a52f5d000b000000` | Bfs | `wwwwwwwwwwww` |
 
 ### Trailer Bytes
 

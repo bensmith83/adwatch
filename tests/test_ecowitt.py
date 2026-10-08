@@ -53,8 +53,8 @@ class TestEcowittMatching:
         "WS1950",
         "HP10",
         "HP1012CD",
-        "AMBWeather-4F2A",
-        "ambweather-4f2a",
+        "AMBWeather-1234",
+        "ambweather-1234",
     ])
     def test_matches_ecowitt_names(self, name):
         assert len(_registry().match(_make_ad(local_name=name))) == 1
@@ -91,7 +91,7 @@ class TestEcowittParse:
         ("WS1950XY", "WS1950"),
         ("WS1900AB", "WS1900"),
         ("HP1012CD", "HP10"),
-        ("AMBWeather-4F2A", "AMBWeather"),
+        ("AMBWeather-1234", "AMBWeather"),
     ])
     def test_model_family(self, name, family):
         result = EcowittParser().parse(_make_ad(local_name=name))

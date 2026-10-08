@@ -50,8 +50,8 @@ e.g.:
 
 ```
 $ lh-console list
-Vive Base Station 25B2DE  state=ON   rssi=-72
-Vive Base Station F14AC1  state=ON   rssi=-85
+Vive Base Station XXXXXX  state=ON   rssi=-72
+Vive Base Station YYYYYY  state=ON   rssi=-85
 ```
 
 `station_id` is the right identity to use for adwatch's

@@ -10,14 +10,15 @@ from adwatch.plugins.samsung_tv import SamsungTVParser
 
 SAMSUNG_COMPANY_ID = 0x0075
 
-# Real sample data from CSV captures
-NAMED_TV_DATA = bytes.fromhex("750042040101ae14bb6eb39bd616bb6eb39bd501000000000000")
+# Sample frames from CSV captures (the two embedded 6-byte addresses per frame keep
+# their vendor OUI; the per-unit bytes are synthetic)
+NAMED_TV_DATA = bytes.fromhex("750042040101ae14bb6e11223316bb6e11223201000000000000")
 NAMED_TV_NAME = "[TV] UN75JU641D"
 
 NAMED_Q6_DATA = bytes.fromhex("75004204012067210f0022014b01010001000000000000000004")
 NAMED_Q6_NAME = "[TV] Samsung Q6DAA 75 TV"
 
-UNNAMED_TV_DATA = bytes.fromhex("75004204018060d003dfbb3ff5d203dfbb3ff401000000000000")
+UNNAMED_TV_DATA = bytes.fromhex("75004204018060d003df445566d203df44556501000000000000")
 
 ALT_TYPE_DATA = bytes.fromhex("7500021844a113aee3055c03e6882b2275f2768c47852740477d")
 

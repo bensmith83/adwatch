@@ -4,7 +4,7 @@
 
 HLI Solutions Inc. (formerly GE Current, a Daintree company; now under Hubbell Lighting) manufactures commercial smart building lighting controls and occupancy sensors. Their NX Lighting Controls platform uses BLE advertisements to broadcast sensor presence and room/zone information for building management systems.
 
-These sensors are typically found in commercial offices, conference rooms, and open-plan workspaces. The BLE advertisements include the sensor's assigned room/zone name (e.g., "235 Open Office").
+These sensors are typically found in commercial offices, conference rooms, and open-plan workspaces. The BLE advertisements include the sensor's assigned room/zone name (e.g., "<room number> Open Office").
 
 ## BLE Advertisement Format
 
@@ -13,7 +13,7 @@ These sensors are typically found in commercial offices, conference rooms, and o
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Company ID | `0x06DF` (1759) | HLI Solutions Inc. (little-endian bytes: `df 06`) |
-| Local Name | Room/zone name | e.g., "235 Open Office" — may not be present in every ad |
+| Local Name | Room/zone name | e.g., "<room number> Open Office" — may not be present in every ad |
 
 ### Manufacturer Data Layout
 
@@ -38,7 +38,7 @@ Offset  Bytes  Field              Example       Notes
 
 | Manufacturer Data (hex)                    | Local Name        | Notes |
 |--------------------------------------------|-------------------|-------|
-| `df06007e0000000101feff7f0029010592`        | 235 Open Office   | Zone ID 0x29 (41) |
+| `df06007e0000000101feff7f0029010592`        | <room name>       | Zone ID 0x29 (41) |
 | `df06007e0000000101feff7f0029010592`        | (none)            | Same device, name not in every ad |
 | `df06007e0000000101feff7f0033010592`        | (none)            | Zone ID 0x33 (51) |
 | `df06007e0000000101feff7f0020010592`        | (none)            | Zone ID 0x20 (32) |

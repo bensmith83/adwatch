@@ -7,7 +7,7 @@ Molekule makes PECO (Photo Electrochemical Oxidation) air purifiers. Their devic
 ## Identifiers
 
 - **Service UUID:** `FE4F` (16-bit, Bluetooth SIG assigned)
-- **Local name pattern:** `MOLEKULE_XXXX` (suffix is a device identifier, e.g., `MOLEKULE_0868`)
+- **Local name pattern:** `MOLEKULE_XXXX` (suffix is a device identifier, e.g., `MOLEKULE_XXXX`)
 - **Device class:** `air_purifier`
 
 ## BLE Advertisement Format
@@ -26,20 +26,19 @@ The manufacturer data is an ASCII-encoded string containing model and serial inf
 #### Example (22 bytes)
 
 ```
-4d 48 31 4d 2d 53 48 41 31 39 30 34 31 35 2d 30
-30 30 38 36 38 e4
+4d 48 31 4d 2d 53 48 41 31 39 30 34 31 35 2d xx xx xx xx xx xx e4
 ```
 
-Decoded ASCII (ignoring trailing byte): `MH1M-SHA190415-000868`
+Decoded ASCII (ignoring trailing byte): `MH1M-SHA190415-XXXXXX`
 
 | Segment | Value | Description |
 |---------|-------|-------------|
 | Model | `MH1M` | Hardware model identifier |
 | Build/batch | `SHA190415` | Possibly SHA-prefix + date code (2019-04-15) |
-| Serial | `000868` | Unit serial number |
+| Serial | `XXXXXX` | Unit serial number |
 | Trailing byte | `0xE4` | Checksum or status byte |
 
-The local name suffix (`0868`) corresponds to the last 4 digits of the serial number.
+The local name suffix (`XXXX`) corresponds to the last 4 digits of the serial number.
 
 ### What We Can Parse from Advertisements
 

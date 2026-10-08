@@ -33,14 +33,14 @@ Total: 13 bytes observed (2-byte CID + 11-byte payload).
 #### Example
 
 ```
-70 08 04 02 dc 5a 33 2c 48 80 00 00 00
+70 08 04 02 dc 5a 33 xx xx xx 00 00 00
 ```
 
 | Offset | Length | Value | Description |
 |--------|--------|-------|-------------|
 | 0-1 | 2 | `70 08` | Company ID 0x0870 little-endian (stripped from `manufacturerPayload`) |
 | 2-3 | 2 | `04 02` | `device_type_hex` — device type / firmware variant |
-| 4-9 | 6 | `dc 5a 33 2c 48 80` | Embedded BLE MAC, big-endian textual order |
+| 4-9 | 6 | `dc 5a 33 xx xx xx` | Embedded BLE MAC, big-endian textual order |
 | 10-12 | 3 | `00 00 00` | `tail_hex` — trailing reserved / state bytes |
 
 In `manufacturerPayload` (post-CID) the offsets shift down by 2:
@@ -53,7 +53,7 @@ In `manufacturerPayload` (post-CID) the offsets shift down by 2:
 
 ### Embedded MAC
 
-The 6 bytes at payload offset 2..7 (`dc 5a 33 2c 48 80` in the sample) are the hub's BLE MAC. In the sample capture, the OUI `dc:5a:33` belongs to **Hon Hai (Foxconn) Precision Industry** — a plausible ODM for a Wyze hardware build. The MAC is used as the stable key:
+The 6 bytes at payload offset 2..7 (`dc 5a 33 xx xx xx` in the sample) are the hub's BLE MAC. In the sample capture, the OUI `dc:5a:33` belongs to **Hon Hai (Foxconn) Precision Industry** — a plausible ODM for a Wyze hardware build. The MAC is used as the stable key:
 
 ```
 stable_key = "wyze_sense_hub:" + embedded_mac
@@ -83,7 +83,7 @@ This means two adwatch sightings of the same physical hub will collapse to the s
 
 | Capture | Inference |
 |---|---|
-| CID `0x0870` + name `"wyze_hub"` + payload `0402dc5a332c4880000000` | Sense Hub, MAC `dc:5a:33:2c:48:80`, device type `0402` |
+| CID `0x0870` + name `"wyze_hub"` + payload `0402dc5a33xxxxxx000000` | Sense Hub, MAC `dc:5a:33:xx:xx:xx`, device type `0402` |
 | CID `0x0870` + name `"wyze_hub"` + short 2-byte payload | Classified as Sense Hub but no MAC / stable key |
 | CID `0x0870` only, no local name, full payload | Sense Hub fallback match via payload length |
 | CID `0x0649` + name `"Wyze Watch 47"` | Handled by `WyzeWatchParser` — this parser ignores it |

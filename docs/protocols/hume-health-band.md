@@ -16,19 +16,19 @@ The band advertises continuously over BLE behind unregistered pseudo-company-ID 
 |---|---|
 | Pseudo company ID | `0xF7F8` (**unregistered** with SIG — vendor magic, not assigned) |
 | Service UUIDs | `0x180D` (Heart Rate, standard) |
-| Local name | `Hume Band <MAC suffix>` (e.g. `"Hume Band B21F"`) — optional; the band sometimes advertises without a name |
+| Local name | `Hume Band <MAC suffix>` (e.g. `"Hume Band XXXX"`) — optional; the band sometimes advertises without a name |
 
 ### Manufacturer Data Layout (~29 bytes — real captures range 28–29)
 
 ```
 Bytes 0..1   : f8 f7                   ← LE pseudo-company-ID
 Bytes 2..7   : 22 08 04 02 02 07       ← 6-byte SDK / firmware signature,
-                                          byte-identical across every B21F
-                                          capture in research/adwatch_export 9.json.
+                                          byte-identical across every capture
+                                          of the observed band in the research export.
                                           Surfaced as `frame_signature_hex`.
-Bytes 8..9   : b2 1f                   ← 2-byte model ID in wire order;
-                                          rendered "B21F" — matches the suffix
-                                          in the local name `Hume Band B21F`.
+Bytes 8..9   : xx xx                   ← 2-byte per-unit tag in wire order;
+                                          rendered as 4 hex chars — matches the
+                                          suffix in the local name `Hume Band XXXX`.
                                           Surfaced as `model_id` (also kept as
                                           `mac_suffix` for backward compatibility).
 Bytes 10..28 : opaque sensor TLV       ← variable across captures (rolling
@@ -39,7 +39,7 @@ Bytes 10..28 : opaque sensor TLV       ← variable across captures (rolling
                                           public decoder yet.
 ```
 
-The fixed 8-byte signature (`f8 f7 22 08 04 02 02 07`) plus the trailing `b2 1f` model-tag is what we anchor on. The 0x180D Heart Rate service UUID is co-broadcast in the advertisement (CoreBluetooth surfaces it as `"180D"`). The variable region likely carries some mix of HR, battery, step count, or a wear-time counter — a controlled-experiment capture (band on a wearer with the Hume app open) would let us correlate.
+The fixed 8-byte signature (`f8 f7 22 08 04 02 02 07`) plus the trailing 2-byte unit tag is what we anchor on. The 0x180D Heart Rate service UUID is co-broadcast in the advertisement (CoreBluetooth surfaces it as `"180D"`). The variable region likely carries some mix of HR, battery, step count, or a wear-time counter — a controlled-experiment capture (band on a wearer with the Hume app open) would let us correlate.
 
 ### Stable Key
 

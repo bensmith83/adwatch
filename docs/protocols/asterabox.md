@@ -17,7 +17,7 @@ In our captures the AsteraBox advertises a **local name only** — no manufactur
 AsteraBox <serial>
 ```
 
-where `<serial>` is the 6-digit decimal unit number engraved on the case (e.g. `"AsteraBox 910757"`).
+where `<serial>` is the 6-digit decimal unit number engraved on the case (e.g. `"AsteraBox NNNNNN"`).
 
 ## BLE Advertisement Format
 
@@ -25,7 +25,7 @@ where `<serial>` is the 6-digit decimal unit number engraved on the case (e.g. `
 
 | Signal | Value |
 |---|---|
-| Local name | `AsteraBox <6+ digit serial>` (e.g. `"AsteraBox 910757"`) |
+| Local name | `AsteraBox <6+ digit serial>` (e.g. `"AsteraBox NNNNNN"`) |
 | Manufacturer data | None observed |
 | Service data | None observed |
 | Service UUIDs | None observed |

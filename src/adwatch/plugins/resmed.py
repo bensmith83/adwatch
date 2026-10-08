@@ -28,7 +28,7 @@ RESMED_SERVICE_UUID = "fd56"
 NIGHTOWL_SERVICE_UUID = "4d521000-9e6f-4570-880a-67a5fcb14f12"
 POC_SERVICE_UUID = "d2009798-1152-4817-9102-3551f72407ed"
 
-# Generic legacy: "ResMed 111682"
+# Generic legacy: "ResMed 123456"
 RESMED_GENERIC_RE = re.compile(r"^ResMed\s+(\d+)")
 # AirMini-family per myAir report: ^(AirMini|AS11|AirCurve)-[A-Z0-9]{10,14}$
 AIR_FAMILY_RE = re.compile(r"^(AirMini|AS11|AirCurve)-([A-Z0-9]{10,14})$")

@@ -20,7 +20,7 @@ Zhuhai Jieli Technology manufactures BLE audio chipsets used by many budget audi
 | 2 | 1 | Version? | `0x02` |
 | 3-4 | 2 | Unknown | `0006` |
 | 5-6 | 2 | Unknown | `0022` |
-| 7-12 | 6 | Device address? | `3e5e525220a6` |
+| 7-12 | 6 | Device address? | `xxxxxxxxxxxx` |
 | 13-14 | 2 | Status | `0214` |
 | 15-16 | 2 | Flags | `5000` |
 | 17 | 1 | Unknown | `0b` |
@@ -32,7 +32,7 @@ Zhuhai Jieli Technology manufactures BLE audio chipsets used by many budget audi
 ```
 JLab GO Pop+-App:
   Company ID: 0x05D6
-  Manufacturer data: d60502000600223e5e525220a6021450000b010200000000000000007f
+  Manufacturer data: d6050200060022xxxxxxxxxxxx021450000b010200000000000000007f
 ```
 
 ## OEM Brand Mapping

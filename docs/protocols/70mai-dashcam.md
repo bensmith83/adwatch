@@ -24,8 +24,8 @@ This parser surfaces the dashcam model (`A810 Plus`, `M500`, `Omni X800`, …) a
 - `<4-hex serial>` is the last two bytes of the dashcam's MAC address, displayed in lowercase on the unit label, and is the same suffix used by the Wi-Fi SSID (the 70mai M500 user manual documents `70mai_M500_XXXX` as the Wi-Fi SSID format). Stable per unit — usable as a fingerprint anchor.
 
 Examples:
-- `"70mai_A810 Plus_5bc1"` → model `A810 Plus`, serial `5bc1`
-- `"70mai_M500_a1b2"` → model `M500`, serial `a1b2`
+- `"70mai_A810 Plus_xxxx"` → model `A810 Plus`, serial `xxxx`
+- `"70mai_M500_xxxx"` → model `M500`, serial `xxxx`
 
 ## Detection Significance
 

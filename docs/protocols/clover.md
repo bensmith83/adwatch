@@ -7,7 +7,7 @@ Clover POS (Point-of-Sale) payment terminals by Fiserv advertise via BLE using c
 ## Identifiers
 
 - **Company ID:** `0x0371` (Fiserv/Clover — bytes `71 03` little-endian)
-- **Local name pattern:** `CC{model}{serial}` (e.g., `CCJB621450531`)
+- **Local name pattern:** `CC{model}{serial}` (e.g., `CCJBXXXXXXXXX`)
 - **Device class:** `payment_terminal`
 
 ## BLE Advertisement Format
@@ -26,7 +26,7 @@ Variable length (2 company ID + 2+ header + optional serial)
 #### Examples
 
 ```
-71 03 01 04 62 00 02 00 4a 42 48 55 33 34 36 34 32 37   (full, with serial)
+71 03 01 04 62 00 02 00 4a 42 48 55 xx xx xx xx xx xx   (full, with serial)
 71 03 01 04 4b 00                                         (short, no serial)
 71 03 01 04 62 00                                         (short variant)
 ```
@@ -39,14 +39,14 @@ Variable length (2 company ID + 2+ header + optional serial)
 | 4 | 1 | `62`/`4b` | Model identifier byte |
 | 5 | 1 | `00` | Padding/reserved |
 | 6-7 | 2 | `02 00` | Extended header (when serial follows) |
-| 8+ | var | ASCII | Device serial number (e.g., "JBHU3464227") |
+| 8+ | var | ASCII | Device serial number (e.g., "JBHUXXXXXXX") |
 
 ### Local Name Format
 
 | Example | Prefix | Model | Serial |
 |---------|--------|-------|--------|
-| `CCJB621450531` | CC | JB | 621450531 |
-| `CCGB616512155` | CC | GB | 616512155 |
+| `CCJBXXXXXXXXX` | CC | JB | XXXXXXXXX |
+| `CCGBXXXXXXXXX` | CC | GB | XXXXXXXXX |
 
 Known model codes:
 - **JB** — Clover Flex (handheld terminal)
@@ -54,7 +54,7 @@ Known model codes:
 
 ### Serial Number in Manufacturer Data
 
-The ASCII serial embedded in manufacturer data (e.g., "JBHU3464227") is Clover's internal hardware serial, distinct from the numeric serial in the local name. This is notable from a security/privacy perspective — the serial is broadcast in plaintext.
+The ASCII serial embedded in manufacturer data (e.g., "JBHUXXXXXXX") is Clover's internal hardware serial, distinct from the numeric serial in the local name. This is notable from a security/privacy perspective — the serial is broadcast in plaintext.
 
 ### What We Can Parse from Advertisements
 

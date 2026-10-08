@@ -66,7 +66,7 @@ class TestWahooMatching:
     def test_match_tickr_name(self):
         registry = ParserRegistry()
         _register(registry)
-        ad = _make_ad(local_name="TICKR 3A6B")
+        ad = _make_ad(local_name="TICKR 1234")
         assert len(registry.match(ad)) == 1
 
     def test_match_elemnt_bolt_name(self):
@@ -97,7 +97,7 @@ class TestWahooParsing:
         assert result.metadata["product_family"] == "ELEMNT"
 
     def test_tickr_family(self):
-        ad = _make_ad(local_name="TICKR 3A6B")
+        ad = _make_ad(local_name="TICKR 1234")
         result = WahooParser().parse(ad)
         assert result.metadata["product_family"] == "TICKR"
 
@@ -107,9 +107,9 @@ class TestWahooParsing:
         assert result.metadata["product_family"] == "KICKR"
 
     def test_serial_suffix_extracted(self):
-        ad = _make_ad(local_name="TICKR 3A6B")
+        ad = _make_ad(local_name="TICKR 1234")
         result = WahooParser().parse(ad)
-        assert result.metadata["serial_suffix"] == "3A6B"
+        assert result.metadata["serial_suffix"] == "1234"
 
     def test_dfu_uuid_flag(self):
         ad = _make_ad(service_uuids=["ee0a"])
@@ -127,14 +127,14 @@ class TestWahooParsing:
         assert result.metadata["vendor"] == "Wahoo"
 
     def test_identity_uses_serial_suffix(self):
-        ad = _make_ad(local_name="TICKR 3A6B",
+        ad = _make_ad(local_name="TICKR 1234",
                       mac_address="11:22:33:44:55:66")
         result = WahooParser().parse(ad)
-        expected = hashlib.sha256(b"wahoo:TICKR:3A6B").hexdigest()[:16]
+        expected = hashlib.sha256(b"wahoo:TICKR:1234").hexdigest()[:16]
         assert result.identifier_hash == expected
 
     def test_basics(self):
-        ad = _make_ad(local_name="TICKR 3A6B")
+        ad = _make_ad(local_name="TICKR 1234")
         result = WahooParser().parse(ad)
         assert result.parser_name == "wahoo"
         assert result.beacon_type == "wahoo"

@@ -27,7 +27,7 @@ from adwatch.registry import register_parser
 
 FRONTIER_NAME_TOKEN = "Frontier"
 
-# "Frontier X", "FrontierX", "Frontier X2", "Frontier X3-0091", ...
+# "Frontier X", "FrontierX", "Frontier X2", "Frontier X3-1234", ...
 _MODEL_RE = re.compile(r"Frontier\s*X(\d?)")
 
 

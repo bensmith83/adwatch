@@ -29,50 +29,50 @@ def make_raw(manufacturer_data=None, service_uuids=None, local_name=None, **kwar
     )
 
 
-SIL_MFR = bytes.fromhex("19088a6c170000000000c2")
-DUE_MFR = bytes.fromhex("1908116009400b000000c2")
+SIL_MFR = bytes.fromhex("19083412170000000000c2")
+DUE_MFR = bytes.fromhex("1908785609400b000000c2")
 
 
 class TestSylvaniaLedvanceParsing:
     def test_parse_sil_device(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert result.parser_name == "sylvania_ledvance"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert result.beacon_type == "sylvania_ledvance"
 
     def test_device_class(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert result.device_class == "smart_light"
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
 
     def test_metadata_device_id(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
-        assert result.metadata["device_id"] == "4914"
+        assert result.metadata["device_id"] == "1111"
 
     def test_metadata_brand_sil(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert result.metadata["brand"] == "Sylvania"
 
     def test_due_brand(self, parser):
-        raw = make_raw(manufacturer_data=DUE_MFR, service_uuids=["fdc1"], local_name="DUE:1568")
+        raw = make_raw(manufacturer_data=DUE_MFR, service_uuids=["fdc1"], local_name="DUE:3333")
         result = parser.parse(raw)
         assert result.metadata["brand"] == "LEDVANCE"
 
@@ -87,7 +87,7 @@ class TestSylvaniaLedvanceParsing:
         assert result is not None
 
     def test_raw_payload_hex(self, parser):
-        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:4914")
+        raw = make_raw(manufacturer_data=SIL_MFR, service_uuids=["fdc1"], local_name="SIL:1111")
         result = parser.parse(raw)
         assert result.raw_payload_hex == SIL_MFR.hex()
 

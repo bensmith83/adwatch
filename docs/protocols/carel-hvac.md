@@ -4,7 +4,7 @@
 
 Bluetooth SIG company ID `0x05B2` is registered to **CAREL Industries S.p.A.** (Italy), one of the major commercial HVAC / refrigeration controller vendors. Their BLE-enabled product family includes **iJW**, **Heez**, **μChiller**, **MPXone**, and **PJ-BLE** controllers. These pair with the Carel **APPLICA** smartphone app for commissioning and live status.
 
-In our scans we observed a single nearby Carel controller broadcasting consistently (660+ sightings of `Carel_00000E6B03`), which suggests a stationary commercial deployment — exactly the use case AdWatch is designed to surface.
+In our scans we observed a single nearby Carel controller broadcasting consistently (660+ sightings of `Carel_XXXXXXXXXX`), which suggests a stationary commercial deployment — exactly the use case AdWatch is designed to surface.
 
 ## BLE Advertisement Format
 
@@ -12,7 +12,7 @@ In our scans we observed a single nearby Carel controller broadcasting consisten
 |---|---|
 | Company ID | `0x05B2` (Carel Industries S.p.A.) |
 | Local name | `"Carel_<10-16 hex chars>"` (the controller's asset ID) |
-| Eddystone-UID | Optional — same `0E6B03`-style instance ID on service `0xFEAA` |
+| Eddystone-UID | Optional — same asset ID as the instance ID on service `0xFEAA` |
 
 ### Manufacturer Data Layouts
 

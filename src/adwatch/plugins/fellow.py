@@ -8,7 +8,7 @@ the local-name carries the model and may include a MAC-suffix tail like
 ``Stagg EKG Pro-A1B2``.
 
 **v1.1.0 (2026-08-17) — the ``EKG-<hex tail>`` setup beacon.** The
-``EKG-XX-XX-XX`` local-name family (e.g. ``EKG-99-23-4c``, 959k+ sightings
+``EKG-XX-XX-XX`` local-name family (e.g. ``EKG-xx-xx-xx``, 959k+ sightings
 of one unit) was documented as "medical EKG" and routed to
 ``alivecor_ekg.py`` for a long time. That was a guess from the "EKG" token;
 the evidence points here:

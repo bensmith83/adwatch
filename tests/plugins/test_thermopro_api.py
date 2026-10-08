@@ -55,7 +55,7 @@ class TestThermoProAPI:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            ("2025-01-15T10:00:00", "11:22:33:44:55:66", "TP357 (2B54)",
+            ("2025-01-15T10:00:00", "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 20.0, 45, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
         await db.execute(
@@ -63,7 +63,7 @@ class TestThermoProAPI:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            ("2025-01-15T10:30:00", "11:22:33:44:55:66", "TP357 (2B54)",
+            ("2025-01-15T10:30:00", "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -42, "ccdd"),
         )
         # Different sensor
@@ -83,7 +83,7 @@ class TestThermoProAPI:
 
         # Should be latest reading per sensor
         by_sensor = {d["sensor_id"]: d for d in data}
-        assert by_sensor["TP357 (2B54)"]["temperature_c"] == 21.5
+        assert by_sensor["TP357 (AB12)"]["temperature_c"] == 21.5
         assert by_sensor["TP393 (1A2B)"]["temperature_c"] == -18.5
 
 
@@ -133,13 +133,13 @@ class TestThermoProNicknameAPI:
         """PUT /nickname should store a nickname for a sensor."""
         resp = await nick_client.put(
             "/nickname",
-            json={"sensor_id": "TP357 (2B54)", "nickname": "Living Room"},
+            json={"sensor_id": "TP357 (AB12)", "nickname": "Living Room"},
         )
         assert resp.status_code == 200
 
         row = await db_with_nicknames.fetchone(
             "SELECT nickname FROM thermopro_nicknames WHERE sensor_id = ?",
-            ("TP357 (2B54)",),
+            ("TP357 (AB12)",),
         )
         assert row is not None
         assert row["nickname"] == "Living Room"
@@ -149,16 +149,16 @@ class TestThermoProNicknameAPI:
         """PUT /nickname should update an existing nickname."""
         await nick_client.put(
             "/nickname",
-            json={"sensor_id": "TP357 (2B54)", "nickname": "Living Room"},
+            json={"sensor_id": "TP357 (AB12)", "nickname": "Living Room"},
         )
         await nick_client.put(
             "/nickname",
-            json={"sensor_id": "TP357 (2B54)", "nickname": "Bedroom"},
+            json={"sensor_id": "TP357 (AB12)", "nickname": "Bedroom"},
         )
 
         row = await db_with_nicknames.fetchone(
             "SELECT nickname FROM thermopro_nicknames WHERE sensor_id = ?",
-            ("TP357 (2B54)",),
+            ("TP357 (AB12)",),
         )
         assert row["nickname"] == "Bedroom"
 
@@ -167,11 +167,11 @@ class TestThermoProNicknameAPI:
         """PUT /nickname should return 200 with confirmation."""
         resp = await nick_client.put(
             "/nickname",
-            json={"sensor_id": "TP357 (2B54)", "nickname": "Kitchen"},
+            json={"sensor_id": "TP357 (AB12)", "nickname": "Kitchen"},
         )
         assert resp.status_code == 200
         body = resp.json()
-        assert body["sensor_id"] == "TP357 (2B54)"
+        assert body["sensor_id"] == "TP357 (AB12)"
         assert body["nickname"] == "Kitchen"
 
     @pytest.mark.asyncio
@@ -188,7 +188,7 @@ class TestThermoProNicknameAPI:
         """PUT /nickname with missing nickname should return 422."""
         resp = await nick_client.put(
             "/nickname",
-            json={"sensor_id": "TP357 (2B54)"},
+            json={"sensor_id": "TP357 (AB12)"},
         )
         assert resp.status_code == 422
 
@@ -206,7 +206,7 @@ class TestThermoProNicknameAPI:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            ("2025-01-15T10:00:00", "11:22:33:44:55:66", "TP357 (2B54)",
+            ("2025-01-15T10:00:00", "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
 
@@ -225,12 +225,12 @@ class TestThermoProNicknameAPI:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            ("2025-01-15T10:00:00", "11:22:33:44:55:66", "TP357 (2B54)",
+            ("2025-01-15T10:00:00", "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
         await nick_client.put(
             "/nickname",
-            json={"sensor_id": "TP357 (2B54)", "nickname": "Garage"},
+            json={"sensor_id": "TP357 (AB12)", "nickname": "Garage"},
         )
 
         resp = await nick_client.get("/active")
@@ -257,7 +257,7 @@ class TestThermoProActiveTimeout:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (recent, "11:22:33:44:55:66", "TP357 (2B54)",
+            (recent, "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
         # Insert an old sensor
@@ -274,7 +274,7 @@ class TestThermoProActiveTimeout:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
-        assert data[0]["sensor_id"] == "TP357 (2B54)"
+        assert data[0]["sensor_id"] == "TP357 (AB12)"
 
     @pytest.mark.asyncio
     async def test_no_timeout_returns_all(self, nick_client, db_with_nicknames):
@@ -290,7 +290,7 @@ class TestThermoProActiveTimeout:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (recent, "11:22:33:44:55:66", "TP357 (2B54)",
+            (recent, "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
         await db_with_nicknames.execute(
@@ -320,7 +320,7 @@ class TestThermoProActiveTimeout:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (old, "11:22:33:44:55:66", "TP357 (2B54)",
+            (old, "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
 
@@ -342,7 +342,7 @@ class TestThermoProActiveTimeout:
                (timestamp, mac_address, sensor_id, model_code, temperature_c,
                 humidity, room_speculation, identifier_hash, rssi, raw_payload_hex)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (old, "11:22:33:44:55:66", "TP357 (2B54)",
+            (old, "11:22:33:44:55:66", "TP357 (AB12)",
              "TP357", 21.5, 50, "Indoor (comfortable)", "abc123", -45, "aabb"),
         )
 

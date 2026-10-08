@@ -45,7 +45,7 @@ firmware vendors squat on the UUID without consequence.
 ```
 Offset  Bytes     Meaning
   0-1   ef f0     Company ID 0xF0EF (little-endian, unregistered)
-  2-7   xx..xx    6 opaque bytes (observed: eaae5bd0962a)
+  2-7   xx..xx    6 opaque bytes (observed: one value, redacted)
 ```
 
 ### Service Data (UUID 0xFEEA)

@@ -21,7 +21,7 @@ zero-false-positive identifier.
 | Signal | Value | Notes |
 |---|---|---|
 | Service UUID (128-bit) | `EFAA0000-7777-772E-7465-6D70692E6669` | tail bytes spell `www.tempi.fi` |
-| Local name | `T_<12 hex>` (e.g. `T_EE760AF5F96A`) | `T` + the device's own random-static BLE address; absent on some frames |
+| Local name | `T_<12 hex>` (e.g. `T_xxxxxxxxxxxx`) | `T` + the device's own random-static BLE address; absent on some frames |
 | Manufacturer data | `b965b686ac67` | 6-byte **constant** vendor signature (CID `0x65B9` is vanity/unregistered), NOT telemetry |
 | Address type | random | |
 | Device class | `sensor` | |
@@ -30,7 +30,7 @@ zero-false-positive identifier.
 
 ```
 serviceUUIDsJSON:   ["EFAA0000-7777-772E-7465-6D70692E6669"]
-localName:          "T_EE760AF5F96A"   (nameless sibling frame also seen)
+localName:          "T_xxxxxxxxxxxx"   (nameless sibling frame also seen)
 manufacturerDataHex: b965b686ac67
 sightingCount:      2   (1 named + 1 nameless)
 rssiMax:            -93 dBm

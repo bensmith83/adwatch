@@ -11,7 +11,7 @@ Generic / white-label wireless PIR motion sensor family that advertises a 10-byt
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Company ID | `0x0502` | LE `02 05` — SIG yaml entry is *Imagination Marketing SARL* but the captured devices are not Imagination products |
-| Local name | `MOTION_<4 hex>` | e.g. `MOTION_0476`, `MOTION_FD0A`, `MOTION_F5C7`. The 4-hex suffix is the same `unit_id` carried in the manufacturer-data payload |
+| Local name | `MOTION_<4 hex>` | e.g. `MOTION_XXXX`. The 4-hex suffix is the same `unit_id` carried in the manufacturer-data payload |
 | Address type | Random | Each capture rotated the BLE address |
 
 ### Manufacturer Data Layout (10 bytes total)
@@ -27,11 +27,9 @@ Generic / white-label wireless PIR motion sensor family that advertises a 10-byt
 
 | Local name | Manufacturer data (hex) | install_token | unit_id |
 |------------|-------------------------|---------------|---------|
-| `MOTION_0476` | `020500004a477f540476` | `4a477f54` | `0476` |
-| `MOTION_FD0A` | `020500004a47608ffd0a` | `4a47608f` | `fd0a` |
-| `MOTION_F5C7` | `020500007b988fbbf5c7` | `7b988fbb` | `f5c7` |
+| `MOTION_XXXX` | `02050000xxxxxxxxxxxx` | `xxxxxxxx` | `xxxx` |
 
-The first two units share the install-token prefix `4a 47 ...`, suggesting either a batch-level salt or a regional factory marker; we don't unpack it further.
+Two of the three captured units shared an install-token prefix, suggesting either a batch-level salt or a regional factory marker; we don't unpack it further.
 
 ### What We Can Parse from Advertisements
 

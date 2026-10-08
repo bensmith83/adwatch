@@ -22,7 +22,7 @@ and no longer sets `sensitive=true`.
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Service UUID | `0000A100-8501-11E3-BA12-0002A5D5C51B` | 128-bit vendor UUID; required for match |
-| Local name | `TraceX<digits>` (optional) | e.g. `TraceX13859` — `\d{1,6}` numeric suffix is the device serial |
+| Local name | `TraceX<digits>` (optional) | e.g. `TraceX#####` — `\d{1,6}` numeric suffix is the device serial |
 | Manufacturer data | *(none)* | name + UUID only |
 | Service data | *(none)* | |
 | Address type | `random` | rotating private address |

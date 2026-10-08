@@ -15,15 +15,15 @@ We detect OnePlus phones (and OnePlus Buds accessories announcing via the phone-
 | Manufacturer-data CID | `0x072F` (little-endian raw `2f 07`) — OnePlus Technology (Shenzhen) Co., Ltd. |
 | Service UUID (16-bit) | `686B` — Heytap / OPPO cross-device ecosystem |
 | Local name | absent |
-| Sample mfr-data | `2f07af302b1488004c264000000000fd2e60177507` (21 bytes: CID + 19-byte payload) |
-| Sample mfr-data variant | `2f07af302b1488004c264800000000c846625f0007` (first 8 bytes shared, tail rotates) |
-| Sample 686B service-data | `f5345e015cf7084f6e65506c7573203131203547` |
+| Sample mfr-data | `2f07xxxxxxxxxxxxxxxx4000000000fd2e60177507` (21 bytes: CID + 19-byte payload) |
+| Sample mfr-data variant | `2f07xxxxxxxxxxxxxxxx4800000000c846625f0007` (first 8 bytes shared, tail rotates) |
+| Sample 686B service-data | `xxxxxxxxxxxxxx4f6e65506c7573203131203547` |
 
 ### Service-data layout (686B)
 
 ```
 | 7-byte header / token        | ASCII model name run                     |
-| f5 34 5e 01 5c f7 08         | 4f 6e 65 50 6c 75 73 20 31 31 20 35 47   |
+| xx xx xx xx xx xx xx         | 4f 6e 65 50 6c 75 73 20 31 31 20 35 47   |
 |                              | "O  n  e  P  l  u  s     1  1     5  G"  |
 ```
 
@@ -31,16 +31,16 @@ The leading 7 bytes look like a per-device token (likely a salted MAC-derived ha
 
 ### Manufacturer-data layout (0x072F)
 
-`2f07af302b1488004c264000000000fd2e60177507`
+`2f07xxxxxxxxxxxxxxxx4000000000fd2e60177507`
 
 ```
-2f 07 | af 30 2b 14 88 00 4c 26 | 40 00 00 00 00 | fd 2e 60 17 75 07
+2f 07 | xx xx xx xx xx xx xx xx | 40 00 00 00 00 | fd 2e 60 17 75 07
 CID   | 8-byte header (stable across samples)
                                 | 5-byte slot (40 = device-type flag?)
                                                 | 6-byte rotating tail
 ```
 
-The first 8 bytes of the payload (`af302b1488004c26`) match across multiple captures and are likely a static device-fingerprint header; bytes 9-13 change between connection states (we see `40 00 …` vs `48 00 …`) and the trailing 6 bytes rotate on every advertisement. We do not currently decode any of this — the CID alone is enough to peg the broadcast to OnePlus, and the 686B service-data ASCII tail is what gives us the marketing model.
+The first 8 bytes of the payload (masked here) match across multiple captures and are likely a static device-fingerprint header; bytes 9-13 change between connection states (we see `40 00 …` vs `48 00 …`) and the trailing 6 bytes rotate on every advertisement. We do not currently decode any of this — the CID alone is enough to peg the broadcast to OnePlus, and the 686B service-data ASCII tail is what gives us the marketing model.
 
 ### Matching rule
 

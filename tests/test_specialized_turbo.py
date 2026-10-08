@@ -76,7 +76,7 @@ class TestMatching:
 
     def test_matches_model_name(self):
         reg = _register(ParserRegistry())
-        assert len(reg.match(_make_ad(local_name="Turbo Levo 4C7A21"))) == 1
+        assert len(reg.match(_make_ad(local_name="Turbo Levo 123456"))) == 1
 
     def test_ignores_unrelated(self):
         reg = _register(ParserRegistry())
@@ -97,16 +97,16 @@ class TestParsing:
     def test_unenumerated_slot_still_decodes_when_name_matched(self):
         # Registry match came from the name; parse() suffix-checks any slot.
         r = SpecializedTurboParser().parse(
-            _make_ad(local_name="Levo SL 9F1C22",
+            _make_ad(local_name="Levo SL 123456",
                      service_uuids=["0000abcd-3731-3032-494d-484f42525554"])
         )
         assert r.metadata["uuid_scheme"] == "turbo_hmi_2017"
         assert r.metadata["service_slot"] == "abcd"
 
     def test_name_gives_model_and_serial(self):
-        r = SpecializedTurboParser().parse(_make_ad(local_name="Turbo Levo 4C7A21"))
+        r = SpecializedTurboParser().parse(_make_ad(local_name="Turbo Levo 123456"))
         assert r.metadata["model"] == "Turbo Levo"
-        assert r.metadata["serial"] == "4C7A21"
+        assert r.metadata["serial"] == "123456"
 
     def test_name_without_serial(self):
         r = SpecializedTurboParser().parse(_make_ad(local_name="Kenevo"))
@@ -115,11 +115,11 @@ class TestParsing:
 
     def test_identity_prefers_serial(self):
         p = SpecializedTurboParser()
-        a = _make_ad(mac_address="11:22:33:44:55:66", local_name="Turbo Levo 4C7A21")
-        b = _make_ad(mac_address="99:88:77:66:55:44", local_name="Turbo Levo 4C7A21")
+        a = _make_ad(mac_address="11:22:33:44:55:66", local_name="Turbo Levo 123456")
+        b = _make_ad(mac_address="99:88:77:66:55:44", local_name="Turbo Levo 123456")
         assert p.parse(a).identifier_hash == p.parse(b).identifier_hash
         assert p.parse(a).identifier_hash == hashlib.sha256(
-            b"specialized:4C7A21").hexdigest()[:16]
+            b"specialized:123456").hexdigest()[:16]
 
     def test_identity_mac_fallback(self):
         r = SpecializedTurboParser().parse(

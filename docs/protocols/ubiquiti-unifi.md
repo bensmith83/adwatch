@@ -56,7 +56,7 @@ Required for parser match.
 Example service-data block from a real U6-LR:
 
 ```
-252A: 0c ea 14 80 11 dd      ← MAC 0c:ea:14:80:11:dd
+252A: 0c ea 14 xx xx xx      ← MAC 0c:ea:14:xx:xx:xx
 2119: 00 0c 25 2b             ← counter 796459
 2021: 01                      ← adoption flag set
 ```

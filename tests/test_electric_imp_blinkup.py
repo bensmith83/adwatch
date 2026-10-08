@@ -71,7 +71,7 @@ class TestBlinkUpMatching:
         assert _registry().match(ad) == []
 
     def test_parse_rejects_without_uuid(self):
-        ad = _make_ad(local_name="imp_004a")
+        ad = _make_ad(local_name="imp_0001")
         assert ElectricImpBlinkUpParser().parse(ad) is None
 
 
@@ -87,11 +87,11 @@ class TestBlinkUpMetadata:
         assert result.metadata["provisioning_mode"] is True
 
     def test_device_name_recorded(self):
-        ad = _make_ad(service_uuids=[BLINKUP_SERVICE_UUID], local_name="imp_004a")
+        ad = _make_ad(service_uuids=[BLINKUP_SERVICE_UUID], local_name="imp_0001")
         result = ElectricImpBlinkUpParser().parse(ad)
-        assert result.metadata["device_name"] == "imp_004a"
+        assert result.metadata["device_name"] == "imp_0001"
 
-    @pytest.mark.parametrize("name", ["imp_004a", "imp-OS", "IMP_ABC"])
+    @pytest.mark.parametrize("name", ["imp_0001", "imp-OS", "IMP_ABC"])
     def test_default_imp_name_flagged(self, name):
         ad = _make_ad(service_uuids=[BLINKUP_SERVICE_UUID], local_name=name)
         result = ElectricImpBlinkUpParser().parse(ad)

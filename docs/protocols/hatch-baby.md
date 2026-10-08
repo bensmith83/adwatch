@@ -108,15 +108,15 @@ bytes:   R  T  j | <seq24LE> | C |  state-C  |  S | prg-S |  E |  zero  padding 
 | Magic | 0 | 3 | ASCII `"RTj"` — protocol marker |
 | `seq_le24` | 3 | 3 | 24-bit little-endian sequence counter; increments per advertisement |
 | `'C'` marker | 6 | 1 | section delimiter (`0x43`) |
-| `state_c_hex` | 7 | 4 | per-unit state block; stable for a given unit while idle (e.g. `EE 76 74 0C` for Bedroom Hatch, `23 FF 27 0F` for Colin's). Sentinel `FF FF FF FF` observed on units in their default/unprovisioned state. |
+| `state_c_hex` | 7 | 4 | per-unit state block; stable for a given unit while idle (e.g. `xx xx xx xx`, differing per unit). Sentinel `FF FF FF FF` observed on units in their default/unprovisioned state. |
 | `'S'` marker | 11 | 1 | section delimiter (`0x53`) |
 | `program_s_hex` | 12 | 2 | program / scene bytes; varies per unit and per chosen scene |
 | `'E'` marker | 14 | 1 | section delimiter (`0x45`) |
 | zero pad | 15 | 5 | always `00 00 00 00 00` |
 | `'P'` marker | 20 | 1 | section delimiter (`0x50`) |
-| `aux_p_hex` | 21 | 1 | unknown auxiliary byte (varies per unit; e.g. `0x03` Bedroom, `0xDF` Colin, `0x1F` Maia) |
+| `aux_p_hex` | 21 | 1 | unknown auxiliary byte (varies per unit; e.g. `0x03` unit 1, `0xDF` unit 2, `0x1F` unit 3) |
 | `'e'` marker | 22 | 1 | section delimiter (`0x65`) |
-| `aux_e_hex` | 23 | 1 | unknown auxiliary byte (`0x00` for most units, `0x82` seen on Maia) |
+| `aux_e_hex` | 23 | 1 | unknown auxiliary byte (`0x00` for most units, `0x82` seen on unit 3) |
 
 The parser sets `frame_valid: "true"` when the magic and all five section
 markers line up, `"false"` otherwise — so downstream consumers can rely on
@@ -126,10 +126,10 @@ the structured fields when `frame_valid` is true and fall back to raw
 ### Captured example payloads (mfr-data after the 2-byte CID)
 
 ```
-Bedroom Hatch: 52546A13 5F70 43 EE76740C 53 045D 45 0000000000 50 03 65 00
-Colin’s Hatch: 52546A13 2776 43 23FF270F 53 064F 45 0000000000 50 DF 65 00
-Maia:          52546A13 5F60 43 FFFFFFFF 53 0351 45 0000000000 50 1F 65 82
-Lucas's Room:  52546A01 E860 43 EB8E487F 53 0333 45 0000000000 50 02 65 00
+Unit 1:        52546A13 5F70 43 xxxxxxxx 53 045D 45 0000000000 50 03 65 00
+Unit 2:        52546A13 2776 43 xxxxxxxx 53 064F 45 0000000000 50 DF 65 00
+Unit 3:        52546A13 5F60 43 FFFFFFFF 53 0351 45 0000000000 50 1F 65 82
+Unit 4:        52546A01 E860 43 xxxxxxxx 53 0333 45 0000000000 50 02 65 00
 ```
 
 `state_c_hex` and `program_s_hex` together act as a per-unit fingerprint
@@ -139,7 +139,7 @@ relying on the user-assigned local name.
 ## Local Name Patterns
 
 Beyond the documented `"<Room> Hatch"` convention, Hatch units in the wild
-can be renamed to **any free-form label** (e.g. `Maia`, `Lucas's Room`).
+can be renamed to **any free-form label** (e.g. a child's name).
 The parser surfaces:
 
 - `room_name` when the local name ends in `" Hatch"` (e.g. `"Bedroom"` from
@@ -176,7 +176,7 @@ Service (0x180A):
 |--------------------|-------|
 | Manufacturer Name (0x2A29) | `Hatch Baby` |
 | Model Number (0x2A24) | `RIOT Plus` |
-| Serial Number (0x2A25) | `90380C9ACDE6` (matches device WiFi MAC) |
+| Serial Number (0x2A25) | `90380Cxxxxxx` (matches device WiFi MAC) |
 | Hardware Revision (0x2A27) | `8.0.0` |
 | Firmware Revision (0x2A26) | `7.1.622` |
 
@@ -196,10 +196,10 @@ bytes:   E  M | <8-byte stable per-unit cookie>
 | Unit cookie | 2 | 8 | per-unit identifier, **stable** across captures — no counter, no sequence |
 
 Example captured payload (from the Rest+ 2nd Gen with serial
-`90380C9ACDE6`):
+`90380Cxxxxxx`):
 
 ```
-RIOT Plus: 45 4D D2 59 6E E3 85 A4 5A 01
+RIOT Plus: 45 4D xx xx xx xx xx xx xx xx
 ```
 
 The local-name advertises the model and the trailing 6 hex chars of the
@@ -207,7 +207,7 @@ device's serial / WiFi MAC:
 
 | Local name | Model | mac_suffix |
 |------------|-------|------------|
-| `RIOT Plus9ACDE6` | Rest+ 2nd Gen | `9ACDE6` |
+| `RIOT PlusXXXXXX` | Rest+ 2nd Gen | `XXXXXX` |
 | `RIOT <6hex>` (extrapolated) | Rest 2nd Gen | (lower 24 bits of serial) |
 
 The advertisement also includes the standard SIG service UUID

@@ -27,7 +27,7 @@ DEPARTMENT_CODES = {
 }
 
 # Pattern: {store_number}_{department}{device_name}
-# e.g., 096_PDZebra1, 096_CA_Floral, 096_PharmZebra
+# e.g., 123_PDZebra1, 123_CA_Floral, 123_PharmZebra
 STORE_NAME_PATTERN = re.compile(r"^(\d{2,4})_([A-Za-z]+)_?(.*)$")
 
 

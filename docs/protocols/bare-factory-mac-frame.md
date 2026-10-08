@@ -41,12 +41,12 @@ oo oo oo | nn nn nn | 00 00
 
 | Frame | Decoded MAC | IEEE MA-L owner | Units |
 |-------|-------------|-----------------|-------|
-| `388d3df102ae0000` | `38:8D:3D:F1:02:AE` | WNC Corporation (Wistron NeWeb) | 5 |
-| `282e895a98b60000` | `28:2E:89:5A:98:B6` | WNC Corporation (Wistron NeWeb) | 4 |
-| `d453834e6ff70000` | `D4:53:83:4E:6F:F7` | Murata Manufacturing Co., Ltd. | 1 |
-| `3409c92632ae0000` | `34:09:C9:26:32:AE` | Dongguan Huayin Electronic Technology | 3 |
-| `880e8582a2de0000` | `88:0E:85:82:A2:DE` | Shenzhen Boomtech Industrial | 1 |
-| `984744a21f220000` | `98:47:44:A2:1F:22` | Shenzhen Boomtech Industrial | 1 |
+| `388d3dxxxxxx0000` | `38:8D:3D:xx:xx:xx` | WNC Corporation (Wistron NeWeb) | 5 |
+| `282e89xxxxxx0000` | `28:2E:89:xx:xx:xx` | WNC Corporation (Wistron NeWeb) | 4 |
+| `d45383xxxxxx0000` | `D4:53:83:xx:xx:xx` | Murata Manufacturing Co., Ltd. | 1 |
+| `3409c9xxxxxx0000` | `34:09:C9:xx:xx:xx` | Dongguan Huayin Electronic Technology | 3 |
+| `880e85xxxxxx0000` | `88:0E:85:xx:xx:xx` | Shenzhen Boomtech Industrial | 1 |
+| `984744xxxxxx0000` | `98:47:44:xx:xx:xx` | Shenzhen Boomtech Industrial | 1 |
 
 The last three rows also advertise a truncated 32-bit vendor service UUID
 of the form `DAF5xxxx`; the WNC and Murata units advertise no service UUID

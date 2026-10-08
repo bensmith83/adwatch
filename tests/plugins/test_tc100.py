@@ -29,45 +29,45 @@ def make_raw(manufacturer_data=None, service_uuids=None, local_name=None, **kwar
     )
 
 
-SHORT_MFR = bytes.fromhex("8719f4c1560652fe0026")
-LONG_MFR = bytes.fromhex("8719f4c1560652fe0026f4c1560652fe0026")
+SHORT_MFR = bytes.fromhex("8719f4c1560612340026")
+LONG_MFR = bytes.fromhex("8719f4c1560612340026f4c1560612340026")
 
 
 class TestTC100Parsing:
     def test_parse_valid(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert result.parser_name == "tc100"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert result.beacon_type == "tc100"
 
     def test_device_class(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert result.device_class == "thermometer"
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
 
     def test_metadata_device_id(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
-        assert result.metadata["device_id"] == "52FE"
+        assert result.metadata["device_id"] == "1234"
 
     def test_long_manufacturer_data(self, parser):
-        raw = make_raw(manufacturer_data=LONG_MFR, service_uuids=["8801", "8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=LONG_MFR, service_uuids=["8801", "8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert result is not None
 
@@ -83,7 +83,7 @@ class TestTC100Parsing:
         assert result is not None
 
     def test_raw_payload_hex(self, parser):
-        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_52FE")
+        raw = make_raw(manufacturer_data=SHORT_MFR, service_uuids=["8801"], local_name="TC100_1234")
         result = parser.parse(raw)
         assert result.raw_payload_hex == SHORT_MFR.hex()
 

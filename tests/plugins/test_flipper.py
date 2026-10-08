@@ -34,14 +34,14 @@ FLIPPER_UUID = "00003081-0000-1000-8000-00805f9b34fb"
 
 class TestFlipperParsing:
     def test_parse_valid_with_uuid_and_name(self, parser):
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parse_valid_name_only(self, parser):
         """Should parse with just local_name matching ^Flipper."""
-        raw = make_raw(local_name="Flipper Goldite")
+        raw = make_raw(local_name="Flipper Example")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
@@ -54,17 +54,17 @@ class TestFlipperParsing:
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
         assert result.parser_name == "flipper"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
         assert result.beacon_type == "flipper"
 
     def test_device_class_tool(self, parser):
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
         assert result.device_class == "tool"
 
@@ -72,7 +72,7 @@ class TestFlipperParsing:
         """Identity = SHA256(mac)[:16]."""
         raw = make_raw(
             service_uuids=[FLIPPER_UUID],
-            local_name="Flipper Goldite",
+            local_name="Flipper Example",
             mac_address="AA:BB:CC:DD:EE:FF",
         )
         result = parser.parse(raw)
@@ -80,15 +80,15 @@ class TestFlipperParsing:
         assert result.identifier_hash == expected
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
 
     def test_metadata_device_name(self, parser):
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
-        assert result.metadata["device_name"] == "Flipper Goldite"
+        assert result.metadata["device_name"] == "Flipper Example"
 
     def test_metadata_no_name(self, parser):
         """When no local_name, metadata should not have device_name."""
@@ -98,7 +98,7 @@ class TestFlipperParsing:
 
     def test_raw_payload_hex_empty(self, parser):
         """No service data payload, so raw_payload_hex should be empty."""
-        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Goldite")
+        raw = make_raw(service_uuids=[FLIPPER_UUID], local_name="Flipper Example")
         result = parser.parse(raw)
         assert result.raw_payload_hex == ""
 

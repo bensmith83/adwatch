@@ -50,7 +50,7 @@ class TestPowerDotMatching:
     def test_matches_powerdot2_name(self):
         registry = ParserRegistry()
         _register(registry)
-        assert len(registry.match(_make_ad(local_name="PowerDot2-4F21"))) == 1
+        assert len(registry.match(_make_ad(local_name="PowerDot2-1234"))) == 1
 
     def test_matches_stim_service_uuid(self):
         registry = ParserRegistry()
@@ -72,7 +72,7 @@ class TestPowerDotMatching:
 
 class TestPowerDotNameVariants:
     def test_powerdot2_is_protocol_v2(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
         assert result.metadata["model"] == "PowerDot 2.0"
         assert result.metadata["protocol_generation"] == "v2"
 
@@ -101,13 +101,13 @@ class TestPowerDotNameVariants:
         assert result.metadata["confidence"] == "medium"
 
     def test_brand_prefix_is_high_confidence(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
         assert result.metadata["confidence"] == "high"
 
 
 class TestPowerDotParsing:
     def test_parses_presence(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
         assert result is not None
         assert result.parser_name == "powerdot"
         assert result.beacon_type == "powerdot"
@@ -115,8 +115,8 @@ class TestPowerDotParsing:
         assert result.metadata["vendor"] == "Therabody"
 
     def test_records_name_suffix(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
-        assert result.metadata["name_suffix"] == "-4F21"
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
+        assert result.metadata["name_suffix"] == "-1234"
 
     def test_uuid_only_match_has_unknown_model(self):
         ad = _make_ad(service_uuids=[POWERDOT_STIM_SERVICE_UUID])
@@ -126,25 +126,25 @@ class TestPowerDotParsing:
         assert "model" not in result.metadata
 
     def test_flags_sensitive_category(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
         assert result.metadata["sensitive"] is True
         assert result.metadata["sensitive_category"] == "muscle_stimulation"
 
     def test_no_telemetry_claimed(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
         assert result.metadata["telemetry"] == "none (connect-only GATT)"
 
     def test_identity_prefers_name_suffix(self):
-        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-4F21"))
-        expected = hashlib.sha256(b"powerdot:PowerDot2-4F21").hexdigest()[:16]
+        result = PowerDotParser().parse(_make_ad(local_name="PowerDot2-1234"))
+        expected = hashlib.sha256(b"powerdot:PowerDot2-1234").hexdigest()[:16]
         assert result.identifier_hash == expected
         assert result.metadata["identity_basis"] == "local_name"
 
     def test_identity_survives_mac_rotation(self):
         a = PowerDotParser().parse(
-            _make_ad(local_name="PowerDot2-4F21", mac_address="C8:FD:19:11:22:33"))
+            _make_ad(local_name="PowerDot2-1234", mac_address="C8:FD:19:11:22:33"))
         b = PowerDotParser().parse(
-            _make_ad(local_name="PowerDot2-4F21", mac_address="DE:AD:BE:EF:00:01"))
+            _make_ad(local_name="PowerDot2-1234", mac_address="DE:AD:BE:EF:00:01"))
         assert a.identifier_hash == b.identifier_hash
 
     def test_identity_falls_back_to_mac_without_suffix(self):

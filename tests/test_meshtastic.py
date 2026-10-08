@@ -51,9 +51,9 @@ class TestMeshtasticRegistry:
         assert len(matches) >= 1
 
     def test_matches_local_name_pattern(self):
-        """Matches on local_name 'Meshtastic_bb14' via name pattern."""
+        """Matches on local_name 'Meshtastic_a1b2' via name pattern."""
         registry = _make_registry()
-        ad = _make_ad(local_name="Meshtastic_bb14")
+        ad = _make_ad(local_name="Meshtastic_a1b2")
         matches = registry.match(ad)
         assert len(matches) >= 1
 
@@ -69,43 +69,43 @@ class TestMeshtasticParser:
     def test_parser_name(self):
         """parser_name is 'meshtastic'."""
         parser = MeshtasticParser()
-        ad = _make_ad(local_name="Meshtastic_bb14")
+        ad = _make_ad(local_name="Meshtastic_a1b2")
         result = parser.parse(ad)
         assert result.parser_name == "meshtastic"
 
     def test_beacon_type(self):
         """beacon_type is 'meshtastic'."""
         parser = MeshtasticParser()
-        ad = _make_ad(local_name="Meshtastic_bb14")
+        ad = _make_ad(local_name="Meshtastic_a1b2")
         result = parser.parse(ad)
         assert result.beacon_type == "meshtastic"
 
     def test_device_class(self):
         """device_class is 'mesh_node'."""
         parser = MeshtasticParser()
-        ad = _make_ad(local_name="Meshtastic_bb14")
+        ad = _make_ad(local_name="Meshtastic_a1b2")
         result = parser.parse(ad)
         assert result.device_class == "mesh_node"
 
     def test_node_id_extraction(self):
-        """'Meshtastic_bb14' -> metadata['node_id'] == 'bb14'."""
+        """'Meshtastic_a1b2' -> metadata['node_id'] == 'a1b2'."""
         parser = MeshtasticParser()
-        ad = _make_ad(local_name="Meshtastic_bb14")
+        ad = _make_ad(local_name="Meshtastic_a1b2")
         result = parser.parse(ad)
-        assert result.metadata["node_id"] == "bb14"
+        assert result.metadata["node_id"] == "a1b2"
 
     def test_device_name_in_metadata(self):
-        """metadata['device_name'] == 'Meshtastic_bb14'."""
+        """metadata['device_name'] == 'Meshtastic_a1b2'."""
         parser = MeshtasticParser()
-        ad = _make_ad(local_name="Meshtastic_bb14")
+        ad = _make_ad(local_name="Meshtastic_a1b2")
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "Meshtastic_bb14"
+        assert result.metadata["device_name"] == "Meshtastic_a1b2"
 
     def test_identity_hash(self):
         """Identity hash is SHA256(mac_address:meshtastic)[:16]."""
         mac = "11:22:33:44:55:66"
         parser = MeshtasticParser()
-        ad = _make_ad(local_name="Meshtastic_bb14", mac_address=mac)
+        ad = _make_ad(local_name="Meshtastic_a1b2", mac_address=mac)
         result = parser.parse(ad)
         expected = hashlib.sha256(f"{mac}:meshtastic".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected

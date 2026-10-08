@@ -12,7 +12,7 @@ This parser surfaces the gimbal's product line, model variant, and unit serial �
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `^DJI ` | E.g. `"DJI RS3 MINI-060WDX"`, `"DJI Osmo Mobile 6-XYZ"`. |
+| Local name | `^DJI ` | E.g. `"DJI RS3 MINI-XXXXXX"`, `"DJI Osmo Mobile 6-XYZ"`. |
 | Service UUID | `0x1812` (HID over GATT) | Lets the gimbal act as a Bluetooth camera-remote / keyboard. |
 | Service UUID | `0xFFF0` | DJI's vendor-allocated 16-bit service. |
 | Company ID | `0x08AA` (when manufacturer data is present) | SIG registry: "Zhuhai Hoksi Technology CO.,LTD" — DJI's OEM partner / SIG registration alias rather than DJI's own ID. |
@@ -21,7 +21,7 @@ This parser surfaces the gimbal's product line, model variant, and unit serial �
 
 `DJI <product line>[ <variant>]-<unit serial>`
 
-- `"DJI RS3 MINI-060WDX"` → product `RS3 MINI`, serial `060WDX`.
+- `"DJI RS3 MINI-XXXXXX"` → product `RS3 MINI`, serial `XXXXXX`.
 - `"DJI RS 3 Pro-XYZ123"` → product `RS 3 Pro`, serial `XYZ123`.
 - `"DJI Osmo Mobile 6-ABC"` → product `Osmo Mobile 6`, serial `ABC`.
 

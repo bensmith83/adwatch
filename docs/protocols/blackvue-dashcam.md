@@ -14,7 +14,7 @@ GATT services are only exposed post-pair.
 
 Any DR-series dashcam advertising a localName matching the regex
 `^BlackVue[0-9]{3,4}X?(?:Box|Plus|Pro)?P?-[0-9A-F]{6}$`. Captured in
-the wild as `BlackVue770XBoxP-EE10A2` (DR770X Box Plus/Pro).
+the wild as `BlackVue770XBoxP-XXXXXX` (DR770X Box Plus/Pro).
 
 The parser does not attempt to distinguish Plus vs Pro from the `P`
 token alone — Pittasoft does not publish the exact mapping in any

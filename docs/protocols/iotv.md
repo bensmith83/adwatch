@@ -18,7 +18,7 @@ even without resolving the vendor.
 ## Identification
 
 ```
-local_name:    "IoTV<6-hex>"      e.g. IoTV086405, IoTV976E1C
+local_name:    "IoTV<6-hex>"      e.g. IoTVXXXXXX, IoTVYYYYYY
 service_uuids: [180A, 180F, E001, 6E400001-…NUS…]   when active
                (empty)                              when idle / sleeping
 ```
@@ -53,10 +53,7 @@ identifier_hash = SHA256("iotv:{device_id}")[:16]
 
 ## Captured Device IDs (2026 export)
 
-```
-086405  308E53  74BACE  8EB410  962844  976E1C  AB393E
-A08B91  BACA23  BFB24B  648268  C07547  C9462C  E86098
-```
+The advertised name carries a per-device 6-hex ID (not listed here).
 
 14 distinct devices. RSSI on every capture is between −90 and −99 dBm,
 so they are at the edge of range — consistent with a single

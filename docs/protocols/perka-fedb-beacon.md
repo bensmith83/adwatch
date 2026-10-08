@@ -25,10 +25,10 @@ Four distinct devices have been captured between 2026-07-13 and
 
 | First seen | Payload (after CID) | Records · sightings | Note |
 |------------|---------------------|---------------------|------|
-| 2026-07-13 | `00 01 0690 00000000 00 01 710e` | 2 · 288 | −59 dBm, one location |
-| 2026-08-19 | `00 01 b0a9 00000000 00 02 1a52` | 22 · ~40 | seen 08-19 → 08-23, same location |
-| 2026-08-19 | `00 02 1ba5 00000000 00 02 8497` | 9 · ~20 | same days and location as above |
-| 2026-08-29 | `00 02 0f0b 00000000 00 02 7803` | 1 · 11 | −54 dBm |
+| 2026-07-13 | `00 01 <A1> 00000000 00 01 <B1>` | 2 · 288 | −59 dBm, one location |
+| 2026-08-19 | `00 01 <A2> 00000000 00 02 <B2>` | 22 · ~40 | seen 08-19 → 08-23, same location |
+| 2026-08-19 | `00 02 <A3> 00000000 00 02 <B3>` | 9 · ~20 | same days and location as above |
+| 2026-08-29 | `00 02 <A4> 00000000 00 02 <B4>` | 1 · 11 | −54 dBm |
 
 NearSight rejected the family at n=1 (2026-07-17, "static blob"), put it on
 the watchlist at n=2 (2026-08-23, trigger "3rd payload") and promoted it on
@@ -49,7 +49,7 @@ the watchlist at n=2 (2026-08-23, trigger "3rd payload") and promoted it on
 
 ```
 offset  0  1 | 2  | 3  | 4  5  | 6  7  8  9  | 10 | 11 | 12 13
-        05 00 | 00 | 02 | 0f 0b | 00 00 00 00 | 00 | 02 | 78 03
+        05 00 | 00 | 02 | xx xx | 00 00 00 00 | 00 | 02 | xx xx
         CID     00   type  id      reserved      00   type  id
                └── field A ──┘                  └── field B ──┘
 ```
@@ -59,11 +59,11 @@ offset  0  1 | 2  | 3  | 4  5  | 6  7  8  9  | 10 | 11 | 12 13
 | 0–1 | CID `0x0005` LE | 41/41 |
 | 2 | `0x00` | 41/41 |
 | 3 | field A type nibble, `0x01` or `0x02` | (1, 1, 2, 2) across the four devices |
-| 4–5 | field A id, per device | `0690`, `b0a9`, `1ba5`, `0f0b` |
+| 4–5 | field A id, per device | four distinct values (`<A1>`…`<A4>`) |
 | 6–9 | reserved, all zero | 41/41 |
 | 10 | `0x00` | 41/41 |
 | 11 | field B type nibble, `0x01` or `0x02` | (1, 2, 2, 2) — **not** always `0x02`, so not gated |
-| 12–13 | field B id, per device | `710e`, `1a52`, `8497`, `7803` |
+| 12–13 | field B id, per device | four distinct values (`<B1>`…`<B4>`) |
 
 No semantics are claimed for the type nibbles or the ids (merchant id /
 beacon id / major-minor are all plausible readings; nothing in four devices

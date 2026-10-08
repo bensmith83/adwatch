@@ -60,7 +60,7 @@ async def _seed_diverse_ads(raw_storage):
                            parsed_by=["fast_pair"])
 
     # ThermoPro ad (local_name only, no manufacturer_data)
-    tp_ad = _make_ad("11:22:33:44:55:66", local_name="TP357 (2B54)")
+    tp_ad = _make_ad("11:22:33:44:55:66", local_name="TP357 (AB12)")
     await raw_storage.save(tp_ad, Classification("thermopro", "sensor", "local_name"),
                            parsed_by=["thermopro"])
 
@@ -132,7 +132,7 @@ class TestExplorerQuery:
         await _seed_diverse_ads(raw_storage)
         results = await raw_storage.explorer_query(local_name="TP357")
         assert len(results) == 1
-        assert results[0]["local_name"] == "TP357 (2B54)"
+        assert results[0]["local_name"] == "TP357 (AB12)"
 
     @pytest.mark.asyncio
     async def test_filter_by_mac_prefix(self, raw_storage):

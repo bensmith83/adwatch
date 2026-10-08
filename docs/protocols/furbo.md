@@ -26,10 +26,10 @@ decoding that ASCII string as hex a second time yields the real 6-byte
 inner payload:
 
 ```
-manufacturerData (ASCII):  "002db309fef0"
+manufacturerData (ASCII):  "002db3xxxxxx"
                              │
                              ▼ (hex-decode the ASCII string)
-inner payload (6 bytes):   00 2d b3 09 fe f0
+inner payload (6 bytes):   00 2d b3 xx xx xx
                             └──┬───┘ └──┬──┘
                           stable prefix  varying tail
                         (00 2d b3, both  (unit-specific?
@@ -38,7 +38,7 @@ inner payload (6 bytes):   00 2d b3 09 fe f0
 
 Observed across 2 independent physical devices (confirmed via
 `deviceIdentifier`, captures 2 days apart): the 3-byte prefix `00 2d b3`
-is identical on both; the 3-byte tail differs (`09fef0` vs `075b74`) with
+is identical on both; the 3-byte tail differs (differs per unit) with
 no confirmed relationship between the two values.
 
 ## Identification

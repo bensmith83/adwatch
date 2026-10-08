@@ -47,7 +47,7 @@ combination specifically and must not shadow that broader FEBE family.
 One 9-byte manufacturer-data frame observed (CID + payload):
 
 ```
-01 0b 02 00 4b d3 d7 43 c1
+01 0b 02 00 xx xx xx xx xx
 └──┬─┘ └─┬─┘ └─────┬──────┘
   CID   hdr     5-byte tail
 ```

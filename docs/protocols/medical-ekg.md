@@ -27,7 +27,7 @@ Portable EKG/ECG monitors broadcast BLE advertisements to enable pairing with co
 ### Identification (as originally documented)
 
 - **Local name pattern:** `^EKG-` (regex)
-- **Example names:** `EKG-99-23-4c`, `EKG-A1-B2-C3`
+- **Example names:** `EKG-xx-xx-xx`, `EKG-A1-B2-C3`
 - **Service UUIDs advertised:** `021a9004-0382-4aea-bff4-6b3f1c5adfb4` (= Espressif provisioning), `7aebf330-6cb1-46e4-b23b-7cc2262c605e` (= Fellow aux)
 
 ### Genuine medical ECG signals (for future work)

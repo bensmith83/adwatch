@@ -19,7 +19,7 @@ The BP5S is a Bluetooth-enabled arm blood pressure monitor made by iHealth (a su
 | Offset | Length | Field | Notes |
 |--------|--------|-------|-------|
 | 0-1 | 2 bytes | Company ID | `0x0059` — Andon Health Co., Ltd. (LE: `5900`) |
-| 2-11 | 10 bytes | Payload | `00000000004d323c1b68` — largely static, purpose unknown |
+| 2-11 | 10 bytes | Payload | `00000000004d32xxxxxx` — largely static; the last 6 bytes read as the device MAC (OUI `00:4D:32` = Andon Health; per-unit part redacted) |
 
 ### Service UUID Decode
 
@@ -37,7 +37,7 @@ Full string: `com.jiuan.BPV25` — this is the Jiuan (iHealth parent company) Bl
 | Field | Source | Notes |
 |-------|--------|-------|
 | Device presence | service_uuid or local_name | BP5S monitor nearby |
-| Serial number | local_name suffix | e.g. `11070` from `BP5S 11070` |
+| Serial number | local_name suffix | e.g. `XXXXX` from `BP5S XXXXX` |
 | Manufacturer | company_id `0x0059` | Andon Health / iHealth |
 
 ### What We Cannot Parse (requires GATT)
@@ -71,9 +71,9 @@ blood_pressure_monitor
 
 | Field | Value |
 |-------|-------|
-| Local Name | `BP5S 11070` |
+| Local Name | `BP5S XXXXX` |
 | Service UUID | `636F6D2E-6A69-7561-6E2E-425056323500` |
-| Manufacturer Data | `590000000000004d323c1b68` |
+| Manufacturer Data | `590000000000004d32xxxxxx` |
 | Company ID | `0x0059` (Andon Health) |
 | Sighting Count | 191 over ~3 hours |
 | RSSI Range | -83 to -100 dBm |

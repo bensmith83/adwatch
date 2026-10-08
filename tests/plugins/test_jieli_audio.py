@@ -11,7 +11,7 @@ from adwatch.plugins.jieli_audio import JieliAudioParser
 JIELI_COMPANY_ID = 0x05D6
 
 # Real sample from CSV: JLab GO Pop+-App
-JLAB_DATA = bytes.fromhex("d60502000600223e5e525220a6021450000b010200000000000000007f")
+JLAB_DATA = bytes.fromhex("d6050200060022aabbccddeeff021450000b010200000000000000007f")
 
 MAC = "AA:BB:CC:DD:EE:FF"
 

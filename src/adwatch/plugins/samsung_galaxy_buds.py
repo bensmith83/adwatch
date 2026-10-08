@@ -8,7 +8,7 @@ from adwatch.registry import register_parser
 
 BUDS_SERVICE_UUID = "fd69"
 BUDS_NAME_RE = re.compile(r"Galaxy Buds")
-# Extracts model like "Galaxy Buds3 Pro" from "Galaxy Buds3 Pro (E757) LE"
+# Extracts model like "Galaxy Buds3 Pro" from "Galaxy Buds3 Pro (ABCD) LE"
 BUDS_MODEL_RE = re.compile(r"(Galaxy Buds\S*(?:\s+\w+)*?)\s*\(")
 
 

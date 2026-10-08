@@ -32,7 +32,7 @@ capability than miss it.
 | Mfg-data header | `53 4E` ("SN" ASCII) | MCR | NOT a SIG-assigned company ID (0x4E53 is unallocated) |
 | Service UUID | `FFFFD1FD-388D-938B-344A-939D1F6EFEE0` | MCR | Sleep Number legacy MCR service |
 | Service UUID | `09D23FAE-90E6-44C2-95B6-0B3D0F1ABF25` | Fuzion | Climate360 / FlexFit Smart service |
-| Local name | Literal MAC string (e.g. `64:db:a0:f7:2b:ff`) | both | Firmware exposes its own MAC as the friendly name |
+| Local name | Literal MAC string (e.g. `64:db:a0:xx:xx:xx`) | both | Firmware exposes its own MAC as the friendly name |
 | Local name | `Smart bed XXXXXX` (6-hex MAC suffix) | Fuzion | Friendlier label used by Fuzion firmware |
 
 Any single signal is sufficient to identify the device; combinations
@@ -77,11 +77,11 @@ marker once it's been confirmed to vary per unit.
 
 ```
 # Legacy MCR (our capture set, 2 distinct units)
-local_name=64:db:a0:f7:2b:ff   svc_uuid=FFFFD1FD-…   mfr=53 4E 92 06 00 00 00
+local_name=64:db:a0:xx:xx:xx   svc_uuid=FFFFD1FD-…   mfr=53 4E 92 06 00 00 00
 local_name=64:db:a0:??:??:??   svc_uuid=FFFFD1FD-…   mfr=53 4E 92 06 00 00 00  (second unit, identical mfg bytes)
 
 # Fuzion (from kristofferR/ha-adjustable-bed reference fixtures)
-local_name="Smart bed 0074E7"  svc_uuid=09D23FAE-…   mfr=(none)
+local_name="Smart bed XXXXXX"  svc_uuid=09D23FAE-…   mfr=(none)
 ```
 
 168 + 8 MCR sightings across two distinct devices in a single

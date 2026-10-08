@@ -14,7 +14,7 @@ def parser():
 def make_raw(manufacturer_data=None, local_name=None, **kwargs):
     defaults = dict(
         timestamp="2026-04-15T00:00:00+00:00",
-        mac_address="41:1C:32:B7:18:A5",
+        mac_address="41:AA:BB:CC:DD:01",
         address_type="random",
         service_data=None,
     )
@@ -27,11 +27,11 @@ def make_raw(manufacturer_data=None, local_name=None, **kwargs):
     )
 
 
-SHORT_MFR = bytes.fromhex("a806013030303030513135414331384236")
+SHORT_MFR = bytes.fromhex("a806013030303030513030303030303031")
 LONG_MFR = bytes.fromhex(
-    "a80601303030303051313541433138423601411c32b718a574b85400"
+    "a8060130303030305130303030303030310141aabbccdd0174b85400"
 )
-SERIAL = "00000Q15AC18B6"
+SERIAL = "00000Q00000001"
 
 
 class TestMideaParsing:
@@ -78,7 +78,7 @@ class TestMideaParsing:
     def test_long_frame_extracts_bd_addr(self, parser):
         raw = make_raw(manufacturer_data=LONG_MFR, local_name="net")
         result = parser.parse(raw)
-        assert result.metadata["embedded_bd_addr"] == "41:1C:32:B7:18:A5"
+        assert result.metadata["embedded_bd_addr"] == "41:AA:BB:CC:DD:01"
 
     def test_short_frame_no_bd_addr(self, parser):
         raw = make_raw(manufacturer_data=SHORT_MFR, local_name="net")
@@ -112,7 +112,7 @@ class TestMideaNonMatching:
     def test_returns_none_for_unknown_frame_type(self, parser):
         raw = make_raw(
             manufacturer_data=bytes.fromhex(
-                "a806ff3030303030305131354143313842363601"
+                "a806ff3030303030305130303030303030313601"
             ),
             local_name="net",
         )

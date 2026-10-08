@@ -39,8 +39,8 @@ The four trailing ASCII bytes match the four-digit suffix in the local name and 
 
 | Capture | Inference |
 |---|---|
-| local name `"GoPro 8216"` + FEA6 svc-data `4794973f38323136` | `camera_id = 8216` from both signals (`38 32 31 36` = ASCII `"8216"`) |
-| mfg `f20202003e230090fc5e5c44d70f` + UUID `FEA6`, no name | matched on company ID; no stable camera_id available without service data or name |
+| local name `"GoPro NNNN"` + FEA6 svc-data `4794973fxxxxxxxx` | `camera_id = NNNN` from both signals (`xx xx xx xx` = four ASCII digits) |
+| mfg `f20202003e230090xxxxxxxxxxxx` + UUID `FEA6`, no name | matched on company ID; no stable camera_id available without service data or name |
 
 ## References
 

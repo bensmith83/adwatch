@@ -33,8 +33,8 @@ Offset  Size  Field
               surfaced raw
 ```
 
-Observed frames: `6c 03 | 01 | 42 c1 ae da c2 7a` and
-`6c 03 | 01 | 41 0b 14 9a 1a 04`. The 6-byte token is **not** decoded
+Observed frames: `6c 03 | 01 | xx xx xx xx xx xx` and
+`6c 03 | 01 | yy yy yy yy yy yy` (tokens redacted). The 6-byte token is **not** decoded
 as a MAC or VIN and is **not** used as a stable device key: with one
 sighting per unit there is no evidence it is stable per vehicle across
 encounters (it could equally be a rotating pairing token for the app

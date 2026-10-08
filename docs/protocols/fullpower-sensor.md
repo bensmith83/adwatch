@@ -28,7 +28,7 @@ hardware with the product left open.
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Company ID | `0x01EF` | SIG → *Fullpower Technologies, Inc.* — the whole attribution |
-| Unit ID | 2 bytes at payload `[2..4)` | 9 distinct values across 12 records; two (`0de3`, `211e`) recur across records and sighting bursts (n=67+3, n=87+3) — stable per physical unit |
+| Unit ID | 2 bytes at payload `[2..4)` | 9 distinct values across 12 records; two recur across records and sighting bursts (n=67+3, n=87+3) — stable per physical unit |
 | Address type | random | |
 | Local name | none (this variant) | The named variant advertises `SleepTracker` |
 | Device class | `health` | Same class as the named branch |

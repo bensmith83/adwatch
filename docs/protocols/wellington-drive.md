@@ -15,8 +15,8 @@ from fixed random addresses that did not rotate inside the capture:
 
 | Date | Serial | Records · sightings | Frames |
 |------|--------|---------------------|--------|
-| 2026-08-23 | `MF23092133` | 4 · 6 | serial frames only (deferred at n=1) |
-| 2026-08-24 | `C112F16927` | 36 · 56 | serial frames |
+| 2026-08-23 | `MF########` | 4 · 6 | serial frames only (deferred at n=1) |
+| 2026-08-24 | `C#########` | 36 · 56 | serial frames |
 | 2026-08-24 | (second radio, no serial) | 2 · 21 | status frames |
 
 The 08-24 serial and status frames came from two different CoreBluetooth
@@ -40,8 +40,8 @@ radios (or two units) in one installation.
 
 ```
 offset  0  1 | 2  | 3  | 4  5  | 6 … 21
-        78 05 | 01 | 00 | vv vv | 43 31 31 32 46 31 36 39 32 37 00 00 00 00 00 00
-        CID     type rsv  int16   "C112F16927" + NUL padding to 16 bytes
+        78 05 | 01 | 00 | vv vv | 43 xx xx xx xx xx xx xx xx xx 00 00 00 00 00 00
+        CID     type rsv  int16   "C#########" + NUL padding to 16 bytes
                           LE
 ```
 
@@ -50,7 +50,7 @@ offset  0  1 | 2  | 3  | 4  5  | 6 … 21
 | 2 | frame type `0x01` | 40/40 serial frames across both units |
 | 3 | reserved / flags, always `0x00` | 40/40 |
 | 4–5 | signed 16-bit little-endian value | see below |
-| 6–21 | 16-byte serial field, ASCII, NUL-padded | `C112F16927` + 6 × `00`; `MF23092133` + 6 × `00` |
+| 6–21 | 16-byte serial field, ASCII, NUL-padded | `C#########` + 6 × `00`; `MF########` + 6 × `00` |
 
 **The 16-bit value.** On the 08-24 unit it traced a clean **triangle
 wave** inside the 15-minute capture: −20 → 500 in steps of 10 at roughly

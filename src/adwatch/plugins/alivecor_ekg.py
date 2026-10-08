@@ -21,7 +21,7 @@ have been removed:
 
   * ``021a9004-…`` is the Espressif BLE Wi-Fi-provisioning service UUID
     (see ``espressif_prov.py``), not an AliveCor UUID.
-  * The only unit ever observed with an ``EKG-`` name (``EKG-99-23-4c``,
+  * The only unit ever observed with an ``EKG-`` name (``EKG-xx-xx-xx``,
     959k+ sightings) advertised exactly that provisioning UUID and nothing
     else. Fellow's smart kettles are ESP32-based and are literally named
     "EKG" (Stagg EKG / EKG+ / EKG Pro, Corvo EKG); the research doc's second

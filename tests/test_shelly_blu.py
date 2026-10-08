@@ -40,7 +40,7 @@ def _make_registry():
     return registry
 
 
-def _shelly_mfr_data(flags=0x0003, model_id=0x1001, mac="3C:2E:F5:71:9A:01", extra=b""):
+def _shelly_mfr_data(flags=0x0003, model_id=0x1001, mac="3C:2E:F5:00:00:01", extra=b""):
     """Build Shelly (CID 0x0BA9) mfr data per shelly-smartcontrol report
     (BleDevice.parseManufacturerData, BleDevice.java:973-1034):
     CID LE | 0x01 flags(u16 LE) | 0x0B model(u16 LE) | 0x0A mac(6, reversed)."""
@@ -198,7 +198,7 @@ class TestShellyReportMfrDecode:
     telemetry rides in BTHome 0xFCD2 service data, handled by bthome.py)."""
 
     def test_full_advert_offsets(self):
-        mfr = bytes.fromhex("a90b" "011300" "0b0110" "0a019a71f52e3c")
+        mfr = bytes.fromhex("a90b" "011300" "0b0110" "0a010000f52e3c")
         r = ShellyBluParser().parse(_make_ad(manufacturer_data=mfr))
         md = r.metadata
         assert md["flags"] == 0x0013
@@ -209,7 +209,7 @@ class TestShellyReportMfrDecode:
         assert md["pairing_mode"] is True
         assert md["provision_locked"] is False
         assert md["model_id"] == 0x1001
-        assert md["device_mac"] == "3C:2E:F5:71:9A:01"
+        assert md["device_mac"] == "3C:2E:F5:00:00:01"
         assert r.raw_payload_hex == mfr[2:].hex()
 
     def test_flags_block_optional(self):
@@ -227,7 +227,7 @@ class TestShellyReportMfrDecode:
         a = p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(), mac_address="11:11:11:11:11:11"))
         b = p.parse(_make_ad(manufacturer_data=_shelly_mfr_data(), mac_address="22:22:22:22:22:22"))
         assert a.identifier_hash == b.identifier_hash
-        assert a.identifier_hash == hashlib.sha256(b"shelly:3C:2E:F5:71:9A:01").hexdigest()[:16]
+        assert a.identifier_hash == hashlib.sha256(b"shelly:3C:2E:F5:00:00:01").hexdigest()[:16]
 
     def test_identity_falls_back_to_mac(self):
         mac = "11:22:33:44:55:66"

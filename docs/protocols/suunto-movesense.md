@@ -33,7 +33,7 @@ don't expose Whiteboard), it demotes `product` to "Suunto BLE device
 |---|---|---|
 | CID | `0x009F` | Suunto Oy — SIG-registered |
 | Service UUID | `61353090-8231-49CC-B57A-886370740041` | Movesense Whiteboard service |
-| Local name | `Movesense <6-16 digit serial>` (optional) | e.g. `Movesense 174030000113` |
+| Local name | `Movesense <6-16 digit serial>` (optional) | e.g. `Movesense <serial digits>` |
 | Address type | `random` | rotating BD_ADDR |
 
 ### What We Can Surface

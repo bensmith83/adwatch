@@ -26,7 +26,7 @@ class TestZenggeMatching:
     def test_match_ledble_name(self):
         registry = ParserRegistry()
         _register(registry)
-        ad = _make_ad(local_name="LEDBLE-F40D2B")
+        ad = _make_ad(local_name="LEDBLE-123456")
         assert len(registry.match(ad)) == 1
 
     def test_match_fluxblue(self):
@@ -59,7 +59,7 @@ class TestZenggeMatching:
 
 class TestZenggeParsing:
     def test_ledble_brand(self):
-        ad = _make_ad(local_name="LEDBLE-F40D2B")
+        ad = _make_ad(local_name="LEDBLE-123456")
         result = ZenggeParser().parse(ad)
         assert result is not None
         assert result.metadata["brand"] == "LEDBLE"
@@ -70,7 +70,7 @@ class TestZenggeParsing:
         assert result.metadata["brand"] == "FluxBlue"
 
     def test_basics(self):
-        ad = _make_ad(local_name="LEDBLE-F40D2B")
+        ad = _make_ad(local_name="LEDBLE-123456")
         result = ZenggeParser().parse(ad)
         assert result.parser_name == "zengge"
         assert result.beacon_type == "zengge"

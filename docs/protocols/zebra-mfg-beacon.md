@@ -20,7 +20,7 @@ only that it's a genuine Zebra-CID device.
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Company ID | `0x01F1` | Zebra Technologies Corporation, SIG code 497 |
-| Constant device-ID block | `c1 ad 93 36 12 92 cc 00 49 64 15 59 54 95 45 84` at bytes `[2..18)` | Identical across all 49 records; bytes `[2..8)` in particular look like a re-embedded MAC fragment |
+| Constant device-ID block | `xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx` at bytes `[2..18)` | Identical across all 49 records; bytes `[2..8)` in particular look like a re-embedded MAC fragment |
 
 ### Frame variants
 
@@ -36,8 +36,9 @@ CID    [2..18)                          [18] [19] [20] [21..23) [23] [24] [25..2
 **Long (54 bytes)** — short's 27 bytes, plus:
 
 ```
-cd 04 10 41 2c 90 40 19 02 1a 93 36 12 02 | <6-byte two-state trailer> | 00 00 30 01 25 00 00
+cd 04 10 41 2c 90 40 19 02 1a xx xx xx 02 | <6-byte two-state trailer> | 00 00 30 01 25 00 00
 [27..41) constant                          [41..47)                     [47..54) constant
+(the three `xx` bytes repeat part of the redacted device-ID block)
 ```
 
 The `[41..47)` trailer region has been observed in exactly two states so

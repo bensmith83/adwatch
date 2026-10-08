@@ -22,7 +22,7 @@ motor current) is exposed over a GATT connection, not in the advertisement.
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `Nabco IOT-<16-hex>n` | e.g. `Nabco IOT-9A23ACB4CF386821n`. The 16-hex block is a per-unit serial; trailing `n` is fixed |
+| Local name | `Nabco IOT-<16-hex>n` | e.g. `Nabco IOT-XXXXXXXXXXXXXXXXn`. The 16-hex block is a per-unit serial; trailing `n` is fixed |
 | Service UUID | `94E06D56-DAAA-4B2B-B9D1-7B1559AE7300` | Nabco vendor-defined GATT service (not registered in BT SIG `member_uuids.yaml`) |
 | Service UUID | `1805` | Standard SIG **Current Time Service** — door controller exposes a clock characteristic so the central can sync timestamps for cycle logging |
 | Manufacturer data | (absent in observed captures) | — |

@@ -29,9 +29,9 @@ def make_raw(service_uuids=None, service_data=None, local_name=None, **kwargs):
     )
 
 
-WATCH_SVC_DATA = bytes.fromhex("0358e427eedb3e59ae89b632ec01")
-WATCH_SVC_DATA_LONG = bytes.fromhex("1058e427eedb3e59ae89b632ec52001e1a20ec8b")
-WATCH_NAMED_DATA = bytes.fromhex("009af2445b834b4c9ac7207c824000")
+WATCH_SVC_DATA = bytes.fromhex("0300112233445566778899aabb01")
+WATCH_SVC_DATA_LONG = bytes.fromhex("1000112233445566778899aabb52001e1a20ec8b")
+WATCH_NAMED_DATA = bytes.fromhex("00aabbccddeeff0011223344554000")
 
 
 class TestGalaxyWatchParsing:
@@ -66,11 +66,11 @@ class TestGalaxyWatchParsing:
         raw = make_raw(
             service_uuids=["fd69"],
             service_data={"fd69": WATCH_NAMED_DATA},
-            local_name="Galaxy Watch Active2(6105) LE",
+            local_name="Galaxy Watch Active2(ABCD) LE",
         )
         result = parser.parse(raw)
         assert result is not None
-        assert result.metadata["device_name"] == "Galaxy Watch Active2(6105) LE"
+        assert result.metadata["device_name"] == "Galaxy Watch Active2(ABCD) LE"
 
     def test_long_service_data(self, parser):
         raw = make_raw(service_uuids=["fd69"], service_data={"fd69": WATCH_SVC_DATA_LONG})
@@ -83,7 +83,7 @@ class TestGalaxyWatchParsing:
         assert result is not None
 
     def test_match_by_name_pattern(self, parser):
-        raw = make_raw(local_name="Galaxy Watch Active2(6105) LE")
+        raw = make_raw(local_name="Galaxy Watch Active2(ABCD) LE")
         result = parser.parse(raw)
         assert result is not None
 

@@ -43,11 +43,11 @@ Multiple sightings of the same MOMENTUM 4 device alternate between advertising t
 
 | Shape | Manufacturer data | Sightings |
 |---|---|---|
-| full | `94 04` + `02 03 a9 5a 42 0f b8 2c 07 01 14 02 35 0a <batt> ff 0f 60 01 06 01 01 06 01` (26 B) | 107 |
+| full | `94 04` + `02 03 a9 5a 42 xx xx xx xx 01 14 02 35 0a <batt> ff 0f 60 01 06 01 01 06 01` (26 B) | 107 |
 | truncated | same prefix, ends after `ff 0f 60` (20 B total) | 4 |
 | short | `94 04 01` (3 B total) | 19 |
 
-Payload bytes 0-4 (`02 03 a9 5a 42`) are a model/firmware constant in all captures; bytes 5-8 (`0f b8 2c 07`) look like a unit identifier (unverified, surfaced raw via `payload_hex`). Byte **14** is the only varying byte across the capture series: `0x4d → 0x38 → 0x37` in time order (2026-09-26 20:11 → 2026-09-27 01:38 → 01:47) = **77 → 56 → 55**, monotonically decreasing ~4%/hour with no RSSI correlation (RSSI spans -88..-101 dBm while the byte holds constant). That is battery-percent-shaped; the parser surfaces it as `battery_percent` with the inference documented. The `06 01 01 06 01` tail is opaque.
+Payload bytes 0-4 (`02 03 a9 5a 42`) are a model/firmware constant in all captures; bytes 5-8 (`xx xx xx xx`) look like a unit identifier (unverified, surfaced raw via `payload_hex`). Byte **14** is the only varying byte across the capture series: `0x4d → 0x38 → 0x37` in time order (2026-09-26 20:11 → 2026-09-27 01:38 → 01:47) = **77 → 56 → 55**, monotonically decreasing ~4%/hour with no RSSI correlation (RSSI spans -88..-101 dBm while the byte holds constant). That is battery-percent-shaped; the parser surfaces it as `battery_percent` with the inference documented. The `06 01 01 06 01` tail is opaque.
 
 Frames on `0x0494` set `frame_type` = `pro_wireless` (full/truncated) or `pro_wireless_short` (the 1-byte `01` shape). Any other `0x0494` payload is still claimed on CID attribution alone, with no invented fields.
 

@@ -7,7 +7,7 @@ Samsung SmartThings devices (hubs, sensors, plugs, etc.) advertise via BLE with 
 ## Identifiers
 
 - **Service UUID:** `1122` (custom, not Bluetooth SIG assigned)
-- **Local name pattern:** `S{16_hex_chars}C` (e.g., `S98039bf21cd187e2C`)
+- **Local name pattern:** `S{16_hex_chars}C` (e.g., `Sxxxxxxxxxxxxxxxx` + `C`, i.e. `S` + 16 hex + `C`)
 - **Device class:** `smart_home`
 
 ## BLE Advertisement Format
@@ -22,7 +22,7 @@ Samsung SmartThings devices (hubs, sensors, plugs, etc.) advertise via BLE with 
 ### Local Name Structure
 
 ```
-S 98039bf21cd187e2 C
+S xxxxxxxxxxxxxxxx C
 │ └─────────────┘ │
 │   Device ID     │
 │   (16 hex)      │
@@ -42,13 +42,7 @@ These advertisements are minimal:
 
 | Local Name | Sightings | Notes |
 |------------|-----------|-------|
-| `S98039bf21cd187e2C` | 151 | |
-| `S201b91dbacb104cdC` | 118 | |
-| `S283da1b32aee14ddC` | 52 | |
-| `Sed9ccb98a762300eC` | 47 | |
-| `S284acba5f5432ecbC` | ~20 | |
-| `S24df0a06b5defbc1C` | ~5 | |
-| `Sdbecf73443176f55C` | ~2 | |
+| `Sxxxxxxxxxxxxxxxx` + `C` (7 distinct names) | ~2 to 151 each | |
 
 ### What We Can Parse from Advertisements
 

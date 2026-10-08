@@ -28,7 +28,7 @@ def make_raw(service_data=None, service_uuids=None, **kwargs):
     )
 
 
-ESTIMOTE_DATA = bytes.fromhex("0088faf71db7e8966183557677a402b304504440")
+ESTIMOTE_DATA = bytes.fromhex("00112233445566778883557677a402b304504440")
 
 
 class TestEstimoteParsing:
@@ -106,7 +106,7 @@ class TestEstimoteParsing:
         """Bytes 1-8 = short identifier as hex string."""
         raw = make_raw(service_data={"fe9a": ESTIMOTE_DATA})
         result = parser.parse(raw)
-        assert result.metadata["short_identifier"] == "88faf71db7e89661"
+        assert result.metadata["short_identifier"] == "1122334455667788"
 
     def test_telemetry_frame_type(self, parser):
         """Frame type 2 = telemetry."""

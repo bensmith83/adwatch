@@ -24,7 +24,7 @@ advertisement itself.
 | Manufacturer-data CID | `0x0A2D` (little-endian raw bytes `2d 0a`) — Feasycom Co., Ltd, per [Bluetooth SIG assigned numbers](https://www.bluetooth.com/specifications/assigned-numbers/) |
 | Service UUID (16-bit) | `FFF0` (generic; many unrelated vendors squat on this — we do **not** rely on it for identification) |
 | Local name | `FSC-BT<sku>[-LE]` — e.g. `"FSC-BT1026C-LE"`, `"FSC-BT986"` |
-| Sample mfr-data hex | `2d0add0d307d7b32` (CID `2d 0a` + 6-byte payload) |
+| Sample mfr-data hex | `2d0axxxxxxxxxx32` (CID `2d 0a` + 6-byte payload) |
 
 A device matches if **either** the manufacturer-data company ID is
 `0x0A2D` **or** the GAP local name matches
@@ -35,7 +35,7 @@ to be a routing signal on its own.
 
 | Offset | Bytes (sample 1) | Bytes (sample 2) | Notes |
 |---|---|---|---|
-| `0..4` | `dd 0d 30 7d 7b` | `dd 0d 30 7d 7b` | Stable across sightings of the same physical module. Most likely a MAC suffix or factory serial fingerprint. |
+| `0..4` | `xx xx xx xx xx` | `xx xx xx xx xx` | Stable across sightings of the same physical module. Most likely a MAC suffix or factory serial fingerprint. |
 | `5` | `32` | `28` | Varies between consecutive captures from the same module. Most likely a status / counter / state-flag byte. |
 
 We do not interpret these further; the entire 6-byte tail is exposed as
@@ -60,8 +60,8 @@ both advertise into the same stack.
 
 | Capture | Inference |
 |---|---|
-| local name `"FSC-BT1026C-LE"` + mfr `2d0add0d307d7b32` + UUID `FFF0` | sku = `FSC-BT1026C`, class = `ble_module`, payload_hex = `dd0d307d7b32` |
-| mfr `2d0add0d307d7b28` only (no name) | matched on CID 0x0A2D; class = `ble_module`; no SKU; payload_hex = `dd0d307d7b28` |
+| local name `"FSC-BT1026C-LE"` + mfr `2d0axxxxxxxxxx32` + UUID `FFF0` | sku = `FSC-BT1026C`, class = `ble_module`, payload_hex = `xxxxxxxxxx32` |
+| mfr `2d0axxxxxxxxxx28` only (no name) | matched on CID 0x0A2D; class = `ble_module`; no SKU; payload_hex = `xxxxxxxxxx28` |
 | local name `"FSC-BT986"` only | matched on name regex; sku = `FSC-BT986`; no payload_hex |
 
 ## References

@@ -34,36 +34,36 @@ PR_BT_UUID = "4553867f-f809-49f4-aefc-e190a1f459f3"
 
 class TestPrBtParsing:
     def test_parse_valid(self, parser):
-        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT 06CD")
+        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT ABCD")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT 06CD")
+        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT ABCD")
         result = parser.parse(raw)
         assert result.parser_name == "pr_bt"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT 06CD")
+        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT ABCD")
         result = parser.parse(raw)
         assert result.beacon_type == "pr_bt"
 
     def test_device_class(self, parser):
-        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT 06CD")
+        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT ABCD")
         result = parser.parse(raw)
         assert result.device_class == "peripheral"
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT 06CD")
+        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT ABCD")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
 
     def test_metadata_device_id(self, parser):
-        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT 06CD")
+        raw = make_raw(service_uuids=["180a", PR_BT_UUID], local_name="PR BT ABCD")
         result = parser.parse(raw)
-        assert result.metadata["device_id"] == "06CD"
+        assert result.metadata["device_id"] == "ABCD"
 
     def test_match_by_name_only(self, parser):
         raw = make_raw(local_name="PR BT ABCD")

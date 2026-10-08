@@ -27,11 +27,11 @@ Amazon Fire TV devices (Stick, Cube, smart TVs) broadcast BLE advertisements usi
 
 ```
 Fire TV (20 bytes):
-  00092f06a181b65da3907bc10a 4b4b4463 000102
-  00dc9571f10df6b403d047c993 4b4b4463 000102
+  00xxxxxxxxxxxxxxxxxxxxxxxx 4b4b4463 000102
+  00xxxxxxxxxxxxxxxxxxxxxxxx 4b4b4463 000102
 
 Fire TV (22 bytes):
-  00cf3bdbf5a2f2c2b05a1669a6 46504273 0001020001
+  00xxxxxxxxxxxxxxxxxxxxxxxx 46504273 0001020001
 ```
 
 ### Observations

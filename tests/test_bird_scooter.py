@@ -73,20 +73,20 @@ class TestParsing:
 
     def test_name_carries_unit_id(self):
         r = BirdScooterParser().parse(
-            _make_ad(service_uuids=["b13d"], local_name="Bird-4F7C")
+            _make_ad(service_uuids=["b13d"], local_name="Bird-1234")
         )
-        assert r.metadata["device_name"] == "Bird-4F7C"
-        assert r.metadata["unit_id"] == "4F7C"
+        assert r.metadata["device_name"] == "Bird-1234"
+        assert r.metadata["unit_id"] == "1234"
 
     def test_identity_prefers_name_over_mac(self):
         p = BirdScooterParser()
         a = _make_ad(mac_address="11:22:33:44:55:66",
-                     service_uuids=["b13d"], local_name="Bird-4F7C")
+                     service_uuids=["b13d"], local_name="Bird-1234")
         b = _make_ad(mac_address="99:88:77:66:55:44",
-                     service_uuids=["b13d"], local_name="Bird-4F7C")
+                     service_uuids=["b13d"], local_name="Bird-1234")
         assert p.parse(a).identifier_hash == p.parse(b).identifier_hash
         assert p.parse(a).identifier_hash == hashlib.sha256(
-            b"bird:Bird-4F7C").hexdigest()[:16]
+            b"bird:Bird-1234").hexdigest()[:16]
 
     def test_identity_falls_back_to_mac(self):
         r = BirdScooterParser().parse(_make_ad(service_uuids=["b13d"]))

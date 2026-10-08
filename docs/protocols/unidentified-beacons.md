@@ -21,39 +21,39 @@ the Zebra "Workforce Connect" push-to-talk radios all advertise FE79.
 Best guess: an enterprise Zebra handheld radio. See `getac-barcode.md` and
 `zebra.md` for related industrial devices already covered by adwatch.
 
-## S201… — Service UUID `0x1122`
+## `S…C` names — Service UUID `0x1122`
 
 Observed continuously since 2026-04-05 (598+ sightings).
 
 | Field | Value |
 |-------|-------|
-| `local_name` | `S201b91dbacb104cdC` (18 chars, mixed case with middle hex) |
+| `local_name` | `SxxxxxxxxxxxxxxxxC` (18 chars, mixed case with middle hex) |
 | `service_uuids` | `["1122"]` |
 | service_data | *(empty)* |
 
 Service UUID `0x1122` is **not** in the Bluetooth SIG assigned-numbers
 registry — it is a non-registered 16-bit UUID that the device is using
 privately (technically a spec violation: only 128-bit UUIDs are allowed for
-non-assigned service identifiers). Pattern `S201` + 12 hex chars + `C`
+non-assigned service identifiers). Pattern `S` + 16 hex chars + `C` (the hex varies per device)
 suggests the hex block is a MAC address or serial embedded in the name.
 
 Guess: an IoT gateway / ESP32-based hobby project or a cheap tracker using
 the SDK's default UUID without requesting a real one.
 
-## OVAT5-K0194559 — Local Name Only
+## OVAT5-K####### — Local Name Only
 
 Observed 2026-04-18 around 17:01 UTC (6 sightings, rssi -92 dBm).
 
 | Field | Value |
 |-------|-------|
-| `local_name` | `OVAT5-K0194559` |
+| `local_name` | `OVAT5-K#######` |
 | `service_uuids` | *(empty)* |
 | `manufacturer_data` | *(empty)* |
 | `service_data` | *(empty)* |
 | address type | random |
 
-The name format `OVAT5-K0194559` looks like `<model>-<serial>` where `OVAT5`
-is a 5-character product code and `K0194559` is a 7-digit serial prefixed
+The name format `OVAT5-K#######` looks like `<model>-<serial>` where `OVAT5`
+is a 5-character product code and `K#######` is a 7-digit serial prefixed
 with `K`. The ad carries no payload beyond the name (random-address
 connectable beacon — likely a device waiting to be paired).
 
@@ -185,16 +185,16 @@ No parser yet. The structure is regular enough to decode once a
 vendor or sibling implementation is identified. Worth chasing if
 the 0x43AC company ID appears in a future SIG-registry update.
 
-## `Nrdic67380B` / Company ID `0xFACE`
+## `NrdicXXXXXX` / Company ID `0xFACE`
 
 Observed: 11 capture entries from **a single device**.
 
 | Field | Value |
 |-------|-------|
 | `companyID` | `0xFACE` — placeholder / private-use, often used by hobby Nordic SDK projects |
-| `local_name` | `Nrdic67380B` (presumably a misspelled "Nordic" + 7-char serial) |
+| `local_name` | `NrdicXXXXXX` (presumably a misspelled "Nordic" + 7-char serial) |
 | Manufacturer data | 18 – 21 bytes, structured payload |
-| Service data `F0C0` | `06 01 0b 38 67 e0 0b da 8f 01 68 00` (constant across captures) |
+| Service data `F0C0` | `06 01 xx xx xx xx xx xx 8f 01 68 00` (constant across captures) |
 
 ### Payload Shape
 
@@ -202,17 +202,17 @@ Byte 0 of the payload after `cefa` is a **packet type discriminator**:
 
 | Type byte | Observed body shape |
 |-----------|---------------------|
-| `0x04` | `c4 1b c4 b6 e9 17 00 01 b2 88 12 80 24 03 d5 01 …` (looks like sensor + tag bytes) |
+| `0x04` | `c4 zz zz zz zz zz zz 01 b2 yy yy yy yy yy yy 01 …` (looks like sensor + tag bytes) |
 | `0x06` | shorter, `bc 41 8f 01 68 00 fd ff 06 01 67 00 19 00` |
-| `0x07` | `c4 88 12 80 24 03 d5 01 …` plus trailing zeros (looks like a status frame) |
+| `0x07` | `c4 yy yy yy yy yy yy 01 …` plus trailing zeros (looks like a status frame) |
 
-The 6-byte sub-sequence `88 12 80 24 03 d5` recurs across multiple
+The 6-byte sub-sequence `yy yy yy yy yy yy` recurs across multiple
 packet types — almost certainly a fixed device identifier or vendor
 tag.
 
 `0xFACE` is **not a valid Bluetooth SIG company assignment** — it
 is a popular placeholder for hobbyist and Nordic SDK demo projects,
-and "Nrdic67380B" looks like an off-by-one Nordic-SDK default name.
+and "NrdicXXXXXX" looks like an off-by-one Nordic-SDK default name.
 
 ### Action
 
@@ -223,28 +223,27 @@ this would only ever match the one device we saw it on.
 nodes with the same `F0C0` block shape (`[node_count] [01] [id ×6]
 [tail ×4]` — the "constant" block above is `06` nodes, version `01`, an id
 and a tail) and the same typed manufacturer frames were captured in one
-scene, and the `88 12 80 24 03 d5` sub-sequence noted above is a
-neighbour's node id. See `face-f0c0-mesh-node.md`; NearSight's
+scene, and the `yy yy yy yy yy yy` sub-sequence noted above is a
+neighbour's node id (as is the `zz …` run in the `0x04` row). See `face-f0c0-mesh-node.md`; NearSight's
 `nrdic_face_beacon` v2 decodes the family and keys identity on the node
 id. Vendor still unidentified.
 
-## `Lola's E.A5.WIFI` — Verifone-style POS terminal
+## `<Business> E.A5.WIFI` — Verifone-style POS terminal
 
 Observed: 2 captures, 1 device.
 
 | Field | Value |
 |-------|-------|
 | `companyID` | `0x5645` — **not assigned**; the bytes spell ASCII `"VE"` (Verifone?) |
-| `local_name` | `Lola's E.A5.WIFI` |
-| Manufacturer data (long) | `56 45 52 15 4c 6f 6c 61 27 73 20 45 75 72 6f 70 65 61 6e 20` — ASCII reads `"VER` + `0x15 Lola's European "` |
+| `local_name` | `<Business> E.A5.WIFI` |
+| Manufacturer data (long) | `56 45 52 15 xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx` — ASCII reads `"VER` + `0x15` + a 16-char business name |
 | Manufacturer data (short) | `56 45 52 15` |
 
 The bytes after the 2-byte company ID decode as ASCII: a literal
 `"VER"` magic prefix, a `0x15` length / version byte, then a free-form
-business name (`"Lola's European "` — looks like the start of "Lola's
-European Cafe" or similar). One device, single location.
+business name (redacted; looks like the start of a cafe name). One device, single location.
 
-`Lola's` was also observed paired separately with a `SA_TMS LUX_…`
+The business name was also observed paired separately with a `SA_TMS LUX_…`
 device on the same site (see below) — strongly suggesting a
 **Verifone TMS (Terminal Management System) BLE pairing beacon** at
 a coffee-shop POS counter.

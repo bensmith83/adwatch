@@ -31,7 +31,7 @@ def make_raw(manufacturer_data=None, service_data=None, service_uuids=None, loca
 
 # Real sample from CSV
 BUDS3_PRO_SVC_DATA = bytes.fromhex("005fe6f74080c94e5ded74a54e4000")
-BUDS3_PRO_NAME = "Galaxy Buds3 Pro (E757) LE"
+BUDS3_PRO_NAME = "Galaxy Buds3 Pro (ABCD) LE"
 
 
 class TestSamsungGalaxyBudsParsing:
@@ -116,7 +116,7 @@ class TestSamsungGalaxyBudsModelExtraction:
     def test_model_from_buds3_pro_name(self, parser):
         raw = make_raw(
             service_data={"fd69": BUDS3_PRO_SVC_DATA},
-            local_name="Galaxy Buds3 Pro (E757) LE",
+            local_name="Galaxy Buds3 Pro (ABCD) LE",
         )
         result = parser.parse(raw)
         assert result.metadata["model"] == "Galaxy Buds3 Pro"
@@ -161,7 +161,7 @@ class TestSamsungGalaxyBudsMatching:
 
     def test_match_on_local_name_only(self, parser):
         """Should parse with just Galaxy Buds local_name, no service data."""
-        raw = make_raw(local_name="Galaxy Buds3 Pro (E757) LE")
+        raw = make_raw(local_name="Galaxy Buds3 Pro (ABCD) LE")
         result = parser.parse(raw)
         assert result is not None
 
@@ -196,10 +196,10 @@ class TestSamsungGalaxyBudsIdentity:
     def test_same_mac_same_hash(self, parser):
         r1 = parser.parse(make_raw(
             service_data={"fd69": BUDS3_PRO_SVC_DATA},
-            local_name="Galaxy Buds3 Pro (E757) LE",
+            local_name="Galaxy Buds3 Pro (ABCD) LE",
         ))
         r2 = parser.parse(make_raw(
             service_data={"fd69": BUDS3_PRO_SVC_DATA},
-            local_name="Galaxy Buds3 Pro (E757) LE",
+            local_name="Galaxy Buds3 Pro (ABCD) LE",
         ))
         assert r1.identifier_hash == r2.identifier_hash

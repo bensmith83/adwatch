@@ -70,7 +70,7 @@ class TestMatching:
 
     def test_matches_link_hub_name(self):
         reg = _register(ParserRegistry())
-        for name in ("Arccos Link", "link1a2b", "LNK3FF01", "rf00c3"):
+        for name in ("Arccos Link", "link1a2b", "LNK3ABCD", "rf12ab"):
             ad = _make_ad(service_uuids=[], local_name=name)
             assert len(reg.match(ad)) == 1, name
 
@@ -171,14 +171,14 @@ class TestLinkAndRangefinder:
         assert r.metadata["unit_id"] == "1a2b"
 
     def test_lnk3_variant(self):
-        r = ArccosGolfParser().parse(_make_ad(service_uuids=[], local_name="LNK3FF01"))
+        r = ArccosGolfParser().parse(_make_ad(service_uuids=[], local_name="LNK3ABCD"))
         assert r.metadata["device_role"] == "link_hub"
-        assert r.metadata["unit_id"] == "FF01"
+        assert r.metadata["unit_id"] == "ABCD"
 
     def test_rangefinder(self):
-        r = ArccosGolfParser().parse(_make_ad(service_uuids=[], local_name="rf00c3"))
+        r = ArccosGolfParser().parse(_make_ad(service_uuids=[], local_name="rf12ab"))
         assert r.metadata["device_role"] == "rangefinder"
-        assert r.metadata["unit_id"] == "00c3"
+        assert r.metadata["unit_id"] == "12ab"
 
     def test_generic_arccos_link_name(self):
         r = ArccosGolfParser().parse(_make_ad(service_uuids=[], local_name="Arccos Link"))

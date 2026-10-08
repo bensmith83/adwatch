@@ -137,11 +137,11 @@ class TestRawAdvertisementFromBleakData:
             manufacturer_data=None,
             service_data=None,
             service_uuids=[],
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
             rssi=-45,
             tx_power=None,
         )
-        assert raw.local_name == "TP357 (2B54)"
+        assert raw.local_name == "TP357 (AB12)"
 
     def test_raw_ad_now_factory(self):
         raw = RawAdvertisement.now(

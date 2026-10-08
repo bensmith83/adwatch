@@ -29,7 +29,7 @@ def make_raw(manufacturer_data=None, service_data=None, service_uuids=None, loca
     )
 
 
-SLEEPTRACKER_MFR = bytes.fromhex("ef010022979b3c06010f")
+SLEEPTRACKER_MFR = bytes.fromhex("ef01002211223344010f")
 SLEEPTRACKER_UUID = "f6380280-6d90-442c-8feb-3aec76948f06"
 
 
@@ -83,7 +83,7 @@ class TestSleepTrackerParsing:
     def test_device_id(self, parser):
         raw = make_raw(manufacturer_data=SLEEPTRACKER_MFR, local_name="SleepTracker")
         result = parser.parse(raw)
-        assert result.metadata["device_id"] == "979b3c06"
+        assert result.metadata["device_id"] == "11223344"
 
     def test_firmware_info(self, parser):
         raw = make_raw(manufacturer_data=SLEEPTRACKER_MFR, local_name="SleepTracker")
@@ -97,7 +97,7 @@ class TestSleepTrackerMalformed:
         assert parser.parse(raw) is None
 
     def test_returns_none_wrong_company_id(self, parser):
-        raw = make_raw(manufacturer_data=bytes.fromhex("4c000022979b3c06010f"))
+        raw = make_raw(manufacturer_data=bytes.fromhex("4c00002211223344010f"))
         assert parser.parse(raw) is None
 
     def test_returns_none_too_short(self, parser):

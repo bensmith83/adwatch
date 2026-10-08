@@ -54,7 +54,7 @@ Neighbor cell:   94 08 35 1b 07 XX YY RR
            received-RSSI-shaped (inter-sensor link measurement)
 
 Stat cells:      5-byte id + counter-shaped words
-  ids seen: 42 02 de d8 4f / 42 02 d6 71 51 / f4 02 e0 3e 4e
+  ids seen: 42 02 xx xx xx / 42 02 yy yy yy / f4 02 zz zz zz
   then:     a 00 01 2a e3-style word shared across units within one
             day (00 01 29 e3 two days earlier — day-counter-shaped),
             further 00 00 10 xx / 00 00 16-17 xx / 00 03 xx xx words,

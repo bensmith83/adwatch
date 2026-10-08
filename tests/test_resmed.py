@@ -48,7 +48,7 @@ class TestResmedParser:
     def test_parses_by_local_name_and_service_uuid(self):
         parser = ResmedParser()
         raw = _make_raw(
-            local_name="ResMed 111682",
+            local_name="ResMed 123456",
             manufacturer_data=bytes.fromhex("8d0300"),
             service_uuids=["0000fd56-0000-1000-8000-00805f9b34fb"],
         )
@@ -57,7 +57,7 @@ class TestResmedParser:
         assert result.parser_name == "resmed"
         assert result.beacon_type == "resmed"
         assert result.device_class == "cpap"
-        assert result.metadata["device_number"] == "111682"
+        assert result.metadata["device_number"] == "123456"
 
     def test_parses_by_service_uuid_only(self):
         parser = ResmedParser()
@@ -71,15 +71,15 @@ class TestResmedParser:
 
     def test_parses_by_local_name_only(self):
         parser = ResmedParser()
-        raw = _make_raw(local_name="ResMed 828156")
+        raw = _make_raw(local_name="ResMed 234567")
         result = parser.parse(raw)
         assert result is not None
-        assert result.metadata["device_number"] == "828156"
+        assert result.metadata["device_number"] == "234567"
 
     def test_extracts_company_id(self):
         parser = ResmedParser()
         raw = _make_raw(
-            local_name="ResMed 111682",
+            local_name="ResMed 123456",
             manufacturer_data=bytes.fromhex("8d0300"),
             service_uuids=["0000fd56-0000-1000-8000-00805f9b34fb"],
         )
@@ -98,7 +98,7 @@ class TestResmedParser:
     def test_identifier_hash_stable(self):
         parser = ResmedParser()
         raw = _make_raw(
-            local_name="ResMed 111682",
+            local_name="ResMed 123456",
             manufacturer_data=bytes.fromhex("8d0300"),
             service_uuids=["0000fd56-0000-1000-8000-00805f9b34fb"],
         )
@@ -109,8 +109,8 @@ class TestResmedParser:
 
     def test_different_devices_different_hashes(self):
         parser = ResmedParser()
-        raw1 = _make_raw(local_name="ResMed 111682", mac="AA:BB:CC:DD:EE:01")
-        raw2 = _make_raw(local_name="ResMed 828156", mac="AA:BB:CC:DD:EE:02")
+        raw1 = _make_raw(local_name="ResMed 123456", mac="AA:BB:CC:DD:EE:01")
+        raw2 = _make_raw(local_name="ResMed 234567", mac="AA:BB:CC:DD:EE:02")
         r1 = parser.parse(raw1)
         r2 = parser.parse(raw2)
         assert r1.identifier_hash != r2.identifier_hash
@@ -128,7 +128,7 @@ class TestResmedRegistration:
 
     def test_matches_local_name(self):
         registry = _make_registry()
-        raw = _make_raw(local_name="ResMed 111682")
+        raw = _make_raw(local_name="ResMed 123456")
         matches = registry.match(raw)
         assert len(matches) >= 1
 

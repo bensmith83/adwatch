@@ -2,14 +2,14 @@
 
 ## Overview
 
-A BLE device observed in a 2026-05-20 scan advertising the custom 128-bit service UUID `5EE1B93C-3DF6-11E4-9D9F-164230D1DF67` together with a local name of the form `P` + 7 decimal digits (captured specimen: `P1822176`). **The vendor could not be identified** from public sources. The combination of a globally-unique vendor UUID and a strict `^P\d{7}$` name pattern is specific enough to fingerprint the family without over-matching, so we surface it as a catalog stub for future correlation.
+A BLE device observed in a 2026-05-20 scan advertising the custom 128-bit service UUID `5EE1B93C-3DF6-11E4-9D9F-164230D1DF67` together with a local name of the form `P` + 7 decimal digits (captured specimen: `P#######`). **The vendor could not be identified** from public sources. The combination of a globally-unique vendor UUID and a strict `^P\d{7}$` name pattern is specific enough to fingerprint the family without over-matching, so we surface it as a catalog stub for future correlation.
 
 ### Observed signature
 
 | Signal | Value |
 |---|---|
 | Service UUID (128-bit, custom) | `5EE1B93C-3DF6-11E4-9D9F-164230D1DF67` |
-| Local name | `P1822176` (matches `^P\d{7}$`) |
+| Local name | `P#######` (matches `^P\d{7}$`) |
 | Manufacturer data | none |
 | Service data | none |
 | Address type | random |
@@ -28,7 +28,7 @@ P + 7 decimal digits
 ^P\d{7}$
 ```
 
-The captured serial `1822176` is captured separately as `metadata.serial` and used as the stable-key anchor.
+The captured serial `#######` is captured separately as `metadata.serial` and used as the stable-key anchor.
 
 ### Vendor UUID forensics (RFC-4122 v1)
 
@@ -64,8 +64,8 @@ All leads dated 2026-05-22. None produced a confident attribution.
 |---|---|
 | Google `"5EE1B93C-3DF6-11E4-9D9F-164230D1DF67"` (literal) | No BLE results. Only hits are Polish MIDAS geological metadata records sharing the same `9d9f-164230d1df67` clock-seq + node tail (e.g. `29bb3786-3e34-11e4-9d9f-164230d1df67`) — forensic correlation but no BLE attribution |
 | Google `"5EE1B93C" BLE service UUID` | Generic BLE service-UUID docs only; no product hit |
-| Google `"P1822176" BLE device name` | No relevant results |
-| Google `"P1822176" device serial number` | No relevant results |
+| Google `"P#######" BLE device name` | No relevant results |
+| Google `"P#######" device serial number` | No relevant results |
 | Google `BLE "P + 7 digit" Polycom / Plantronics / Poly` | Poly/Plantronics serial-number guidance is 6-char alphanumeric, not 7-digit-with-P-prefix. No match |
 | Google Pioneer DEH series "P" serial | Pioneer model codes use the prefix in product names (e.g. DEH-S7200BHS), not as a BLE-advertised local name |
 | Google Polk Audio MagniFi / React BLE service UUID | No product publishes a matching UUID or naming scheme |
@@ -83,7 +83,7 @@ All leads dated 2026-05-22. None produced a confident attribution.
 
 ## References
 
-- `research/adwatch_export 9.json` — 6-sighting capture of the device (deviceIdentifier `3B2C73F2-00D8-7A52-D6B6-79357CC81243`)
+- `research/adwatch_export 9.json` — 6-sighting capture of the device (deviceIdentifier `<device-id>`)
 - [Sources/Parsers/Unknown5EE1B93CParser.swift](https://github.com/) — the parser implementation
 - [Sources/Parsers/Unknown3E1D50CDParser.swift](https://github.com/) — sibling unattributed-family parser (custom-UUID + literal-name gate)
 - [Sources/Parsers/UnknownFE7CDAF58E01Parser.swift](https://github.com/) — sibling unattributed-family parser (CID + custom-UUID gate)

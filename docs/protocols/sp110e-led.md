@@ -50,7 +50,7 @@ the `FFB0` service UUID before claiming the advertisement.
 
 ```
 Bytes 0..1   : 00 00                   ← LE company ID (0x0000 placeholder)
-Bytes 2..9   : 00 00 a9 9a 18 04 48 b9 ← opaque 8-byte payload
+Bytes 2..9   : 00 00 xx xx xx xx xx xx ← opaque 8-byte payload
 ```
 
 The 8-byte payload after the CID very likely encodes some mix of MAC

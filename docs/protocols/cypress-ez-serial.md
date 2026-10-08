@@ -39,7 +39,7 @@ Two manufacturer-data variants captured:
 
 ```
 mfg = 31 01 [00 00 00 00 00]            — 5 bytes of zeros (default uninitialized slot)
-mfg = 31 01 [cd 56 57 ab]               — 4-byte EZ-Serial id (BD_ADDR-low bytes)
+mfg = 31 01 [xx xx xx xx]               — 4-byte EZ-Serial id (BD_ADDR-low bytes; redacted)
 ```
 
 | Offset (post-cid) | Bytes | Field |
@@ -55,7 +55,7 @@ practice it is the low 4 octets of the module's BD_ADDR.
 
 ```
 mfg = 31 01 00 00 00 00 00              (13 sightings — uninitialized)
-mfg = 31 01 cd 56 57 ab                 (4 sightings — id slot populated)
+mfg = 31 01 xx xx xx xx                 (4 sightings — id slot populated)
 ```
 
 Captured 2026-05-31 in `research/adwatch_export 14.json` — two distinct

@@ -57,7 +57,7 @@ class TestAlibabaAisMatching:
     def test_match_winbot_name(self):
         registry = ParserRegistry()
         _register(registry)
-        ad = _make_ad(local_name="WINBOT-88C2F3")
+        ad = _make_ad(local_name="WINBOT-123456")
         assert len(registry.match(ad)) == 1
 
 

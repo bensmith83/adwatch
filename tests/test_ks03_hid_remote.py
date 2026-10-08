@@ -42,7 +42,7 @@ def _make_registry():
 class TestKS03Registry:
     def test_matches_local_name_pattern(self):
         registry = _make_registry()
-        ad = _make_ad(local_name="KS03~2520e0")
+        ad = _make_ad(local_name="KS03~aabbcc")
         assert len(registry.match(ad)) >= 1
 
     def test_matches_uppercase_hex(self):
@@ -65,7 +65,7 @@ class TestKS03Registry:
 class TestKS03Parser:
     def test_parses_canonical_name(self):
         parser = KS03HidRemoteParser()
-        ad = _make_ad(local_name="KS03~2520e0")
+        ad = _make_ad(local_name="KS03~aabbcc")
         result = parser.parse(ad)
         assert result is not None
         assert result.parser_name == "ks03_hid_remote"
@@ -74,21 +74,21 @@ class TestKS03Parser:
 
     def test_mac_suffix_extracted(self):
         parser = KS03HidRemoteParser()
-        ad = _make_ad(local_name="KS03~98dad0")
+        ad = _make_ad(local_name="KS03~ddeeff")
         result = parser.parse(ad)
-        assert result.metadata["mac_suffix"] == "98dad0"
+        assert result.metadata["mac_suffix"] == "ddeeff"
 
     def test_device_name_preserved(self):
         parser = KS03HidRemoteParser()
-        ad = _make_ad(local_name="KS03~2520e0")
+        ad = _make_ad(local_name="KS03~aabbcc")
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "KS03~2520e0"
+        assert result.metadata["device_name"] == "KS03~aabbcc"
 
     def test_flags_placeholder_mfg_data(self):
         """Mfg data f001020304050600 is a Telink SDK uninitialized template."""
         parser = KS03HidRemoteParser()
         ad = _make_ad(
-            local_name="KS03~2520e0",
+            local_name="KS03~aabbcc",
             manufacturer_data=KS03_PLACEHOLDER_MFG,
         )
         result = parser.parse(ad)
@@ -98,7 +98,7 @@ class TestKS03Parser:
     def test_does_not_flag_real_mfg_data(self):
         parser = KS03HidRemoteParser()
         ad = _make_ad(
-            local_name="KS03~2520e0",
+            local_name="KS03~aabbcc",
             manufacturer_data=b"\xf0\x01\xde\xad\xbe\xef",
         )
         result = parser.parse(ad)
@@ -107,7 +107,7 @@ class TestKS03Parser:
     def test_identity_hash_stable(self):
         parser = KS03HidRemoteParser()
         mac = "11:22:33:44:55:66"
-        ad = _make_ad(mac_address=mac, local_name="KS03~2520e0")
+        ad = _make_ad(mac_address=mac, local_name="KS03~aabbcc")
         result = parser.parse(ad)
         expected = hashlib.sha256(f"{mac}:ks03_hid_remote".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
@@ -125,7 +125,7 @@ class TestKS03Parser:
     def test_hid_service_flagged(self):
         parser = KS03HidRemoteParser()
         ad = _make_ad(
-            local_name="KS03~2520e0",
+            local_name="KS03~aabbcc",
             service_uuids=["1812", "180F"],
         )
         result = parser.parse(ad)
@@ -135,7 +135,7 @@ class TestKS03Parser:
         """Linux/BlueZ delivers the HID service as the full 128-bit UUID."""
         parser = KS03HidRemoteParser()
         ad = _make_ad(
-            local_name="KS03~2520e0",
+            local_name="KS03~aabbcc",
             service_uuids=["00001812-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)
@@ -145,7 +145,7 @@ class TestKS03Parser:
         """Some backends deliver uppercase full 128-bit UUIDs."""
         parser = KS03HidRemoteParser()
         ad = _make_ad(
-            local_name="KS03~2520e0",
+            local_name="KS03~aabbcc",
             service_uuids=["00001812-0000-1000-8000-00805F9B34FB"],
         )
         result = parser.parse(ad)
@@ -154,7 +154,7 @@ class TestKS03Parser:
     def test_raw_payload_hex_captures_mfg_data(self):
         parser = KS03HidRemoteParser()
         ad = _make_ad(
-            local_name="KS03~2520e0",
+            local_name="KS03~aabbcc",
             manufacturer_data=KS03_PLACEHOLDER_MFG,
         )
         result = parser.parse(ad)
@@ -162,6 +162,6 @@ class TestKS03Parser:
 
     def test_raw_payload_hex_empty_when_no_mfg_data(self):
         parser = KS03HidRemoteParser()
-        ad = _make_ad(local_name="KS03~2520e0")
+        ad = _make_ad(local_name="KS03~aabbcc")
         result = parser.parse(ad)
         assert result.raw_payload_hex == ""

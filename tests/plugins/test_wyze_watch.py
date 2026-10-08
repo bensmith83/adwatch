@@ -29,8 +29,8 @@ def make_raw(manufacturer_data=None, service_data=None, service_uuids=None, loca
     )
 
 
-WYZE_MFR_DATA = bytes.fromhex("4906020900002caa8ed26282")
-WYZE_FE95_DATA = bytes.fromhex("31208f03002caa8ed2628209")
+WYZE_MFR_DATA = bytes.fromhex("4906020900002caa8e000001")
+WYZE_FE95_DATA = bytes.fromhex("31208f03002caa8e00000109")
 
 
 class TestWyzeWatchParsing:
@@ -92,7 +92,7 @@ class TestWyzeWatchParsing:
     def test_embedded_mac(self, parser):
         raw = make_raw(manufacturer_data=WYZE_MFR_DATA, local_name="Wyze Watch 47")
         result = parser.parse(raw)
-        assert result.metadata["embedded_mac"] == "2C:AA:8E:D2:62:82"
+        assert result.metadata["embedded_mac"] == "2C:AA:8E:00:00:01"
 
     def test_device_type_code(self, parser):
         raw = make_raw(manufacturer_data=WYZE_MFR_DATA, local_name="Wyze Watch 47")
@@ -126,7 +126,7 @@ class TestWyzeWatchParsing:
 class TestWyzeWatchMalformed:
     def test_returns_none_wrong_name(self, parser):
         """Without matching name, needs non-Wyze company_id to reject."""
-        raw = make_raw(manufacturer_data=bytes.fromhex("4c00020900002caa8ed26282"), local_name="Some Other Watch")
+        raw = make_raw(manufacturer_data=bytes.fromhex("4c00020900002caa8e000001"), local_name="Some Other Watch")
         assert parser.parse(raw) is None
 
     def test_returns_none_no_data_no_name(self, parser):

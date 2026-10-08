@@ -2,7 +2,7 @@
 
 ## Identification
 
-- **Local Name Pattern**: `WVOM-XXXXXX` (6-digit serial number, e.g., `WVOM-147516`)
+- **Local Name Pattern**: `WVOM-XXXXXX` (6-digit serial number, e.g., `WVOM-XXXXXX`)
 - **Service UUID**: `0ED3E3D3-8CD8-4F29-8FEC-A7D3A2C5443E` (128-bit custom UUID)
 - **Manufacturer Data**: None observed in advertisements
 - **Address Type**: Random (BLE privacy enabled)
@@ -99,9 +99,9 @@ Potentially relevant resources:
 
 | Field               | Value                                          |
 |---------------------|------------------------------------------------|
-| Local Name          | `WVOM-147516`                                  |
+| Local Name          | `WVOM-XXXXXX`                                  |
 | Service UUID        | `0ED3E3D3-8CD8-4F29-8FEC-A7D3A2C5443E`        |
-| Device Address      | `8898969B-28F0-0759-AFA2-D7F752A61E0E`         |
+| Device Address      | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`         |
 | Address Type        | Random                                         |
 | RSSI Range          | -75 to -101 dBm (moderate to far)              |
 | Observation Window  | ~5 hours                                       |

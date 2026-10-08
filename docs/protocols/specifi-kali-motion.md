@@ -2,8 +2,7 @@
 
 ## Overview
 
-A BLE PIR motion sensor advertising as `MOTION_<4 hex>` (e.g. `MOTION_0476`,
-`MOTION_FD0A`, `MOTION_F5C7`). Manufacturer ID `0x0502` is registered by the
+A BLE PIR motion sensor advertising as `MOTION_<4 hex>` (e.g. `MOTION_xxxx`). Manufacturer ID `0x0502` is registered by the
 Bluetooth SIG to **Specifi-Kali LLC**, a small Austin, TX hardware company
 better known for the Laelaps GPS dog-tracking collar system (FCC ID `2AFKF`).
 The `MOTION` family appears to be a newer or undocumented Specifi-Kali
@@ -32,13 +31,13 @@ Total payload length (excluding the 2-byte CID): **10 bytes**.
 
 | Local name | Mfr payload (post-CID) | unit_id | serial |
 |------------|------------------------|---------|--------|
-| `MOTION_0476` | `00 00 4A 47 7F 54 04 76` | `0476` | `4a477f54` |
-| `MOTION_FD0A` | `00 00 4A 47 60 8F FD 0A` | `fd0a` | `4a47608f` |
-| `MOTION_F5C7` | `00 00 7B 98 8F BB F5 C7` | `f5c7` | `7b988fbb` |
+| `MOTION_xxxx` | `00 00 4A 47 xx xx xx xx` | `xxxx` | `4a47xxxx` |
+| `MOTION_yyyy` | `00 00 4A 47 yy yy yy yy` | `yyyy` | `4a47yyyy` |
+| `MOTION_zzzz` | `00 00 7B 98 zz zz zz zz` | `zzzz` | `7b98zzzz` |
 
-Note: units `0476` and `FD0A` share the leading serial bytes `4A 47`,
+Note: units `xxxx` and `yyyy` share the leading serial bytes `4A 47`,
 suggesting a manufacturing batch or model marker (`4A 47` = ASCII `"JG"`).
-Unit `F5C7` carries a different leading pair (`7B 98`), so the prefix is
+Unit `zzzz` carries a different leading pair (`7B 98`), so the prefix is
 not a fixed model field — at most a batch identifier.
 
 ### Local Name

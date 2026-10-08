@@ -25,8 +25,8 @@ consistent across all of them, so adwatch identifies them generically.
 
 Example names observed:
 
-- `KS03~2520e0`
-- `KS03~98dad0`
+- `KS03~xxxxxx`
+- `KS03~yyyyyy`
 
 ### Manufacturer Data
 
@@ -68,7 +68,7 @@ adwatch matches via `local_name_pattern=r"^KS03~[0-9a-fA-F]{6}$"` and emits:
 ## Detection Density
 
 In the adwatch export from 2026-04-13, two distinct KS03 devices were seen in
-the last 8-hour window (MAC suffixes `2520e0` and `98dad0`). Typical
+the last 8-hour window (two distinct MAC suffixes). Typical
 home environments show 0–3 of these at any time. In dense urban or retail
 environments (cafes, malls) sightings cluster into the dozens, since the same
 product is sold under hundreds of brands.

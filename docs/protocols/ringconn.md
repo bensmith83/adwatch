@@ -52,7 +52,7 @@ The stable key is `ringconn:<localName>`.
 
 | Capture | Inference |
 |---|---|
-| local name `"RingConn Gen2-6DD7"` (only signal) | generation = 2, mac_suffix = `6DD7`, class = `smart_ring` |
+| local name `"RingConn Gen2-XXXX"` (only signal) | generation = 2, mac_suffix = `XXXX`, class = `smart_ring` |
 | local name `"RingConn-AB12"` | generation = 1, mac_suffix = `AB12`, class = `smart_ring` |
 | local name `"RingConn Gen2-abcd"` | generation = 2, mac_suffix = `abcd` (case-insensitive) |
 | local name `"RingConn"` (no suffix) | no match |

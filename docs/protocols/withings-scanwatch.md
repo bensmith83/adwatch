@@ -45,7 +45,7 @@ Examples:
 |---|---|---|
 | `ScanWatch ABC` | `ScanWatch` | `ABC` |
 | `ScanWatch 2 D9` | `ScanWatch 2` | `D9` |
-| `ScanWatch Light 42F0` | `ScanWatch Light` | `42F0` |
+| `ScanWatch Light XXXX` | `ScanWatch Light` | `XXXX` |
 | `ScanWatch Horizon 1A` | `ScanWatch Horizon` | `1A` |
 
 The variant token is optional (a bare `ScanWatch` is the original 2020 model). The trailing hex token is required and matches `[0-9A-F]{2,4}` — at least 2 hex digits, anchored at the end of the name. A bare `ScanWatch 2` with no suffix does **not** match.

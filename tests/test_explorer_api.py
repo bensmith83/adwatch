@@ -119,7 +119,7 @@ class TestExplorerAdsEndpoint:
 
     @pytest.mark.asyncio
     async def test_filter_by_local_name(self, client, raw_storage):
-        ad = _make_ad("11:22:33:44:55:66", local_name="TP357 (2B54)")
+        ad = _make_ad("11:22:33:44:55:66", local_name="TP357 (AB12)")
         await raw_storage.save(ad)
         resp = await client.get("/api/explorer/ads", params={"local_name": "TP357"})
         assert resp.status_code == 200

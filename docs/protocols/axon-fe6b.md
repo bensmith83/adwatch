@@ -49,8 +49,8 @@ Offset  Size  Field
 
 Fields [1..14) exactly as v1; bytes [14..23) are a **9-byte
 printable-ASCII serial** replacing the v1 tail + terminator. Observed:
-`X60AE544A` — Axon's documented X-prefix serial convention (compare the
-consumer Pulse+ GATT-trace serial `X87004693`). The parser requires the
+`X########` — Axon's documented X-prefix serial convention (compare the
+consumer Pulse+ GATT-trace serial `X########`). The parser requires the
 serial region to be printable ASCII before claiming a v2 frame.
 
 ## Identity

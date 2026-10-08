@@ -6,7 +6,7 @@ MELK-OA21 is a Bluetooth Low Energy LED-strip controller in the broader **ELK-BL
 
 | Signal | Value |
 |---|---|
-| Local name | `MELK-OA21   14` (note three spaces — fixed-width-padded numeric suffix) |
+| Local name | `MELK-OA21   NN` (note three spaces — fixed-width-padded numeric suffix) |
 | Manufacturer data | absent |
 | Service data | absent |
 | Service UUIDs | absent |
@@ -29,7 +29,7 @@ This took a non-trivial amount of web research; documenting both the hits and th
 **What we still don't know:**
 
 - The OEM / silicon vendor behind the MELK brand. The chips are sold under dozens of Amazon brand names and the original manufacturer is not publicly named in any source we found. We surface `family = "ELK-BLEDOM"` in metadata but **do not invent a specific vendor**.
-- Whether the trailing numeric suffix (`14`) is a true per-unit serial, a batch number, or a deployment label. We capture it as `serial_suffix` and let downstream consumers interpret.
+- Whether the trailing numeric suffix (`NN`) is a true per-unit serial, a batch number, or a deployment label. We capture it as `serial_suffix` and let downstream consumers interpret.
 
 **Dead-end queries (all 2026-05-20):**
 
@@ -52,7 +52,7 @@ This took a non-trivial amount of web research; documenting both the hits and th
 ### Local Name Format
 
 ```
-MELK-OA21   14
+MELK-OA21   NN
 └──┬──┘└┬┘└┬┘└┬┘
    │   │  │  └── trailing digits — `serial_suffix` (parser captures)
    │   │  └───── whitespace padding (1+ space/tab characters, fixed-width
@@ -83,7 +83,7 @@ The parser scopes its stable key to `melk_device:<MODEL>:<SERIAL>`, anchoring on
 
 ## References
 
-- `research/adwatch_export 8.json` — captured MELK-OA21 device (entry at line 2479, local name `MELK-OA21   14`, sighting count 1, RSSI -99 dBm)
+- `research/adwatch_export 8.json` — captured MELK-OA21 device (entry at line 2479, local name `MELK-OA21   NN`, sighting count 1, RSSI -99 dBm)
 - [dave-code-ruiz/elkbledom](https://github.com/dave-code-ruiz/elkbledom) — Home Assistant integration documenting ELK-/MELK-/LEDBLE/XROCKER family
 - [dave-code-ruiz/elkbledom#90 — MELK-OA21 Info / General MELK Reverse Engineering](https://github.com/dave-code-ruiz/elkbledom/issues/90)
 - [homebridge-melk-ble-light on libraries.io](https://libraries.io/npm/homebridge-melk-ble-light)

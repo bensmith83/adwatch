@@ -48,14 +48,14 @@ def _make_raw(
 
 
 BP5S_UUID = "636f6d2e-6a69-7561-6e2e-425056323500"
-BP5S_MFR_DATA = bytes.fromhex("590000000000004d323c1b68")
+BP5S_MFR_DATA = bytes.fromhex("590000000000004d32aabbcc")
 
 
 class TestBp5sParser:
     def test_parses_by_local_name_and_uuid(self):
         parser = Bp5sParser()
         raw = _make_raw(
-            local_name="BP5S 11070",
+            local_name="BP5S 12345",
             manufacturer_data=BP5S_MFR_DATA,
             service_uuids=[BP5S_UUID],
         )
@@ -68,12 +68,12 @@ class TestBp5sParser:
     def test_extracts_serial_number(self):
         parser = Bp5sParser()
         raw = _make_raw(
-            local_name="BP5S 11070",
+            local_name="BP5S 12345",
             service_uuids=[BP5S_UUID],
         )
         result = parser.parse(raw)
-        assert result.metadata["serial_number"] == "11070"
-        assert result.metadata["device_name"] == "BP5S 11070"
+        assert result.metadata["serial_number"] == "12345"
+        assert result.metadata["device_name"] == "BP5S 12345"
 
     def test_parses_by_service_uuid_only(self):
         parser = Bp5sParser()
@@ -84,7 +84,7 @@ class TestBp5sParser:
 
     def test_parses_by_local_name_only(self):
         parser = Bp5sParser()
-        raw = _make_raw(local_name="BP5S 11070")
+        raw = _make_raw(local_name="BP5S 12345")
         result = parser.parse(raw)
         assert result is not None
 
@@ -100,7 +100,7 @@ class TestBp5sParser:
     def test_identifier_hash_stable(self):
         parser = Bp5sParser()
         raw = _make_raw(
-            local_name="BP5S 11070",
+            local_name="BP5S 12345",
             service_uuids=[BP5S_UUID],
         )
         r1 = parser.parse(raw)
@@ -111,7 +111,7 @@ class TestBp5sParser:
     def test_extracts_company_id(self):
         parser = Bp5sParser()
         raw = _make_raw(
-            local_name="BP5S 11070",
+            local_name="BP5S 12345",
             manufacturer_data=BP5S_MFR_DATA,
             service_uuids=[BP5S_UUID],
         )
@@ -128,6 +128,6 @@ class TestBp5sRegistration:
 
     def test_matches_local_name(self):
         registry = _make_registry()
-        raw = _make_raw(local_name="BP5S 11070")
+        raw = _make_raw(local_name="BP5S 12345")
         matches = registry.match(raw)
         assert len(matches) >= 1

@@ -8,7 +8,7 @@ PR BT devices advertise via BLE with a custom 128-bit service UUID `4553867F-F80
 
 - **Service UUID:** `4553867F-F809-49F4-AEFC-E190A1F459F3` (custom 128-bit)
 - **Standard service:** `180A` (Device Information)
-- **Local name pattern:** `PR BT XXXX` (XXXX = hex device ID, e.g., `PR BT 06CD`)
+- **Local name pattern:** `PR BT XXXX` (XXXX = hex device ID, e.g., `PR BT XXXX`)
 - **Device class:** `peripheral`
 
 ## BLE Advertisement Format

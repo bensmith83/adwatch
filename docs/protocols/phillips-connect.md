@@ -59,17 +59,17 @@ themselves with a fleet asset number instead.
 | 2 | 2 | Frame selector | `0A 01` |
 | 4 | 1 | Constant | `0x1A` in all captures |
 | 5 | 1 | Frame counter | ticks between adverts (`0x1B`→`0x1C` in ~2 s) |
-| 6 | 2 | Per-unit tag | stable per camera (`6E47`, `787C`) |
+| 6 | 2 | Per-unit tag | stable per camera (two distinct 2-byte values seen) |
 
 ### Captured frames
 
 | local name | mfr data |
 |------------|----------|
-| `PCTGW_24783` | `7f 08 00 00 00 08 66 96 10 62 22 47 83` → IMEI 866961062224783 |
-| `V571536` | `7f 08 00 00 00 08 66 96 10 69 83 92 29` → IMEI 866961069839229 |
-| `PCAM_E719EB` | `7f 08 0a 01 1a 1c 6e 47` |
-| `PCAM_E719EB` | `7f 08 0a 01 1a 1b 6e 47` |
-| `PCAM_8985EF` | `7f 08 0a 01 1a 1c 78 7c` |
+| `PCTGW_xxxxx` | `7f 08 00 00 00 08 66 96 10 62 xx xx xx` → IMEI 86696106xxxxxxx |
+| `V######` | `7f 08 00 00 00 08 66 96 10 69 xx xx xx` → IMEI 86696106xxxxxxx |
+| `PCAM_XXXXXX` | `7f 08 0a 01 1a 1c xx xx` |
+| `PCAM_XXXXXX` | `7f 08 0a 01 1a 1b xx xx` |
+| `PCAM_YYYYYY` | `7f 08 0a 01 1a 1c yy yy` |
 
 ## What We Can Parse
 

@@ -47,7 +47,7 @@ with our capture (`addressType = random`).
 
 ```
 offset 0–1   f4 9d           forged company ID 0x9DF4 (LE), non-SIG, stable
-offset 2–5   8a 8d 22 3f     opaque device/model id field (stable in session)
+offset 2–5   xx xx xx xx     opaque device/model id field (stable in session; redacted)
 offset 6–7   00 00           reserved / padding
 offset 8..   73 6f 75 6e 64 63   ASCII "soundc…" (start of "soundcore", TRUNCATED)
 ```

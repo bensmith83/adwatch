@@ -11,8 +11,8 @@ count and each node's slowly-incrementing counter. Fourteen nodes were
 captured in one three-minute scene on 2026-08-26 (23:55–23:58 UTC, RSSI up
 to −56 dBm), every one on a rotating random address with no local name.
 
-The 2026-06 `unidentified-beacons.md` entry "Nrdic67380B / 0xFACE" was one
-node of the same family (its block reads `06 01 | 0b3867e00bda | 8f016800`
+The 2026-06 `unidentified-beacons.md` entry "Nrdic<XXXXXX> / 0xFACE" was one
+node of the same family (its block reads `06 01 | xxxxxxxxxxxx | 8f016800`
 — six nodes, version 01, an id, a tail); that device also listed the
 128-bit service UUID `F000F0C0-0451-4000-B000-000000000000`, which is the
 Texas Instruments CC26xx SimpleLink base UUID with `0xF0C0` in the short
@@ -20,7 +20,7 @@ slot. Seventeen of this sweep's records list the same UUID. That points at
 the silicon family (TI CC26xx), not at a vendor.
 
 **No vendor is claimed.** `0xFACE` is not a SIG allocation, nothing in the
-frames names a product, and the one local name ever seen ("Nrdic67380B")
+frames names a product, and the one local name ever seen ("Nrdic<XXXXXX>")
 was a firmware-style default. The parser reports the protocol honestly and
 keys identity on the node id.
 
@@ -31,7 +31,7 @@ Captured and shipped in the 2026-08-28 telemetry sweep
 
 | Model | Attribution | Notes |
 |-------|-------------|-------|
-| unknown | none | 14 nodes in one 2026-08-26 scene + the 2026-06 "Nrdic67380B" unit; identical block and frame grammar across all 15 |
+| unknown | none | 14 nodes in one 2026-08-26 scene + the 2026-06 "Nrdic<XXXXXX>" unit; identical block and frame grammar across all 15 |
 
 ## BLE Advertisement Format
 
@@ -42,7 +42,7 @@ Captured and shipped in the 2026-08-28 telemetry sweep
 | Service data | under `0xF0C0`, exactly 12 bytes | byte 1 == `0x01`; bytes 2–7 non-zero |
 | Company ID | `0xFACE` (wire `ce fa`) | placeholder, never sufficient alone |
 | Service UUID (128-bit list) | `F000F0C0-0451-4000-B000-000000000000` | on 17 of 174 blocks; TI SimpleLink base — corroboration, not gated |
-| Local name | none (2026-08); `Nrdic67380B` (2026-06) | |
+| Local name | none (2026-08); `Nrdic<XXXXXX>` (2026-06) | |
 | Address | random, rotating | 14 CoreBluetooth identifiers for 14 node ids over three minutes |
 
 ### Node block (service data 0xF0C0, 12 bytes)
@@ -142,7 +142,7 @@ the neighbour table leaks the network's topology to a passive listener.
 
 - NearSight `research/sweep-2026-08-28-candidates.md` — the 14-node capture
   and the frame analysis
-- `docs/protocols/unidentified-beacons.md` — the 2026-06 "Nrdic67380B" entry
+- `docs/protocols/unidentified-beacons.md` — the 2026-06 "Nrdic<XXXXXX>" entry
   (one node of this family)
 - NearSight `research/sweep-2026-07-01-candidates.md` — first note of the
   TI SimpleLink base UUID on that device

@@ -25,11 +25,11 @@ window). Each advertisement carries:
 Exactly **29 ASCII characters** per advertisement. Example captures:
 
 ```
-5AEA00000AM04ZW!@+j76AZRF-C(%
-5AEA00000AC)1$W!@-|6afHPF-C)M
-5AEA00000AAk=qW!@;t76AZRF-C*E
-5AEA000009{^duW!@;97XbiSF-C($
-5AEA00000AIe$3W!@-`76AZRF-C(_
+5AEA00000AxxxxW!@xxxxxxxF-Cxx
+5AEA00000AxxxxW!@xxxxxxxF-Cxx
+5AEA00000AxxxxW!@xxxxxxxF-Cxx
+5AEA000009xxxxW!@xxxxxxxF-Cxx
+5AEA00000AxxxxW!@xxxxxxxF-Cxx
 ```
 
 ### Template (by character index)
@@ -38,7 +38,7 @@ Exactly **29 ASCII characters** per advertisement. Example captures:
 |-------:|-------|-------------|
 | 0-7   | `5AEA0000` | Fixed magic / version prefix |
 | 8-9   | `0A` or `09` | Minor version or counter (both values seen) |
-| 10-13 | 4 printable-ASCII chars, including punctuation | Appears to be a stable 4-char device ID — the same 4-char block reappears across multiple MACs (e.g. `7+!#` x6, `8%K` x5, `M04Z` x4) |
+| 10-13 | 4 printable-ASCII chars, including punctuation | Appears to be a stable 4-char device ID — the same 4-char block reappears across multiple MACs (e.g. one block seen x6, another x5, another x4) |
 | 14-16 | `W!@` | Fixed separator |
 | 17-25 | 9 printable-ASCII chars, mixed alnum+punct | High entropy — likely a rolling token or encrypted payload |
 | 25-27 | `F-C` | Fixed separator |

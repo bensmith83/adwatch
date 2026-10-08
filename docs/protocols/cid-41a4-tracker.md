@@ -29,14 +29,14 @@ a4 41 | XX XX XX XX XX XX XX | 1b 96 04 36 | XX | dc 0b | b0 00 00 e2 a2 6b 00 0
 **Long (67 bytes total)** — same prefix as short, plus a trailing embedded TLV starting at byte 28:
 
 ```
-... | 11 02 11 02 <4-byte token> 25 00 01 <state> 00 78 6d eb f2 56 <byte> 06 07 08 09 0a 0b 0c 0d 0e 0f
+... | 11 02 11 02 <4-byte token> 25 00 01 <state> 00 xx xx xx xx xx <byte> 06 07 08 09 0a 0b 0c 0d 0e 0f
      └────┬────┘ └─────┬───────┘ ┬┬ ┬┬ ┬┬ └─┬───┘ ┬┬ └─────┬──────┘ └─┬──┘ └──────────┬──────────────────┘
      nested CID    rotating tok  type ?  ?  state ?    fingerprint   tag  SDK default-fill tail
 ```
 
 The `11 02` doubling at the head of the TLV mirrors the Telink BLE SDK frame-builder habit also seen in `HonorBLEParser`. The trailing `06 07 08 09 0a 0b 0c 0d 0e 0f` is the canonical SDK default-fill pattern (Nordic / Espressif / Telink reference firmware emit this when the host application forgets to populate the optional payload region).
 
-The 4-byte `embedded_token` alternates between two stable values (e.g. `6d51f2eb` and `df51f2eb`) across consecutive ads from the same device, with the matching `embedded_state` byte (`0x8b` vs `0x99`) tracking alongside. Likely two beacons or two pairing-state pings sharing a unit.
+The 4-byte `embedded_token` alternates between two stable values (values redacted) across consecutive ads from the same device, with the matching `embedded_state` byte (`0x8b` vs `0x99`) tracking alongside. Likely two beacons or two pairing-state pings sharing a unit.
 
 ### What we can extract
 
@@ -47,7 +47,7 @@ The 4-byte `embedded_token` alternates between two stable values (e.g. `6d51f2eb
 | `embedded_token_hex` | Long-frame only; rotating per-device token |
 | `embedded_state_hex` | Long-frame only; observed values `0x8b`, `0x99` |
 | `embedded_type_byte` | Always `0x25` in captures so far |
-| `embedded_fingerprint_hex` | Stable `78 6d eb f2 56` per device generation |
+| `embedded_fingerprint_hex` | Stable 5-byte value per device (or device generation); value redacted — the same bytes are the per-device constant token in `honor-ble.md` |
 | `embedded_tail_present` | `true` when the `06 07 08 ... 0f` SDK leftover is intact |
 
 ### What we cannot extract

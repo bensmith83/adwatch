@@ -1,4 +1,7 @@
-# "FA-FLEM" Sensor (Ubiquiti factory-MAC block, product not identified)
+# Owner-labelled Ubiquiti-block Sensor (parser `fa_flem_sensor`; product not identified)
+
+> The parser id and this file name are legacy identifiers kept for cross-repo
+> references; the owner-chosen local name they were derived from is redacted below.
 
 ## Overview
 
@@ -13,11 +16,11 @@ Ubiquiti Inc. The **product is not known.**
 
 ## Attribution (corrected)
 
-The 2026-07-06 write-up read the local name `FA-FLEM-BMWTEMP-BR01` as
-"tentatively a BMW temperature probe" and never looked the MAC up. That reading
+The 2026-07-06 write-up read the local name `<owner-chosen label>` as
+"tentatively a vehicle-maker temperature probe" and never looked the MAC up. That reading
 is **retracted**. The evidence, strongest first:
 
-1. **MAC block.** The `0x252A` value `58:d6:1f:4c:ad:a5` is on IEEE MA-L block
+1. **MAC block.** The `0x252A` value `58:d6:1f:xx:xx:xx` is on IEEE MA-L block
    `58:D6:1F`, registered to **Ubiquiti Inc** (the research repo's vendored
    registry, `_oui_vendors.py`, lists `58D61F` under that name).
 2. **Convention.** "Service data `0x252A` carries the unit's factory MAC" is
@@ -34,11 +37,11 @@ One block is thinner evidence than the three independent blocks behind
 `ubiquiti-device-beacon`, but a factory-MAC block plus the shared `0x252A`
 convention is two independent signals that agree.
 
-The local name is **not** evidence of the maker. `FA-FLEM-BMWTEMP-BR01` is
+The local name is **not** evidence of the maker. `<owner-chosen label>` is
 free text that whoever set the unit up chose (a Ubiquiti product lets its owner
-or installer name the device), so "BMWTEMP" is a label someone typed, most
-plausibly for where or what the sensor monitors, not a BMW part number.
-"FA-FLEM" and "BR01" read as that owner's site / unit naming. It is recorded as
+or installer name the device), so the label is something someone typed, most
+plausibly for where or what the sensor monitors, not a part number. It
+reads as that owner's site / unit naming. It is recorded as
 `device_name` and nothing more.
 
 **Product: unknown.** Nothing in the frame names a Ubiquiti product line. A
@@ -51,9 +54,9 @@ supports it, so the parser does not claim it (`product_family = unknown`).
 | Signal | Value | Notes |
 |---|---|---|
 | Service UUID (128-bit) | `35CD221C-02B4-4D1F-9B54-6089C861AD62` | custom UUID — the routing anchor |
-| Service data `0x252A` | `58 d6 1f 4c ad a5` | 6-byte **factory MAC**; OUI `58:D6:1F` = Ubiquiti Inc |
+| Service data `0x252A` | `58 d6 1f xx xx xx` | 6-byte **factory MAC**; OUI `58:D6:1F` = Ubiquiti Inc |
 | Service data `0x2120` | `0b` | opaque 1-byte counter/flag (named variant only) |
-| Local name | `FA-FLEM-BMWTEMP-BR01` | present on one of two frames; user/installer-chosen label |
+| Local name | `<owner-chosen label>` | present on one of two frames; user/installer-chosen label |
 | Manufacturer data | none | |
 | Device class | `sensor` | kept; the class was never the doubtful part |
 

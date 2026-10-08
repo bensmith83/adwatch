@@ -7,7 +7,7 @@
 The advertisement broadcasts two useful fields for asset inventory and surveying:
 
 1. A **stable 32-bit serial number** that identifies the physical BluKey unit across reboots and MAC rotations.
-2. An optional **16-byte operator-assigned machine label** carried in an extended ad frame. Operators routinely set labels like `"Coke 8th Flr co"`, `"Snack 8th Flr c"`, `"Coke 9th Flr co"` — i.e. friendly names that geolocate the unit inside a building.
+2. An optional **16-byte operator-assigned machine label** carried in an extended ad frame. Operators routinely set labels like `"<product> <floor> co"`-style strings — i.e. friendly names that geolocate the unit inside a building.
 
 This is a **non-payment-related** read of public, unauthenticated advertising data; no payment, card, or user identifier is exposed.
 
@@ -54,11 +54,11 @@ Bytes 1..4 of the manufacturer payload form a little-endian unsigned 32-bit seri
 
 | Bytes (LE) | Serial (decimal) | Observed label |
 |---|---:|---|
-| `be f4 d5 00` | 14,021,822 | "Coke 8th Flr co" |
-| `1a f4 d5 00` | 14,021,658 | "Snack 8th Flr c" |
-| `d3 eb d5 00` | 14,019,539 | "Coke 9th Flr co" |
-| `7a ff d5 00` | 14,024,570 | (heartbeat only) |
-| `3c 0d d6 00` | 14,028,092 | (heartbeat only) |
+| `xx xx d5 00` | 14,0xx,xxx | "<product> <floor> co" |
+| `xx xx d5 00` | 14,0xx,xxx | "<product> <floor> c" |
+| `xx xx d5 00` | 14,0xx,xxx | "<product> <floor> co" |
+| `xx xx d5 00` | 14,0xx,xxx | (heartbeat only) |
+| `xx xx d6 00` | 14,0xx,xxx | (heartbeat only) |
 
 ### Nonce / Auth Tag
 
@@ -68,7 +68,7 @@ A prior reverse-engineering effort against an earlier BluKey generation (which b
 
 ### Machine Label
 
-When present, the operator-assigned machine label is a NUL-terminated ASCII string in a fixed 16-byte field starting at payload offset 25. The string is truncated by the operator dashboard at 16 bytes — that's why captures show labels like `"Coke 8th Flr co"` (which is almost certainly the full name `"Coke 8th Flr coffee corner"` or similar, hard-truncated at byte 16).
+When present, the operator-assigned machine label is a NUL-terminated ASCII string in a fixed 16-byte field starting at payload offset 25. The string is truncated by the operator dashboard at 16 bytes — that's why captures show `"<product> <floor> co"`-style labels (almost certainly a longer operator name such as `"<product> <floor> coffee corner"`, hard-truncated at byte 16).
 
 The parser surfaces the label as `metadata["label"]` after stripping NUL padding and validating that all bytes are printable ASCII.
 

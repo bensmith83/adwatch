@@ -21,7 +21,7 @@ with the Fellow app. Two advertisement shapes are known:
 >
 > * Fellow's kettle line is literally named **EKG** ("Electric Kettle
 >   Gooseneck"): Stagg EKG, Stagg EKG+, Stagg EKG Pro, Corvo EKG.
-> * The only unit ever observed (`EKG-99-23-4c`, 959k+ sightings) advertised
+> * The only unit ever observed (`EKG-xx-xx-xx`, 959k+ sightings) advertised
 >   **only** the Espressif provisioning UUID — Fellow's kettles are ESP32;
 >   AliveCor's Kardia devices are not.
 > * The old medical-ekg doc listed a second "EKG" UUID,
@@ -46,7 +46,7 @@ with the Fellow app. Two advertisement shapes are known:
 | Primary service UUID | `2291c4b6-5d7f-4477-a88b-b266edb97142` | vendor-unique, match key |
 | Aux service UUID | `7aebf330-6cb1-46e4-b23b-7cc2262c605e` | vendor-unique (OTA / provisioning), match key |
 | Local name (model) | `^(Stagg EKG Pro\|Corvo EKG\|Fellow EKG Pro)(-[0-9A-Fa-f]{2,8})?$` | match key; tail = ESP32 MAC suffix |
-| Local name (setup beacon) | `^EKG-[0-9A-Fa-f]{2}(-[0-9A-Fa-f]{2})+$` (e.g. `EKG-99-23-4c`) | match key; tail = per-unit id |
+| Local name (setup beacon) | `^EKG-[0-9A-Fa-f]{2}(-[0-9A-Fa-f]{2})+$` (e.g. `EKG-xx-xx-xx`) | match key; tail = per-unit id |
 | Espressif provisioning UUID | `021a9004-0382-4aea-bff4-6b3f1c5adfb4` | **corroboration only** — never a match key (it is a platform UUID owned by the `espressif_prov` parser); surfaced as `provisioning_mode` |
 
 Match strategy: any one of primary UUID / aux UUID / model name / `EKG-` tail
@@ -86,7 +86,7 @@ one identity while advertising from random addresses.
 
 ## Observed in DB
 
-- Local name `EKG-99-23-4c`, service UUID `021A9004-0382-4AEA-BFF4-6B3F1C5ADFB4`,
+- Local name `EKG-xx-xx-xx`, service UUID `021A9004-0382-4AEA-BFF4-6B3F1C5ADFB4`,
   no manufacturer data, no service data, random address — one unit, 959k+
   sightings (a very active advertiser: it never left provisioning mode).
 

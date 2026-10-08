@@ -122,10 +122,10 @@ class TestCurrentLightingParser:
         parser = CurrentLightingParser()
         ad = _make_ad(
             manufacturer_data=_hli_mfr_data(),
-            local_name="235 Open Office",
+            local_name="Example Room",
         )
         result = parser.parse(ad)
-        assert result.metadata["room_name"] == "235 Open Office"
+        assert result.metadata["room_name"] == "Example Room"
 
     def test_no_room_name_when_no_local_name(self):
         """room_name not in metadata when local_name is absent."""

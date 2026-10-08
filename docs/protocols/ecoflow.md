@@ -99,7 +99,7 @@ than spec:
 - **Identification is no longer name-gated.** The parser previously required
   the local name to start with `"EF-"`. In the corpus most units don't
   reliably advertise that name at all: 7 of 8 sampled records had no local
-  name, and the one that did carried a bare serial-like `"R33-3221"` with no
+  name, and the one that did carried a bare serial-like `"R33-XXXX"` with no
   `"EF-"` prefix. The parser now identifies EcoFlow units by company ID
   `0xB5B5` **plus a decodable ASCII serial in the payload** — no local name
   required. The `EF-*` prefix, when present, is still a corroborating signal

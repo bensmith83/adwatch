@@ -16,7 +16,7 @@ SHORT_AD = bytes.fromhex("2909b200000000000000000000")
 # Long ad: company_id + status bytes + model string (null-terminated) + padding
 LONG_AD = bytes.fromhex("2909b10350584432324259504346530000000000000000000000")
 
-GE_MAC = "FC:B9:7E:2B:D1:9E"
+GE_MAC = "FC:B9:7E:00:00:01"
 
 
 @pytest.fixture

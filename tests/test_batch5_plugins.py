@@ -312,11 +312,11 @@ def test_cold_chain_56d6_extracts_sensor_id():
         ColdChain56d6Parser,
         COLD_CHAIN_56D6_UUID,
     )
-    # 7-byte service-data: 0x00 + 6 ASCII chars (observed: "SSFYV3", "1ZNQGY", "LYHR3S")
-    svc = {COLD_CHAIN_56D6_UUID: bytes([0x00]) + b"SSFYV3"}
+    # 7-byte service-data: 0x00 + 6 ASCII chars (observed: "AAAAA1", "BBBBB2", "CCCCC3" — synthetic stand-ins for three captured ids)
+    svc = {COLD_CHAIN_56D6_UUID: bytes([0x00]) + b"AAAAA1"}
     result = ColdChain56d6Parser().parse(_make_ad(service_data=svc))
     assert result and result.device_class == "sensor"
-    assert result.metadata["sensor_id"] == "SSFYV3"
+    assert result.metadata["sensor_id"] == "AAAAA1"
 
 
 def test_cold_chain_56d6_identity_uses_sensor_id():
@@ -327,9 +327,9 @@ def test_cold_chain_56d6_identity_uses_sensor_id():
         ColdChain56d6Parser,
         COLD_CHAIN_56D6_UUID,
     )
-    svc = {COLD_CHAIN_56D6_UUID: bytes([0x00]) + b"1ZNQGY"}
+    svc = {COLD_CHAIN_56D6_UUID: bytes([0x00]) + b"BBBBB2"}
     result = ColdChain56d6Parser().parse(_make_ad(service_data=svc))
-    expected = hashlib.sha256(b"cold_chain_56d6:1ZNQGY").hexdigest()[:16]
+    expected = hashlib.sha256(b"cold_chain_56d6:BBBBB2").hexdigest()[:16]
     assert result.identifier_hash == expected
 
 
@@ -345,7 +345,7 @@ def test_cold_chain_56d6_rejects_wrong_payload_shape():
         ColdChain56d6Parser,
         COLD_CHAIN_56D6_UUID,
     )
-    svc_bad_lead = {COLD_CHAIN_56D6_UUID: bytes([0xFF]) + b"SSFYV3"}
+    svc_bad_lead = {COLD_CHAIN_56D6_UUID: bytes([0xFF]) + b"AAAAA1"}
     assert ColdChain56d6Parser().parse(_make_ad(service_data=svc_bad_lead)) is None
 
     svc_short = {COLD_CHAIN_56D6_UUID: bytes([0x00, 0x41, 0x42])}

@@ -51,8 +51,8 @@ only attribution signal.
 | 4..6 | `2C E0 32` | Embedded-MAC OUI (IEEE → TCL King) |
 | 7..9 | `XX XX XX` | Embedded-MAC device suffix |
 
-Worked example: `061000002ce032c81ed2` → CID `0x1006`, reserved `0000`,
-embedded MAC `2C:E0:32:C8:1E:D2` (OUI `2C:E0:32`).
+Worked example: `061000002ce032xxxxxx` → CID `0x1006`, reserved `0000`,
+embedded MAC `2C:E0:32:xx:xx:xx` (OUI `2C:E0:32`).
 
 ### What we can surface
 
@@ -81,7 +81,7 @@ The embedded MAC is the per-unit stable identifier — it survives the
 random-address rotation the radio uses on-air:
 
 ```
-stable_key = tcl_appliance:<embedded_mac>   (e.g. tcl_appliance:2C:E0:32:C8:1E:D2)
+stable_key = tcl_appliance:<embedded_mac>   (e.g. tcl_appliance:2C:E0:32:xx:xx:xx)
 identifier = SHA256(stable_key)[:16]
 ```
 

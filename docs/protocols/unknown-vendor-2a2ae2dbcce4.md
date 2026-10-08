@@ -13,7 +13,7 @@ Two surface forms have been captured in `research/adwatch_export 17.json`
 | Surface form | UUID | Carries | Sightings (export 17) |
 |---|---|---|---|
 | Service-data key paired with `0xFFF5` adv UUID | `5810BBC0-B499-11E9-A2A3-2A2AE2DBCCE4` | constant 3-byte payload `01 02 00` | 1,499 (2 devices) |
-| Standalone 128-bit advertised UUID | `089810CC-EF89-11E9-81B4-2A2AE2DBCCE4` | (sometimes a 12-hex local name, e.g. `84E585CE4724`) | 31 (2 devices) |
+| Standalone 128-bit advertised UUID | `089810CC-EF89-11E9-81B4-2A2AE2DBCCE4` | (sometimes a 12-hex local name, e.g. `XXXXXXXXXXXX`) | 31 (2 devices) |
 
 This parser catalogues the cluster as `vendor: Unknown` so the devices can
 be counted, grouped, and flagged for ground-truth follow-up; it does **not**
@@ -75,7 +75,7 @@ What we still can't conclude without ground truth:
 | Service UUIDs | `["089810CC-EF89-11E9-81B4-2A2AE2DBCCE4"]` | 128-bit UUID only |
 | Service data | (absent) | — |
 | Manufacturer data | (absent) | — |
-| Local name | `<12-hex>` (sometimes), or absent | the 12-hex string `84E585CE4724` looks like a MAC suffix, but the OUI doesn't match a well-known IEEE registration |
+| Local name | `<12-hex>` (sometimes), or absent | the 12-hex string `XXXXXXXXXXXX` looks like a MAC suffix, but the OUI doesn't match a well-known IEEE registration |
 | Address type | `random` | rotating private address |
 | RSSI | −99 to −85 | |
 

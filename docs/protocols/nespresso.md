@@ -10,7 +10,7 @@ Nespresso connected coffee machines (Vertuo, Venus/VertuoLine) advertise via BLE
 - **Company ID (on-the-wire):** `0x2502` — what shipping firmware actually
   transmits because the bytes are encoded big-endian (a spec violation).
 - **Service UUID:** `06AA1910-F22A-11E3-9DAA-0002A5D5C51B` (Nespresso GATT service)
-- **Local name pattern:** `{model}_{variant}_{MAC}` (e.g., `Vertuo_CV6_FCB46765786E`)
+- **Local name pattern:** `{model}_{variant}_{MAC}` (e.g., `Vertuo_CV6_XXXXXXXXXXXX`)
 - **Device class:** `appliance`
 
 ### Byte-order quirk (important)
@@ -100,8 +100,8 @@ chipset vendor.
 
 | Local Name | Model | Notes |
 |------------|-------|-------|
-| `Vertuo_CV6_FCB46765786E` | Vertuo Next (CV6) | Last 12 chars = BLE MAC |
-| `Venus_D8132A9D825A` | VertuoLine (Venus) | Original VertuoLine model |
+| `Vertuo_CV6_XXXXXXXXXXXX` | Vertuo Next (CV6) | Last 12 chars = BLE MAC |
+| `Venus_XXXXXXXXXXXX` | VertuoLine (Venus) | Original VertuoLine model |
 
 ### Known Models
 

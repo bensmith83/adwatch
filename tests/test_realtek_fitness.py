@@ -56,7 +56,7 @@ class TestRealtekFitnessParser:
         ad = _make_ad(
             local_name="BIGGERFIVE Brave 2",
             service_uuids=["0af0"],
-            manufacturer_data=bytes.fromhex("ab1ef406c88a7136020107010101"),
+            manufacturer_data=bytes.fromhex("ab1ef406c8000001020107010101"),
         )
         result = parser.parse(ad)
         assert result is not None
@@ -66,26 +66,26 @@ class TestRealtekFitnessParser:
         # BLE CIDs are little-endian: raw bytes 0xAB 0x1E -> CID 0x1EAB
         assert result.metadata["vendor_cid"] == 0x1EAB
         # 6 embedded ID bytes (MAC-shaped)
-        assert result.metadata["device_id"] == "f4:06:c8:8a:71:36"
+        assert result.metadata["device_id"] == "f4:06:c8:00:00:01"
 
     def test_idw20(self):
         parser = RealtekFitnessParser()
         ad = _make_ad(
             local_name="IDW20",
             service_uuids=["0af0"],
-            manufacturer_data=bytes.fromhex("331ff43aa22dea34020101010101"),
+            manufacturer_data=bytes.fromhex("331ff43aa2000002020101010101"),
         )
         result = parser.parse(ad)
         assert result is not None
         assert result.metadata["vendor_cid"] == 0x1F33
-        assert result.metadata["device_id"] == "f4:3a:a2:2d:ea:34"
+        assert result.metadata["device_id"] == "f4:3a:a2:00:00:02"
 
     def test_status_byte_exposed(self):
         """Byte offset 10 (after CID+MAC+02+01) looks like a varying status/state."""
         parser = RealtekFitnessParser()
         ad = _make_ad(
             service_uuids=["0af0"],
-            manufacturer_data=bytes.fromhex("ab1ef406c88a7136020107010101"),
+            manufacturer_data=bytes.fromhex("ab1ef406c8000001020107010101"),
         )
         result = parser.parse(ad)
         assert result.metadata["state_byte"] == 0x07
@@ -95,7 +95,7 @@ class TestRealtekFitnessParser:
         the outer BLE MAC which may be randomized. Both ads with the same
         embedded ID must produce the same identifier_hash."""
         parser = RealtekFitnessParser()
-        payload = "ab1ef406c88a7136020107010101"
+        payload = "ab1ef406c8000001020107010101"
         a = _make_ad(
             mac_address="AA:BB:CC:DD:EE:01",
             service_uuids=["0af0"],
@@ -112,7 +112,7 @@ class TestRealtekFitnessParser:
         parser = RealtekFitnessParser()
         ad = _make_ad(
             service_uuids=["feaa"],
-            manufacturer_data=bytes.fromhex("ab1ef406c88a7136020107010101"),
+            manufacturer_data=bytes.fromhex("ab1ef406c8000001020107010101"),
         )
         assert parser.parse(ad) is None
 
@@ -134,7 +134,7 @@ class TestRealtekFitnessParser:
         parser = RealtekFitnessParser()
         ad = _make_ad(
             service_uuids=["0af0"],
-            manufacturer_data=bytes.fromhex("ab1ef406c88a7136ff00ff00ff00"),
+            manufacturer_data=bytes.fromhex("ab1ef406c8000001ff00ff00ff00"),
         )
         # Should still return *something* (we saw the service UUID) but with
         # no extracted fields — so assert we gracefully degrade.

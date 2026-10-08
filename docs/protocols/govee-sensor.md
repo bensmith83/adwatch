@@ -36,7 +36,7 @@ local names) is a separate parser — see `govee-led.md`.
 | H5121, H5122, H5123, H5124, H5125, H5126, H5130 | h512x | 26 (24 payload) | Encrypted sensors |
 
 Model detection runs on the BLE local name, which always includes the
-4-digit model number (e.g. `GVH5075_CF71` → `H5075`). The name usually
+4-digit model number (e.g. `GVH5075_XXXX` → `H5075`). The name usually
 arrives only in the scan response; without it, a 6-byte `0xEC88` payload
 is reported as `H5072/H5075` (govee-ble does the same) and a 7-byte one is
 decoded with the H5074 layout.
@@ -130,7 +130,7 @@ corpora.
 6. The real 7-byte payload is `00 | temp LE16 | hum LE16 | batt | 02`, per
 Home Assistant govee-ble (7-byte `0xEC88` payload, `"<hHB"` at
 `data[1:6]`) and Theengs `H5074_json.h` (hex offsets 6 / 10 / 14). NearSight
-corpus frame `88ec00fc0dc5086402` (`Govee_H5074_42AC`) decodes to
+corpus frame `88ec00fc0dc5086402` (`Govee_H5074_XXXX`) decodes to
 **35.80 °C / 22.45 % / 100 %** at offset 1, but to −150.9 °C / 256.1 %
 (battery 0x02, really the trailer) at offset 2. Eight named H5074 captures
 all agree with offset 1.
@@ -138,7 +138,7 @@ all agree with offset 1.
 h5103 and h5177 (on `0xEC88`) remain unverified. govee-ble decodes the
 H5103/H5177 family from the CID-0x0001 frame instead (payload offset 2,
 see `govee-ec88-0001.md`), and the only named H5177 in the NearSight corpus
-(`GVH5177_B1E1`) sends exactly that frame; treat the `0xEC88` h5103/h5177
+(`GVH5177_XXXX`) sends exactly that frame; treat the `0xEC88` h5103/h5177
 offsets as provisional.
 
 ## h512x (encrypted)

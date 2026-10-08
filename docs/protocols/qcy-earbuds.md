@@ -21,14 +21,14 @@ We require **at least two of the three signals** to be present. FEE8 alone is sh
 
 ### Manufacturer Payload Layout (24 bytes after CID)
 
-Example real capture: `1c52` `4a737c006e646400a2ced6ac8460a2ced600a9d376aebede`
+Example real capture: `1c52` `4a737c006e646400xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 
 | Offset | Bytes | Likely meaning |
 |---|---|---|
 | 0–7 | `4a 73 7c 00 6e 64 64 00` | Stable prefix across observed captures; probably a firmware/family marker or pairing-token header. |
-| 8–13 | `a2 ce d6 ac 84 60` | Looks MAC-like; possibly the earbud's Classic Bluetooth MAC (case half) or a paired-host hint. |
-| 14–17 | `a2 ce d6 00` | Repeats the first 3 bytes of the previous group + a sentinel. Unconfirmed. |
-| 18–23 | `a9 d3 76 ae be de` | Looks MAC-like; we expose this as `embedded_mac` and use it as the stable key. **Best-effort** — confirm against more captures. |
+| 8–13 | `xx xx xx xx xx xx` | Looks MAC-like; possibly the earbud's Classic Bluetooth MAC (case half) or a paired-host hint. |
+| 14–17 | `xx xx xx 00` | Repeats the first 3 bytes of the previous group + a sentinel. Unconfirmed. |
+| 18–23 | `xx xx xx xx xx xx` | Looks MAC-like; we expose this as `embedded_mac` and use it as the stable key. **Best-effort** — confirm against more captures. |
 
 We surface the full payload as `payload_hex` so the user can confirm the layout across additional units, but we do not gate identification on any specific byte pattern.
 
@@ -47,13 +47,13 @@ When the payload is long enough to extract the trailing 6 bytes, the parser sets
 | `device_name` | `QCY-APP` (when local name matched) |
 | `app_pairing_mode` | `true` (when local name matched) |
 | `payload_hex` | full 24-byte payload after the CID |
-| `embedded_mac` | trailing-6-byte best-effort MAC (e.g. `a9:d3:76:ae:be:de`) |
+| `embedded_mac` | trailing-6-byte best-effort MAC (e.g. `xx:xx:xx:xx:xx:xx`) |
 
 ## Examples
 
 | Capture | Inference |
 |---|---|
-| CID 0x521C + FEE8 + name `QCY-APP` (real capture) | full match, `embedded_mac` extracted, `stableKey = "qcy:a9:d3:76:ae:be:de"` |
+| CID 0x521C + FEE8 + name `QCY-APP` (real capture) | full match, `embedded_mac` extracted, `stableKey = "qcy:xx:xx:xx:xx:xx:xx"` |
 | CID 0x521C + name `QCY-APP` (no FEE8) | match, `app_pairing_mode = true` |
 | CID 0x521C + FEE8 (no name) | match, `app_pairing_mode` absent |
 | CID 0x521C only | nil — too risky (unattributed CID alone) |

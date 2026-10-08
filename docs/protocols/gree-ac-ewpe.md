@@ -52,9 +52,8 @@ GR-AC_<MID>_<HW>_<MAC4>(_SC)?
 
 Observed concrete names:
 
-- `GR-AC_10001_09_79cb_SC`
-- `GR-AC_10001_09_929c_SC`
-- `GR-AC_10011_02_d2d3` (from Home Assistant issue #67536 — un-provisioned variant)
+- `GR-AC_10001_09_xxxx_SC`
+- `GR-AC_10011_02_xxxx` (from Home Assistant issue #67536 — un-provisioned variant)
 
 ### Manufacturer-Data Layout (17 bytes)
 

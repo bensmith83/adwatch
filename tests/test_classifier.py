@@ -259,15 +259,15 @@ class TestLocalNamePatterns:
             assert isinstance(ad_category, str)
 
     def test_thermopro_pattern_matches(self):
-        """A ThermoPro local name like 'TP357 (2B54)' should match."""
+        """A ThermoPro local name like 'TP357 (AB12)' should match."""
         matched = False
         for pattern, ad_type, ad_category in LOCAL_NAME_PATTERNS:
-            if re.search(pattern, "TP357 (2B54)"):
+            if re.search(pattern, "TP357 (AB12)"):
                 matched = True
                 assert ad_type == "thermopro"
                 assert ad_category == "sensor"
                 break
-        assert matched, "No pattern matched 'TP357 (2B54)'"
+        assert matched, "No pattern matched 'TP357 (AB12)'"
 
     def test_iphone_pattern_matches(self):
         matched = False
@@ -304,12 +304,12 @@ class TestLocalNamePatterns:
         /recent endpoint can filter by ad_type."""
         matched = False
         for pattern, ad_type, ad_category in LOCAL_NAME_PATTERNS:
-            if re.search(pattern, "KS03~2520e0"):
+            if re.search(pattern, "KS03~aabbcc"):
                 matched = True
                 assert ad_type == "ks03_hid_remote"
                 assert ad_category == "remote"
                 break
-        assert matched, "No pattern matched 'KS03~2520e0'"
+        assert matched, "No pattern matched 'KS03~aabbcc'"
 
 
 # ===================================================================
@@ -655,7 +655,7 @@ class TestClassifyPriority:
         ad = _make_ad(
             manufacturer_data=b"\xFF\xFF\x01\x02",  # unknown
             service_uuids=["00001234-0000-1000-8000-00805f9b34fb"],  # unknown
-            local_name="TP357 (2B54)",  # ThermoPro
+            local_name="TP357 (AB12)",  # ThermoPro
         )
         result = classifier.classify(ad)
         assert result is not None
@@ -750,7 +750,7 @@ class TestGoveeClassification:
         assert result.source == "company_id"
 
     def test_govee_vibration_by_local_name(self, classifier):
-        ad = _make_ad(local_name="GV51242F04")
+        ad = _make_ad(local_name="GV5124AB12")
         result = classifier.classify(ad)
         assert result is not None
         assert result.ad_type == "govee"

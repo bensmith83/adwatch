@@ -13,8 +13,8 @@ Two units are in the NearSight corpus:
 
 | First seen (UTC) | Records | Frame (manufacturer data) | Name captured? |
 |------------------|---------|---------------------------|----------------|
-| 2026-06-09 21:34 | 2 (7 sightings) | `ffff ffff 0081f9245b82 ff01` | yes on one record, **no** on the other — same identifier, same frame |
-| 2026-08-30 17:20–17:25 | 2 (30 sightings) | `ffff ffff e07dea99b975 ff01` | no |
+| 2026-06-09 21:34 | 2 (7 sightings) | `ffff ffff 0081f9xxxxxx ff01` | yes on one record, **no** on the other — same identifier, same frame |
+| 2026-08-30 17:20–17:25 | 2 (30 sightings) | `ffff ffff e07deaxxxxxx ff01` | no |
 
 The uploading device's coarse classifier had tagged the 08-30 unit
 "inkbird" on the strength of `0xFFF0` alone, which is what put it in the
@@ -35,7 +35,7 @@ captured and are not claimed.
 |--------|-------|-------|
 | Company ID | `0xFFFF` (LE wire `ff ff`) | SIG reserved placeholder — never keyed on alone |
 | Service UUID | `0xFFF0` | Generic vendor slot shared with Inkbird, SP110E and many others — corroboration only |
-| Embedded MAC | 6 bytes at payload [2..8), **forward** order | `00:81:f9:24:5b:82`, `e0:7d:ea:99:b9:75` — both in Texas Instruments MA-L blocks (the CC26xx-class BLE SoC) |
+| Embedded MAC | 6 bytes at payload [2..8), **forward** order | `00:81:f9:xx:xx:xx`, `e0:7d:ea:xx:xx:xx` — both in Texas Instruments MA-L blocks (the CC26xx-class BLE SoC) |
 | Local name | `LUNA4PlaySmart`, exact | Carried in a scan response; absent on 2 of the 4 records |
 | Address type | random | The 06-09 unit's address stayed put within the session |
 | Device class | `personal_care` | |
@@ -44,7 +44,7 @@ captured and are not claimed.
 
 ```
 offset  0  1 | 2  3 | 4  5  6  7  8  9  | 10 11
-        ff ff | ff ff | e0 7d ea 99 b9 75 | ff 01
+        ff ff | ff ff | e0 7d ea xx xx xx | ff 01
         CID     pad     factory MAC          trailer
 ```
 

@@ -21,9 +21,9 @@ key and embed a reversed factory MAC in Samsara's own OUI block, which is
 what turns a UUID lookup into an attribution. The 2026-09-19 merged corpus
 added **eight more service-data records** (all one-off drive-bys,
 −79..−102 dBm), re-verified below — the map holds on all of them. One new
-MAC (`fc:db:21:89:ca:c3`) appears on two records with different entropy
+MAC (`fc:db:21:xx:xx:xx`) appears on two records with different entropy
 regions — the MAC is the unit identity, the rest rotates — and three of
-the eight share the `fc:db:21:89:ca:xx` block, plausibly one fleet's
+the eight share the `fc:db:21:xx:xx:xx` block (first five bytes identical), plausibly one fleet's
 sequentially-issued hardware.
 
 | First seen (UTC) | Carrier | Frame type | Units | RSSI |
@@ -50,7 +50,7 @@ left open.
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Service UUID | `0xFCE5` | SIG member UUID → *Samsara Networks, Inc*. Present on 12/12 records: as the service-data key on 2, in the advertised UUID list on 10 |
-| Embedded MAC | 6 bytes at [6..12), **reversed** | Service-data frames only; `fc:db:21:ac:2b:71` and `fc:db:21:ad:fa:ce` — IEEE MA-L `FC:DB:21` = SAMSARA NETWORKS INC |
+| Embedded MAC | 6 bytes at [6..12), **reversed** | Service-data frames only; `fc:db:21:xx:xx:xx` (two units) — IEEE MA-L `FC:DB:21` = SAMSARA NETWORKS INC |
 | "Company ID" bytes | `02 1f` / `32 20` / `32 00` | Read as CIDs 0x1F02 / 0x2032 / 0x0032 on the manufacturer-data frames — none SIG-assigned, high byte varies within the family. A frame header, not a company id |
 | Address type | random, one sighting per unit | No unit was seen twice, so rotation cannot be measured |
 | Local name | none | |
@@ -59,9 +59,9 @@ left open.
 ## Ad Format — 22 bytes, three observed shapes
 
 ```
-service data 0xFCE5   02 1d | 10 0a | d0 0b | 71 2b ac 21 db fc | 00 00 00 10 81 01 e2 8e 6a db
-manufacturer data     02 1f | 0d 0f | b8 0b | 48 76 5a 20 96 05 | 39 f0 d9 48 e4 02 4d 8b 2e f4
-manufacturer data     32 20 | 14 0f | 6a 09 | 35 cf 98 96 03 00 | 00 00 00 00 00 00 00 00 00 00
+service data 0xFCE5   02 1d | 10 0a | d0 0b | xx xx xx 21 db fc | 00 00 00 10 81 01 e2 8e 6a db
+manufacturer data     02 1f | 0d 0f | b8 0b | xx xx xx xx xx xx | 39 f0 d9 48 e4 02 4d 8b 2e f4
+manufacturer data     32 20 | 14 0f | 6a 09 | yy yy yy yy yy yy | 00 00 00 00 00 00 00 00 00 00
 offset                0       1..4    4..6    6..12               12..22
                       type    header  u16 LE  unit field          body
 ```
@@ -71,7 +71,7 @@ offset                0       1..4    4..6    6..12               12..22
 | 0 | frame type | `0x02` on 7 units (both carriers), `0x32` on 5 (manufacturer data only) |
 | 1–3 | header | `1d 10 0a` on both service-data units; `1f 0d XX` (XX = 0f/0c/3f/0e/0f) on the `0x02` manufacturer frames; `20/00 14 0f` on the `0x32` frames. Reported raw as `header_hex` |
 | 4–5 | 16-bit little-endian word | 3000, 3000, 2801, 2801, 3000 (`0x02` mfg), 3024 ×2 (service data), 2685, 2410, 1320, 2410, 2410 (`0x32`). A coin-cell millivolt battery reading fits the range and the product line, but nothing confirms it — reported raw as `u16_le_at_4` with a note |
-| 6–11 | 6-byte unit field | Different on every unit. On the service-data frames it reverses to a `fc:db:21` factory MAC; on the manufacturer frames it reverses to no registered OUI (e.g. `05:96:20:5a:76:48`) and is surfaced as `unit_field_hex` only |
+| 6–11 | 6-byte unit field | Different on every unit. On the service-data frames it reverses to a `fc:db:21` factory MAC; on the manufacturer frames it reverses to no registered OUI (e.g. `xx:xx:xx:xx:xx:xx`) and is surfaced as `unit_field_hex` only |
 | 12–21 | body | High-entropy on the `0x02` frames (consistent with the "encrypted device ID" Samsara describes), `00 00 00` + 7 bytes on the service-data frames, all zero on `0x32` |
 
 ### Parser gate

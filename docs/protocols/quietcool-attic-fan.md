@@ -26,20 +26,22 @@ Manufacturer payload (after the 2-byte CID, captures consistently emit
 25 bytes — a 19-byte ASCII string + 6 NUL pads):
 
 ```
-33 47 | 69 6e 67 69 65 27 73 20 41 74 74 69 63 20 46 61 6e | 00 00 00 00 00 00
-       └──────────────── "ingie's Attic Fan" ──────────────┘
+33 47 | xx xx xx xx xx 27 73 20 41 74 74 69 63 20 46 61 6e | 00 00 00 00 00 00
+       └──────────────── "<name>'s Attic Fan" ─────────────┘
 ```
 
-Reading the CID + payload as a single ASCII run produces
-`"3Gingie's Attic Fan"`. "Gingie" appears to be an internal QuietCool /
-ODM codename — it does not match any public retail brand. The leading
-`3` is plausibly the firmware/hardware revision.
+Reading the CID + payload as a single ASCII run produces a possessive
+`"<name>'s Attic Fan"` string (name redacted here). It may be an internal
+QuietCool / ODM codename or a user-assigned fan name — only one unit has
+been captured, so this is unresolved. If it is user-assigned, the leading
+CID bytes (`"3G"`) may also vary per unit. The leading `3` is otherwise
+plausibly the firmware/hardware revision.
 
 ## Captured Examples
 
 ```
-localName = "ATTICFAN_3494542c99ca"
-mfr       = 33 47 69 6e 67 69 65 27 73 20 41 74 74 69 63 20 46 61 6e 00 00 00 00 00 00
+localName = "ATTICFAN_xxxxxxxxxxxx"
+mfr       = 33 47 xx xx xx xx xx 27 73 20 41 74 74 69 63 20 46 61 6e 00 00 00 00 00 00
 ```
 
 Captured 2026-05-28 in `research/adwatch_export 14.json` — 1 device,

@@ -32,7 +32,7 @@ further classifies SKU family.
 
 ### SS-series (newer)
 
-- Local name: `SS<8 hex>` (e.g. `SS010a2f57`)
+- Local name: `SS<8 hex>` (e.g. `SSxxxxxxxx`)
 - Service UUID: `26526EEA-C96A-45D0-854E-3BB05C450B56`
 - Manufacturer data: `b1 06 | <unit-id 4 bytes> | <4 opaque bytes>`
   - The unit-id bytes literally equal the hex in the name suffix
@@ -40,7 +40,7 @@ further classifies SKU family.
     (`unit_id_matches_mfg = true` in the captured example).
 
 ```
-b1 06 | 01 0a 2f 57 | 95 2c f0 95
+b1 06 | xx xx xx xx | 95 2c f0 95
 └──┬─┘ └─────┬────┘ └─────┬─────┘
    │         │            └── opaque (counter / state, unverified)
    │         └── unit id (matches local-name suffix)
@@ -49,7 +49,7 @@ b1 06 | 01 0a 2f 57 | 95 2c f0 95
 
 ### Legacy SKU
 
-- Local name: `<8 hex>` (e.g. `3982e7d7`)
+- Local name: `<8 hex>` (e.g. `xxxxxxxx`)
 - Service UUID: `0x00CC` (vendor-claimed short UUID — not SIG-assigned)
 - Manufacturer data: `b1 06 | <8 opaque bytes>`
   - Bytes 2–5 do NOT equal the local-name hex on this SKU (`unit_id_matches_mfg = false`).
@@ -57,7 +57,7 @@ b1 06 | 01 0a 2f 57 | 95 2c f0 95
     without more captures.
 
 ```
-b1 06 | 86 6a 53 9b d4 c8 a9 87
+b1 06 | yy yy yy yy yy yy yy yy
 └──┬─┘ └─────────┬─────────────┘
    │             └── opaque 8 bytes (unverified)
    └── SimpliSafe CID (LE)

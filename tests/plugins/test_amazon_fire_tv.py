@@ -29,9 +29,9 @@ def make_raw(service_data=None, service_uuids=None, local_name=None, **kwargs):
     )
 
 
-# Real sample data from CSV
-SVC_DATA_20 = bytes.fromhex("00092f06a181b65da3907bc10a4b4b4463000102")
-SVC_DATA_22 = bytes.fromhex("00cf3bdbf5a2f2c2b05a1669a6465042730001020001")
+# Sample frame shapes from a capture; the 12 per-unit bytes after the header are synthetic
+SVC_DATA_20 = bytes.fromhex("00aabbccddeeff0011223344554b4b4463000102")
+SVC_DATA_22 = bytes.fromhex("00112233445566778899aabbcc465042730001020001")
 
 FIRE_TV_MAC = "AA:BB:CC:DD:EE:FF"
 

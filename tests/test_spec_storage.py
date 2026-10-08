@@ -269,7 +269,7 @@ class TestMatchSpecs:
     @pytest.mark.asyncio
     async def test_match_by_local_name_pattern(self, spec_storage):
         await spec_storage.create_spec("thermo_proto", local_name_pattern=r"^TP\d+")
-        ad_row = {"manufacturer_data_hex": None, "service_uuids_json": "[]", "local_name": "TP357 (2B54)"}
+        ad_row = {"manufacturer_data_hex": None, "service_uuids_json": "[]", "local_name": "TP357 (AB12)"}
         matches = await spec_storage.match_specs(ad_row)
         assert len(matches) == 1
 

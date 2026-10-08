@@ -19,7 +19,7 @@ Two product families appear in the wild:
 |---|---|
 | Company ID | `0x02AB` (BBPOS Limited) |
 | Service UUID | `0xFFA0` (user-defined; informational only — many unrelated products use this slot) |
-| Local name | `<MODEL_CODE><SERIAL>` — e.g. `"STRM2D533004284"` or `"CHB20-1000003F1"` |
+| Local name | `<MODEL_CODE><SERIAL>` — e.g. `"STRM2DXXXXXXXXX"` or `"CHB20-XXXXXXXXX"` |
 
 We match on company ID **or** a local name with one of the known model-code prefixes. We deliberately do **not** match on the `0xFFA0` service UUID alone because that 16-bit slot is in the user-defined range and is used by many unrelated white-label products.
 
@@ -39,10 +39,10 @@ Only a single byte of payload is observed. Its meaning is not publicly documente
 <MODEL_CODE><[-]?><SERIAL>
 ```
 
-- `STRM2D` followed directly by a 9-digit serial (e.g. `STRM2D533004284`)
-- `CHB20` followed by `-` and a 9-character alphanumeric serial (e.g. `CHB20-1000003F1`)
+- `STRM2D` followed directly by a 9-digit serial (e.g. `STRM2DXXXXXXXXX`)
+- `CHB20` followed by `-` and a 9-character alphanumeric serial (e.g. `CHB20-XXXXXXXXX`)
 
-The parser uses `(model_code, serial)` as the stable key: `bbpos:STRM2D:533004284`.
+The parser uses `(model_code, serial)` as the stable key: `bbpos:STRM2D:XXXXXXXXX`.
 
 ## References
 

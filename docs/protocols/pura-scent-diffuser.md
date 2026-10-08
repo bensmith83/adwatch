@@ -36,14 +36,14 @@ generation.
 One unit produced three frame lengths in the same session:
 
 ```
-d8 0b | c7 c5 ba f9 57 f6                              (8 bytes,  ADV)
-d8 0b | 4f 05 1b | c7 c5 ba f9 57 f6                   (11 bytes, SCAN_RSP)
-d8 0b | c7 c5 ba f9 57 f6 | 4f 05 1b c7 c5 ba f9 57 f6 (17 bytes, merged)
+d8 0b | c7 xx xx xx xx xx                              (8 bytes,  ADV)
+d8 0b | 4f 05 1b | c7 xx xx xx xx xx                   (11 bytes, SCAN_RSP)
+d8 0b | c7 xx xx xx xx xx | 4f 05 1b c7 xx xx xx xx xx (17 bytes, merged)
 ```
 
 The 17-byte form is CoreBluetooth's merge of the ADV and SCAN_RSP
 manufacturer-data blocks (the second block's own `d8 0b` CID is dropped in
-the merge). The invariant is the **6-byte unit ID** `c7 c5 ba f9 57 f6`,
+the merge). The invariant is the **6-byte unit ID** `c7 xx xx xx xx xx`,
 which appears once or twice depending on which frames the scanner caught.
 
 The ID is *not* an IEEE-registered MAC — byte 0 (`0xC7`) has the
@@ -53,10 +53,10 @@ hardware address.
 ### Generation B — typed, 4-byte unit ID (service `9B2DBC93-…`)
 
 ```
-d8 0b | 1c | 03 04 | 5e 69 2d ed                        (9 bytes)
-d8 0b | 1c | 03 04 | 69 50 48 a2                        (9 bytes)
-d8 0b | 1c | 03 04 | 00 a7 6f d0                        (9 bytes)
-d8 0b | 1b | 07 16 | 66 76 92 17 | 00 00 00 00 00       (14 bytes)
+d8 0b | 1c | 03 04 | <unit-1 id>                        (9 bytes)
+d8 0b | 1c | 03 04 | <unit-2 id>                        (9 bytes)
+d8 0b | 1c | 03 04 | <unit-3 id>                        (9 bytes)
+d8 0b | 1b | 07 16 | <unit-4 id> | 00 00 00 00 00       (14 bytes)
 ```
 
 | Bytes | Meaning | Evidence |
@@ -68,7 +68,7 @@ d8 0b | 1b | 07 16 | 66 76 92 17 | 00 00 00 00 00       (14 bytes)
 | 9–13 | trailing bytes, all zero (`0x1B` frame only) | 1 unit — surfaced, not asserted |
 
 The per-unit tail was byte-stable across the whole capture for each unit
-(e.g. `5e 69 2d ed` on every one of that unit's sightings), so it is a
+(e.g. the first unit's ID on every one of that unit's sightings), so it is a
 device identity field, not a counter or a sensor reading.
 
 ## What We Cannot Parse

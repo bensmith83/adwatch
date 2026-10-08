@@ -42,7 +42,7 @@ def test_maytronics_bare_serials_still_match(name):
 
 
 def test_ambweather_never_reaches_the_catch_all():
-    """`AMBWeather-4F2A` has a dash and is 15 chars, so the 8-alphanumeric
+    """`AMBWeather-1234` has a dash and is 15 chars, so the 8-alphanumeric
     bare-serial branch cannot fire for it in the first place."""
-    assert MaytronicsParser().parse(_ad("AMBWeather-4F2A")) is None
-    assert EcowittParser().parse(_ad("AMBWeather-4F2A")) is not None
+    assert MaytronicsParser().parse(_ad("AMBWeather-1234")) is None
+    assert EcowittParser().parse(_ad("AMBWeather-1234")) is not None

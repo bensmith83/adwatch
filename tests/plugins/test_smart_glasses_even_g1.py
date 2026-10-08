@@ -54,10 +54,10 @@ class TestEvenG1:
 
     def test_trailing_token_variant(self, parser):
         """Field names seen as `Even G1_<id>_L_<suffix>` are also accepted."""
-        m = parser.parse(_ad("Even G1_87_L_39E92")).metadata
+        m = parser.parse(_ad("Even G1_87_L_12345")).metadata
         assert m["pair_id"] == "87"
         assert m["side"] == "left"
-        assert m["name_suffix"] == "39E92"
+        assert m["name_suffix"] == "12345"
 
     def test_prefix_only_name(self, parser):
         m = parser.parse(_ad("Even G1")).metadata

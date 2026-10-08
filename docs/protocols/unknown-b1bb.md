@@ -36,12 +36,12 @@ vendor.
 | Local name | absent |
 | Address type | random |
 
-Sample (one device): `b1bb4746de1e233dd94fcb792abe3d534df58e0922cab2020d7f26`.
+Sample (one device): `b1bb` + 25 opaque bytes (redacted; the sibling `unknown-bcb1.md` capture found this body stable per device within a scan window).
 
 ### Structure
 
 ```
-b1 bb | 47 46 de 1e 23 3d d9 4f cb 79 … (25 bytes)
+b1 bb | xx xx xx xx xx xx xx xx xx xx … (25 bytes)
 \_____/ \____________ rotating token ____________/
  prefix         opaque / high-entropy
 ```

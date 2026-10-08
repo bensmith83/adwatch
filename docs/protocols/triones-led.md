@@ -21,14 +21,14 @@ This parser identifies the controller family from the local-name prefix, extract
 `<PREFIX><12-hex factory ID>`
 
 - `<PREFIX>` is one of `Triones:`, `LEDBLE-`, `LEDnetWF`, `LEDnet`, `LEDBlue-`. Match is case-insensitive — ha-triones [matches on `device.name.lower().startswith("triones")`](https://github.com/sysofwan/ha-triones). `LEDnetWF` is the Wi-Fi co-radio variant of the LEDnet firmware — it must be matched before `LEDnet` so prefix detection picks the longer name and the 12-hex suffix lines up.
-- `<12-hex factory ID>` is a firmware-baked identifier stamped at the Zengge factory. **It is NOT the radio's BD_ADDR.** Real captures show prefixes like `22:15:22:00:1?:??` (with `22-15-22` and `42-15-22` not present in the IEEE OUI registry), and the BLE advertisement uses a random address type whose first-byte top bits don't conform to a random static / non-resolvable private layout. The hex tail persists across reboots and factory resets even though the radio MAC rotates.
+- `<12-hex factory ID>` is a firmware-baked identifier stamped at the Zengge factory. **It is NOT the radio's BD_ADDR.** Real captures show prefixes like `22:15:22:xx:xx:xx` (with `22-15-22` and `42-15-22` not present in the IEEE OUI registry), and the BLE advertisement uses a random address type whose first-byte top bits don't conform to a random static / non-resolvable private layout. The hex tail persists across reboots and factory resets even though the radio MAC rotates.
 
 Examples (real captures, `research/nearsight_export 3.json`):
-- `Triones:2215220010D0` → family `Triones`, factory_id `2215220010D0`
-- `Triones:4215220013B9` → family `Triones`, factory_id `4215220013B9`
+- `Triones:XXXXXXXXXXXX` → family `Triones`, factory_id `XXXXXXXXXXXX`
+- `Triones:YYYYYYYYYYYY` → family `Triones`, factory_id `YYYYYYYYYYYY`
 
 Sibling captures:
-- `LEDnetWF000033C60E3F` → family `LEDnetWF` (real capture, `research/nearsight_export 2.json`) — Wi-Fi co-radio variant
+- `LEDnetWFXXXXXXXXXXXX` → family `LEDnetWF` (real capture, `research/nearsight_export 2.json`) — Wi-Fi co-radio variant
 - `LEDBLE-1A2B3C4D5E6F` → family `LEDBLE` (documented but not observed locally)
 - `LEDnet112233445566` → family `LEDnet` (documented but not observed locally)
 

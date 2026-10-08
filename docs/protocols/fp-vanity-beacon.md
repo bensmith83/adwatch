@@ -24,7 +24,7 @@ The first four payload bytes are an ASCII model code — `FPBO` (heartbeat-only 
 |---|---|---|---|
 | 0..1 | `46 50` | `46 50` | Forged SIG CID ("FP") |
 | 2..3 | `42 4F` ("BO") | `42 47` ("BG") | ASCII model variant |
-| 4..8 | `21 09 15 47 11` | `23 05 59 17 12` | BCD timestamp / serial (low confidence) |
+| 4..8 | `xx xx xx xx xx` | `xx xx xx xx xx` | BCD-looking digits — timestamp / serial (low confidence; redacted) |
 | 9..12 | `20 21 10 14` | `20 23 05 05` | **Commissioning date** — printable BCD `YYYYMMDD` |
 | 13 | `59` / `5A` / `5B` (varies) | `98` (constant) | FPBO: heartbeat sequence counter / FPBG: status flag |
 | 14..15 | `FF FF` | `00 C7` | End-of-fixed-block sentinel / sensor reading |

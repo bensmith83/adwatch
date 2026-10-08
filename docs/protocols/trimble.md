@@ -17,7 +17,7 @@ All of these advertise with a `local_name` of `"Trimble <6-10 digit serial>"`, w
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `^Trimble \d{6,10}$` | E.g. `"Trimble 11006144"`, `"Trimble 23052162"`. |
+| Local name | `^Trimble \d{6,10}$` | E.g. `"Trimble ########"` (two units). |
 | Company ID | `0x03FD` (when present) | Manufacturer data is optional — many sightings carry only the local name in a scan response. |
 
 ### Manufacturer Data

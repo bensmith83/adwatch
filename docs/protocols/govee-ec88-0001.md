@@ -22,7 +22,7 @@ CID `0x0001`), which invented values such as −37 °C and 0.02 V.
 |---|---|---|
 | Company ID (as read) | `0x0001` | Really the `01 00` prefix of Govee's payload |
 | Service UUID | `0xEC88` | Required (or a Govee local name) — CID 0x0001 alone is ambiguous |
-| Local name | `GVH5177_B1E1`, `GVH5102_…` | Usually only in the scan response; often absent |
+| Local name | `GVH5177_XXXX`, `GVH5102_…` | Usually only in the scan response; often absent |
 | iBeacon (optional) | UUID `INTELLI_ROCKS_HW`, major `Pu` / `Qw` | A second manufacturer-data structure (CID `0x004C`) |
 
 ## Wire Format
@@ -76,7 +76,7 @@ uses (see `govee-sensor.md`), just at payload offset 2 instead of 1.
 |---|---|---|---|---|---|
 | `0100 0101 045b0d 64` | 0x045B0D = 285453 | 28.5 °C | 45.3 % | 100 % | + iBeacon `HWPu` |
 | `0100 0101 03d211 56` | 0x03D211 = 250385 | 25.0 °C | 38.5 % | 86 % | + iBeacon `HWQw` |
-| `0100 0101 03d5fd 5f` | 0x03D5FD = 251389 | 25.1 °C | 38.9 % | 95 % | same device, named `GVH5177_B1E1` |
+| `0100 0101 03d5fd 5f` | 0x03D5FD = 251389 | 25.1 °C | 38.9 % | 95 % | same device, named `GVH5177_XXXX` |
 | `0100 0101 03a442 4e` | 0x03A442 = 238658 | 23.8 °C | 65.8 % | 78 % | |
 | `0100 0101 0734dd 64` | 0x0734DD = 472285 | 47.2 °C | 28.5 % | 100 % | |
 | `0100 0101 005460 3b 0000` | 0x005460 = 21600 | 2.1 °C | — | 59 % | 8-byte payload → H5108 (fridge) |
@@ -99,7 +99,7 @@ In order of precedence (adwatch `govee` v1.3):
    | iBeacon | Model | Evidence |
    |---|---|---|
    | `INTELLI_ROCKS_HW` + major `Pu` | H5075 | Same marker rides on 6-byte `0xEC88` H5072/H5075 frames |
-   | `INTELLI_ROCKS_HW` + major `Qw` | H5177 | Device BD65FB8F sends `HWQw` and also advertises as `GVH5177_B1E1` |
+   | `INTELLI_ROCKS_HW` + major `Qw` | H5177 | A device sends `HWQw` and also advertises as `GVH5177_XXXX` |
 
    The iBeacon is a separate AD structure (`4c 00 02 15` + 16-byte UUID
    `494e54454c4c495f524f434b535f4857` = ASCII `INTELLI_ROCKS_HW` + major

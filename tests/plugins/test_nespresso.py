@@ -39,7 +39,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result is not None
@@ -49,7 +49,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.parser_name == "nespresso"
@@ -58,7 +58,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.beacon_type == "nespresso"
@@ -67,7 +67,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.device_class == "appliance"
@@ -76,7 +76,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
@@ -86,7 +86,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
             mac_address="11:22:33:44:55:66",
         )
         result = parser.parse(raw)
@@ -97,7 +97,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.metadata["model"] == "Vertuo"
@@ -107,7 +107,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=bytes.fromhex("0225008900000000"),
             service_uuids=[NESPRESSO_UUID],
-            local_name="Venus_D8132A9D825A",
+            local_name="Venus_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.metadata["model"] == "Venus"
@@ -116,16 +116,16 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
-        assert result.metadata["device_mac"] == "FCB46765786E"
+        assert result.metadata["device_mac"] == "AABBCCDDEEFF"
 
     def test_machine_state_byte(self, parser):
         raw = make_raw(
             manufacturer_data=NESPRESSO_MFR_DATA,
             service_uuids=[NESPRESSO_UUID],
-            local_name="Vertuo_CV6_FCB46765786E",
+            local_name="Vertuo_CV6_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.metadata["state_byte"] == 0x40
@@ -134,7 +134,7 @@ class TestNespressoParsing:
         raw = make_raw(
             manufacturer_data=bytes.fromhex("0225008900000000"),
             service_uuids=[NESPRESSO_UUID],
-            local_name="Venus_D8132A9D825A",
+            local_name="Venus_AABBCCDDEEFF",
         )
         result = parser.parse(raw)
         assert result.metadata["state_byte"] == 0x00

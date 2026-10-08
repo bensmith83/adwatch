@@ -45,9 +45,9 @@ def _make_registry():
 
 class TestMyQGarageRegistry:
     def test_matches_local_name_pattern(self):
-        """Matches on local_name 'MyQ-75D' via name pattern."""
+        """Matches on local_name 'MyQ-ABC' via name pattern."""
         registry = _make_registry()
-        ad = _make_ad(local_name="MyQ-75D")
+        ad = _make_ad(local_name="MyQ-ABC")
         matches = registry.match(ad)
         assert len(matches) >= 1
 
@@ -62,7 +62,7 @@ class TestMyQGarageRegistry:
         """Matches on MyQ custom 128-bit service UUID."""
         registry = _make_registry()
         ad = _make_ad(
-            local_name="MyQ-017",
+            local_name="MyQ-XYZ",
             service_uuids=[MYQ_UUID_FULL],
             manufacturer_data=bytes.fromhex("78082e00"),
         )
@@ -73,7 +73,7 @@ class TestMyQGarageRegistry:
         """Matches on Chamberlain company ID 0x0878."""
         registry = _make_registry()
         ad = _make_ad(
-            local_name="MyQ-75D",
+            local_name="MyQ-ABC",
             manufacturer_data=bytes.fromhex("78082b00"),
         )
         matches = registry.match(ad)
@@ -84,43 +84,43 @@ class TestMyQGarageParser:
     def test_parser_name(self):
         """parser_name is 'myq'."""
         parser = MyQGarageParser()
-        ad = _make_ad(local_name="MyQ-75D")
+        ad = _make_ad(local_name="MyQ-ABC")
         result = parser.parse(ad)
         assert result.parser_name == "myq"
 
     def test_beacon_type(self):
         """beacon_type is 'myq'."""
         parser = MyQGarageParser()
-        ad = _make_ad(local_name="MyQ-75D")
+        ad = _make_ad(local_name="MyQ-ABC")
         result = parser.parse(ad)
         assert result.beacon_type == "myq"
 
     def test_device_class(self):
         """device_class is 'garage_door'."""
         parser = MyQGarageParser()
-        ad = _make_ad(local_name="MyQ-75D")
+        ad = _make_ad(local_name="MyQ-ABC")
         result = parser.parse(ad)
         assert result.device_class == "garage_door"
 
     def test_device_id_extraction(self):
-        """'MyQ-75D' -> metadata['device_id'] == '75D'."""
+        """'MyQ-ABC' -> metadata['device_id'] == 'ABC'."""
         parser = MyQGarageParser()
-        ad = _make_ad(local_name="MyQ-75D")
+        ad = _make_ad(local_name="MyQ-ABC")
         result = parser.parse(ad)
-        assert result.metadata["device_id"] == "75D"
+        assert result.metadata["device_id"] == "ABC"
 
     def test_device_name_in_metadata(self):
-        """metadata['device_name'] == 'MyQ-75D'."""
+        """metadata['device_name'] == 'MyQ-ABC'."""
         parser = MyQGarageParser()
-        ad = _make_ad(local_name="MyQ-75D")
+        ad = _make_ad(local_name="MyQ-ABC")
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "MyQ-75D"
+        assert result.metadata["device_name"] == "MyQ-ABC"
 
     def test_identity_hash(self):
         """Identity hash is SHA256(mac_address:myq)[:16]."""
         mac = "11:22:33:44:55:66"
         parser = MyQGarageParser()
-        ad = _make_ad(local_name="MyQ-75D", mac_address=mac)
+        ad = _make_ad(local_name="MyQ-ABC", mac_address=mac)
         result = parser.parse(ad)
         expected = hashlib.sha256(f"{mac}:myq".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected

@@ -42,7 +42,7 @@ Total: 7 bytes (2 company ID + 5 payload)
 
 ### Local Name Format
 
-The `BLESmart_` prefix is followed by a hex string that serves as a unique device identifier. The length varies but is typically 20–24 hex characters. Example: `BLESmart_000000BAEA9D7A5D9F79`.
+The `BLESmart_` prefix is followed by a hex string that serves as a unique device identifier. The length varies but is typically 20–24 hex characters. Example: `BLESmart_XXXXXXXXXXXXXXXXXXXX`.
 
 ### What We Can Parse from Advertisements
 
