@@ -1,5 +1,9 @@
 # Samsara fleet telematics devices (service UUID 0xFCE5)
 
+> Sibling family: a second Samsara member UUID, `0xFC86`, carries a
+> distinct 24-byte service-data frame — see `samsara-fc86.md`
+> (2026-10-05 nightly sweep).
+
 ## Overview
 
 **Samsara Networks, Inc.** holds the Bluetooth SIG *member* 16-bit service
