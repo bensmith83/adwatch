@@ -17,6 +17,32 @@ parser below decodes exactly what that scanner reads without the device key.
 First captured in the 2026-08-26 telemetry sweep: two units, one sighting
 each, ~3 h apart on 2026-08-25, random addresses, no local name.
 
+## Satellite PHY (bench-confirmed 2026-10-07)
+
+The frame documented below is the **terrestrial** (BLE advertisement) path. The
+**satellite** uplink is a separate, non-BLE waveform the SDK drives on the same
+2.4 GHz radio: a narrowband 2-FSK signal (~125 sym/s, native sample rate
+781.25 kHz) that hops a 19-channel plan (~25.9 kHz spacing, Nordic synth step)
+near **2.482754875 GHz**, wrapped in Reed-Solomon FEC. Captured off-air from an
+nRF54L15 with a HackRF and decoded with
+[`hubble-satnet-decoder`](https://github.com/HubbleNetwork/hubble-satnet-decoder):
+
+| Field | Value (one captured packet) |
+|-------|-----------------------------|
+| PHY version | 1 |
+| chipset (from synth step) | Nordic (meas. 488.46 Hz vs 488.28) |
+| network id | `0x7EE37B21` |
+| sequence | 130 |
+| auth tag | `0xABC42A5B` |
+| channel / hop-seq index | 8 / 1 (of 4 sequences x 19 channels) |
+| FEC | Reed-Solomon RS(23,13) |
+
+Phones and ordinary BLE scanners **cannot** see this - it is not an
+advertisement. Only a ground SDR (HackRF/Pluto/bladeRF) receives it, and the
+transmitting SoC family is identifiable from the synthesizer resolution before a
+single byte is decrypted. Out of scope for the passive BLE parser; documented
+here for completeness.
+
 ## BLE Advertisement Format
 
 ### Identification
@@ -50,7 +76,7 @@ bytes after it, which is what both captures carry. The byte map comes from
 | Offset | Field | Size | Notes |
 |--------|-------|------|-------|
 | 0–1 | version (6 bits) \| sequence number (10 bits) | 2 | big-endian; `seq = BE16 & 0x3FF` |
-| 2–5 | EID | 4 | the rotating "device address"; changes on the SDK's advertisement-expiry period (180 s in the TI reference sample) |
+| 2–5 | EID | 4 | the rotating "device address"; rotation period = `CONFIG_HUBBLE_EID_ROTATION_PERIOD_SEC` (default **86400 s / daily**; the TI reference sample sets 180 s). Confirmed daily on the Zephyr `ble-network` sample with the UNIX_TIME counter: EID = f(⌊unix/86400⌋), unchanged within a UTC day, so BLE-address rotation gives no intra-day unlinkability. The 4-byte tag is a CMAC over the **ciphertext only** (not time or location) |
 | 6–9 | authentication tag | 4 | AES-CMAC-style tag under the device key |
 | 10– | ciphertext | 0–13 | customer payload, AES-CTR under the per-device key Hubble provisions |
 
