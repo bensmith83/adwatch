@@ -66,6 +66,36 @@ FE2C: 10 60 c5 31 a6 a6 86 1c 21 aa 8f
 | 0 | 1 | FMDN frame type (0x10) |
 | 1-10 | 10 | Ephemeral identifier for FMDN tracking |
 
+### FDDF Service Data — product-id frame (2026-10-06 sweep addition)
+
+Newer Alexa-built-in / LE-audio JBL units (headphones and earbuds, not the
+portable speakers) advertise FDDF service data with a **little-endian
+product id** in the first two payload bytes, followed by per-sighting
+state/counter bytes, and often a co-advertised empty `FE03` (Amazon
+Alexa) key. The ids sit in the same 0x20xx–0x21xx range as the
+manufacturer-data table and collide with none of its entries.
+
+Observed id → model mapping (each row anchored by a corpus record that
+carried the self-identifying "JBL …" local name with that exact FDDF
+payload — never interpolated):
+
+| FDDF payload[0..2) | LE product id | Model | Form |
+|---|---|---|---|
+| `83 20` | 0x2083 | Endurance Peak 3 | earbuds |
+| `b3 20` | 0x20b3 | Tune 520BT | headphones |
+| `b4 20` | 0x20b4 | Tune 720BT | headphones |
+| `b5 20` | 0x20b5 | Tune 670NC | headphones |
+| `b7 20` | 0x20b7 | Tune 770NC | headphones |
+| `ce 20` | 0x20ce | Live 770NC | headphones |
+| `f7 20` | 0x20f7 | Tune 520BT (hw rev) | headphones |
+| `0c 21` | 0x210c | Tune Buds 2 | earbuds |
+
+0x20b3 and 0x20f7 both anchor to Tune 520BT — hardware revisions.
+A nameless frame whose id is not in the table stays unclaimed (e.g. the
+`58 20` / 0x2058 family, 56 sightings, no named capture). NearSight's
+`jbl` parser claims nameless FDDF frames from this table since v1.5
+(`model_source = fddf_product_id_table`).
+
 ### What We Can Parse from Advertisements
 
 | Field | Source | Notes |
