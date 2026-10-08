@@ -47,8 +47,8 @@ Two physical units observed (full-corpus history, 2026-08-26 and
 manufacturer data with an identical 4-byte head:
 
 ```
-unit A (2026-09-29, 3 sightings):  03 2c | 51 12 | cd 23 f6 67 68 50 2d ff 12
-unit B (2026-08-26, 5 sightings):  03 2c | 51 12 | f0 89 1c 2c 4e 22 17 2d 9f
+unit A (2026-09-29, 3 sightings):  03 2c | 51 12 | xx xx xx xx xx xx xx xx xx
+unit B (2026-08-26, 5 sightings):  03 2c | 51 12 | yy yy yy yy yy yy yy yy yy
                                     CID    type     per-unit rolling hash
 ```
 
@@ -70,7 +70,7 @@ unit B (2026-08-26, 5 sightings):  03 2c | 51 12 | f0 89 1c 2c 4e 22 17 2d 9f
 
 None ever captured on a `0x2C03` frame. This is the decisive gap: the
 Bose-claimed `03 NN` CIDs (`0x4703`, `0x3703`) both arrived with
-Bose-substring names ("LE-Bose QC Headphones", "LE-Connies Bose",
+Bose-substring names ("LE-Bose QC Headphones", "LE-<owner> Bose",
 "LE-Bose QC45"); this family has none.
 
 ## Identification

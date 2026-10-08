@@ -29,8 +29,8 @@ def make_raw(manufacturer_data=None, service_uuids=None, local_name=None, **kwar
     )
 
 
-FRIDGE_MFR = bytes.fromhex("7500420c83455d30414a54524531000104a457a04da6020a02043631395604020400")
-TV_MFR = bytes.fromhex("7500021834a14fa4deff26093f21e7a359d642da6e7f9289")
+FRIDGE_MFR = bytes.fromhex("7500421122334430414a54524531000104a457a04da6020a02043631395604020400")
+TV_MFR = bytes.fromhex("7500021800112233445566778899aabbccddeeff00112233")
 
 
 class TestSamsungApplianceParsing:

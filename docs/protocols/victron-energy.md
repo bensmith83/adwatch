@@ -202,7 +202,7 @@ A second BLE stream that some Victron devices emit — particularly the WiFi-equ
 |--------|-------|-------|
 | Company ID | `0x4556` (LE-read of bytes `56 45` = ASCII "VE") | NOT SIG-assigned — Victron stuffs ASCII into the CID slot non-conformantly |
 | Magic header (full 4 bytes) | `56 45 52 15` | Required exactly to avoid false positives from any other firmware emitting `56 45` |
-| Local name pattern | `<label>.A<2hex>.WIFI` (e.g. `Smart.A7.WIFI`, `Lola's E.A5.WIFI`) | Last 2 hex chars before `.WIFI` look like the low byte of the BLE MAC; the `.WIFI` suffix marks Wi-Fi-capable firmware variants |
+| Local name pattern | `<label>.A<2hex>.WIFI` (e.g. `Smart.A7.WIFI`, `<Business> E.A5.WIFI`) | Last 2 hex chars before `.WIFI` look like the low byte of the BLE MAC; the `.WIFI` suffix marks Wi-Fi-capable firmware variants |
 
 ### Wire Format
 

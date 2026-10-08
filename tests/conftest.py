@@ -30,7 +30,7 @@ def thermopro_ad():
         manufacturer_data=None,
         service_data=None,
         service_uuids=[],
-        local_name="TP357 (2B54)",
+        local_name="TP357 (AB12)",
         rssi=-45,
         tx_power=None,
     )

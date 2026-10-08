@@ -621,51 +621,51 @@ H5124_DIFFERENT_TIME = _build_h5124(event=1, time_counter=b"\x00\x0a\x00\x05")
 
 class TestGoveeH5124Decryption:
     def test_vibration_event_detected(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["vibration"] is True
 
     def test_idle_event(self, parser):
-        raw = make_raw(manufacturer_data=H5124_IDLE, local_name="GV51244071")
+        raw = make_raw(manufacturer_data=H5124_IDLE, local_name="GV5124CD34")
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["vibration"] is False
 
     def test_battery_percentage(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result.metadata["battery_percent"] == 100
 
     def test_low_battery(self, parser):
-        raw = make_raw(manufacturer_data=H5124_LOW_BATTERY, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_LOW_BATTERY, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result.metadata["battery_percent"] == 12
 
     def test_model_is_h5124(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result.metadata["model"] == "H5124"
 
     def test_device_class(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result.device_class == "sensor"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result.beacon_type == "govee"
 
     def test_different_time_counter_same_result(self, parser):
-        raw = make_raw(manufacturer_data=H5124_DIFFERENT_TIME, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_DIFFERENT_TIME, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result is not None
         assert result.metadata["vibration"] is True
         assert result.metadata["battery_percent"] == 100
 
     def test_identity_hash(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         expected = hashlib.sha256("AA:BB:CC:DD:EE:FF".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
@@ -679,7 +679,7 @@ class TestGoveeH5124Matching:
         assert result is not None
 
     def test_matches_by_local_name_gv5124(self, parser):
-        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=H5124_VIBRATION, local_name="GV5124AB12")
         result = parser.parse(raw)
         assert result is not None
 
@@ -691,13 +691,13 @@ class TestGoveeH5124CRCValidation:
     def test_bad_crc_rejected(self, parser):
         data = bytearray(H5124_VIBRATION)
         data[-1] ^= 0xFF  # corrupt CRC
-        raw = make_raw(manufacturer_data=bytes(data), local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=bytes(data), local_name="GV5124AB12")
         assert parser.parse(raw) is None
 
     def test_short_payload_rejected(self, parser):
         # Only 10 bytes (need 24 after company ID bytes, total 26)
         short = VIBRATION_CID_BYTES + b"\x00" * 10
-        raw = make_raw(manufacturer_data=short, local_name="GV51242F04")
+        raw = make_raw(manufacturer_data=short, local_name="GV5124AB12")
         assert parser.parse(raw) is None
 
 
@@ -774,11 +774,11 @@ class TestGoveeH5124API:
 
         ad = RawAdvertisement(
             timestamp="2026-03-09T10:00:00+00:00",
-            mac_address="CA:32:39:37:2F:04",
+            mac_address="CA:AA:BB:CC:DD:01",
             address_type="random",
             manufacturer_data=H5124_VIBRATION,
             service_data=None,
-            local_name="GV51242F04",
+            local_name="GV5124AB12",
         )
         await raw_storage.save(
             ad,
@@ -805,14 +805,14 @@ class TestGoveeH5074CorpusOffset:
 
     HA govee-ble: 7-byte 0xEC88 payload -> "<hHB" at data[1:6];
     Theengs H5074_json.h: manufacturerdata hex offsets 6/10/14 (payload
-    bytes 1/3/5). Corpus frame 88ec00fc0dc5086402 ("Govee_H5074_42AC")
+    bytes 1/3/5). Corpus frame 88ec00fc0dc5086402 ("Govee_H5074_1234")
     decodes to 35.80 C / 22.45 % / 100 %; offset 2 gave -150.9 C / 256.1 %.
     """
 
     @pytest.mark.parametrize("hexframe,name,temp,hum,batt", [
-        ("88ec00fc0dc5086402", "Govee_H5074_42AC", 35.80, 22.45, 100),
-        ("88ec002a0d8e126302", "Govee_H5074_04DB", 33.70, 47.50, 99),
-        ("88ec00a5087f115502", "Govee_H5074_FC16", 22.13, 44.79, 85),
+        ("88ec00fc0dc5086402", "Govee_H5074_1234", 35.80, 22.45, 100),
+        ("88ec002a0d8e126302", "Govee_H5074_9ABC", 33.70, 47.50, 99),
+        ("88ec00a5087f115502", "Govee_H5074_5678", 22.13, 44.79, 85),
     ])
     def test_corpus_frame(self, parser, hexframe, name, temp, hum, batt):
         result = parser.parse(make_raw(manufacturer_data=bytes.fromhex(hexframe), local_name=name))
@@ -832,7 +832,7 @@ class TestGoveeH5075CorpusFrames:
 
     def test_doc_worked_example(self, parser):
         result = parser.parse(make_raw(
-            manufacturer_data=bytes.fromhex("88ec0003bb2d3800"), local_name="GVH5075_CF71"))
+            manufacturer_data=bytes.fromhex("88ec0003bb2d3800"), local_name="GVH5075_1234"))
         assert result.metadata["model"] == "H5075"
         assert result.metadata["temperature_c"] == pytest.approx(24.4)
         assert result.metadata["humidity_percent"] == pytest.approx(52.5)
@@ -924,7 +924,7 @@ class TestGoveeCid0001Frames:
     def test_model_from_name(self, parser):
         md = parser.parse(make_raw(
             manufacturer_data=bytes.fromhex("0100010103d5fd5f"),
-            local_name="GVH5177_B1E1", service_uuids=EC88_UUIDS)).metadata
+            local_name="GVH5177_1234", service_uuids=EC88_UUIDS)).metadata
         assert md["model"] == "H5177"
         assert md["temperature_c"] == pytest.approx(25.1)
         assert md["humidity_percent"] == pytest.approx(38.9)
@@ -933,7 +933,7 @@ class TestGoveeCid0001Frames:
     def test_name_alone_is_enough(self, parser):
         md = parser.parse(make_raw(
             manufacturer_data=bytes.fromhex("0100010103d5fd5f"),
-            local_name="GVH5177_B1E1")).metadata
+            local_name="GVH5177_1234")).metadata
         assert md["model"] == "H5177"
 
     def test_eight_byte_payload_is_h5108_temperature_only(self, parser):

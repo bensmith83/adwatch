@@ -212,7 +212,7 @@ class TestAranetEnrichment:
 
     @pytest.mark.parametrize("name,model", [
         ("Aranet2 1A2B3", "Aranet2"),
-        ("Aranet Radon 0F11", "Aranet Radon"),
+        ("Aranet Radon 1234", "Aranet Radon"),
         ("Aranet\u2622 123", "Aranet Nucleo"),
         ("Aranet4 12345", "Aranet4"),
     ])

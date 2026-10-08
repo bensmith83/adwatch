@@ -28,7 +28,7 @@ def _registry():
 
 
 def test_matches_name():
-    assert len(_registry().match(_ad(local_name="NOWATCH MB2900897"))) == 1
+    assert len(_registry().match(_ad(local_name="NOWATCH MB1234567"))) == 1
 
 
 def test_no_match_other_name():
@@ -37,21 +37,21 @@ def test_no_match_other_name():
 
 
 def test_parse_serial_identity():
-    r = NowatchParser().parse(_ad(local_name="NOWATCH MB2900897"))
+    r = NowatchParser().parse(_ad(local_name="NOWATCH MB1234567"))
     assert r.parser_name == "nowatch"
     assert r.device_class == "wearable"
     m = r.metadata
-    assert m["unit_id"] == "MB2900897"
+    assert m["unit_id"] == "MB1234567"
     assert m["model_code"] == "MB"
-    assert m["serial"] == "2900897"
+    assert m["serial"] == "1234567"
     assert m["sensitive"] is True
     assert m["sensitive_category"] == "mental_health"
-    assert r.identifier_hash == hashlib.sha256(b"nowatch:MB2900897").hexdigest()[:16]
+    assert r.identifier_hash == hashlib.sha256(b"nowatch:MB1234567").hexdigest()[:16]
 
 
 def test_identity_stable_across_mac():
-    a = NowatchParser().parse(_ad(local_name="NOWATCH MB2900897"))
-    b = NowatchParser().parse(_ad(local_name="NOWATCH MB2900897", mac_address="F1:00:00:00:00:01"))
+    a = NowatchParser().parse(_ad(local_name="NOWATCH MB1234567"))
+    b = NowatchParser().parse(_ad(local_name="NOWATCH MB1234567", mac_address="F1:00:00:00:00:01"))
     assert a.identifier_hash == b.identifier_hash
 
 

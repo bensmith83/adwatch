@@ -87,7 +87,7 @@ b1 03 | 4f 54 4f | 33 32 38 31 | <3 per-unit bytes> | 01 | ...
 
 `3281` sits in the frame-tag slot but is ASCII digits, so it is likely a
 model designator rather than a message type. The three bytes after the tag
-differ per unit (`32 15 ad`, `d8 71 ae`, `e6 73 35`) and are the only
+differ per unit (three distinct values, `xx xx xx` here) and are the only
 per-unit-distinguishing bytes in the whole family; they are surfaced as an
 opaque `unit_bytes_hex`, not claimed as a serial.
 
@@ -104,7 +104,7 @@ parser, all consistent with the layouts above:
   word at bytes 15–18 reads `0x18067A3A`, 1,281 above the 2026-07-31
   `0x18067539`, again consistent with a shared, slowly advancing
   clock/epoch counter rather than an identity.
-- `OTO3281` per-unit bytes `ce 91 bc` — a fourth distinct value.
+- `OTO3281` per-unit bytes (`xx xx xx`) — a fourth distinct value.
 
 ## What We Cannot Parse
 

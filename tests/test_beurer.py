@@ -123,7 +123,7 @@ class TestBeurerNamePrefixGating:
     """
 
     def test_powerdot_is_not_a_beurer(self):
-        assert BeurerParser().parse(_make_ad(local_name="PowerDot2-4F21")) is None
+        assert BeurerParser().parse(_make_ad(local_name="PowerDot2-1234")) is None
 
     def test_polar_is_not_a_beurer(self):
         assert BeurerParser().parse(_make_ad(local_name="Polar H10")) is None
@@ -153,5 +153,5 @@ class TestBeurerNamePrefixGating:
         class _P(BeurerParser):
             pass
 
-        assert registry.match(_make_ad(local_name="PowerDot2-4F21")) == []
+        assert registry.match(_make_ad(local_name="PowerDot2-1234")) == []
         assert len(registry.match(_make_ad(local_name="BM27"))) == 1

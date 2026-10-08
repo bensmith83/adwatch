@@ -18,7 +18,7 @@ The fingerprint is a proprietary 128-bit service UUID; the local name (when broa
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Service UUID | `60054001-F97C-C5A3-9941-1C799C307DDF` | Dell's vendor-allocated service UUID. |
-| Local name | `^[CPSU]\d{3,4}[A-Z]?\d{3}$` (optional) | E.g. `"P2417027"` (P2417 model, unit 027). |
+| Local name | `^[CPSU]\d{3,4}[A-Z]?\d{3}$` (optional) | E.g. `"P2417NNN"` (P2417 model, unit NNN). |
 
 ### Manufacturer Data
 
@@ -35,7 +35,7 @@ The varying byte is stable within a single sighting burst but changes between ca
 
 The Dell display naming convention is `<model><unit serial>`:
 
-- `P2417027` → model `P2417` (UltraSharp 24"), unit 027.
+- `P2417NNN` → model `P2417` (UltraSharp 24"), unit NNN.
 - C-series and U-series follow the same pattern.
 
 ## Detection Significance

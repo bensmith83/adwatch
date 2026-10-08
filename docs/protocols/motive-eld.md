@@ -14,7 +14,7 @@ Motive is registered with the Bluetooth SIG as the owner of UUID **`0xFC6D`**. T
 ## Identifiers
 
 - **Service UUID:** `FC6D` (16-bit, SIG-allocated to "MOTIVE TECHNOLOGIES, INC.")
-- **Local name pattern:** asset / VIN-style code, observed e.g. `AABL36UG028367` (4 alpha + 2 alnum + 6-8 digits)
+- **Local name pattern:** asset / VIN-style code, observed e.g. `XXXX36UGNNNNNN` (4 alpha + 2 alnum + 6-8 digits)
 - **Device class:** `vehicle_telematics`
 
 ## BLE Advertisement Format
@@ -29,15 +29,15 @@ Motive is registered with the Bluetooth SIG as the owner of UUID **`0xFC6D`**. T
 
 ### Asset-tag structure
 
-Captured: `AABL36UG028367`
+Captured: `XXXX36UGNNNNNN`
 
 Breakdown (heuristic, based on Motive support documentation):
 
 | Substring | Meaning |
 |-----------|---------|
-| `AABL` | Fleet / customer prefix (often 4 alpha) |
+| `XXXX` | Fleet / customer prefix (often 4 alpha) |
 | `36UG` | Hardware revision / SKU |
-| `028367` | Serial number |
+| `NNNNNN` | Serial number |
 
 Other observed Motive asset codes follow the same general "4 alpha + 2 alnum + 6-8 digits" shape. The tag is the **stable identity** of the hardware — Motive recycles MAC addresses across replacements, but the asset code tracks the physical unit and survives swaps.
 
@@ -61,7 +61,7 @@ Other observed Motive asset codes follow the same general "4 alpha + 2 alnum + 6
 ## Sample Advertisements
 
 ```
-Asset tag AABL36UG028367 — 6 sightings, one persistent unit
+Asset tag XXXX36UGNNNNNN — 6 sightings, one persistent unit
   Service UUID: FC6D
   Manufacturer data: 0f00
   Service data: (none)

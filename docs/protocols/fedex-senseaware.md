@@ -47,9 +47,9 @@ The 12-byte `R1..R12` field of the extended variant is what the FedEx **SenseAwa
 
 Observed examples (from a 24-tag fleet capture):
 ```
-c1860ba8c4e80107016615e4000000
-df28ca100ef701070181 1ae4000000
-ef9dd7437ef30107012c 4b93000000
+xxxxxxxxxxxx0107016615e4000000
+xxxxxxxxxxxx01070181 1ae4000000
+xxxxxxxxxxxx0107012c 4b93000000
 ```
 
 The recurring `01 07 01` triplet at bytes 22..24 of the mfg data (or bytes 6..8 of the record) looks like a sub-TLV (`length=0x01 type=0x07 value=0x01`), suggesting the record itself is also TLV-encoded. Confirmation requires controlled captures against known SenseAware tag configurations.

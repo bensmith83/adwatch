@@ -33,7 +33,7 @@ class NestParser:
             return None
 
         # Prefer local_name for identity when present. Nest local names like
-        # "NW3J0" are stable per device, while the FEAF service-data payload
+        # "NAAAA" are stable per device, while the FEAF service-data payload
         # contains a rotating counter — hashing that produces a new identity
         # per emission and fragments a single device into many.
         if raw.local_name:

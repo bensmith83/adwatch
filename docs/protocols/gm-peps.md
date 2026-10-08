@@ -24,13 +24,13 @@ capture.
 
 ## FE48 service-data byte map (20 bytes)
 
-Example: `01 0000 6bac506ed622fdc0 01 02 00000000000000`
+Example: `01 0000 xxxxxxxxxxxxxxxx 01 02 00000000000000`
 
 | Offset | Bytes | Field | Behaviour |
 |---|---|---|---|
 | 0 | `01` | frame/format | constant |
 | 1–2 | `00 00` | reserved | constant |
-| **3–10** | **`6b ac 50 6e d6 22 fd c0`** | **8-byte vehicle id** | **constant across all captures AND across differing random MACs** |
+| **3–10** | **`xx xx xx xx xx xx xx xx`** | **8-byte vehicle id** | **constant across all captures AND across differing random MACs** |
 | 11 | `01` / `03` / `04` | key-slot index | matches `VKS1` / `VKS3` / `VKS4` |
 | 12 | `02` | state | constant |
 | 13–19 | `00 × 7` | padding | constant |

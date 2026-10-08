@@ -34,7 +34,7 @@ Local name: JBL PartyBox Stage 320
 
 #### Frame 2: Manufacturer data
 ```
-Manufacturer data: cb0edd2001d06486a92401000068593259334901010000000000
+Manufacturer data: cb0edd2001d06486a924010000xxxxxxxxxxxx01010000000000
 Service Data: {"FDDF": ""}
 Local name: JBL PartyBox Stage 320
 ```
@@ -42,9 +42,12 @@ Local name: JBL PartyBox Stage 320
 ### Manufacturer Data Structure (25 bytes)
 
 ```
-cb 0e dd 20 01 d0 64 86 a9 24 01 00 00 68 59 32
-59 33 49 01 01 00 00 00 00 00
+cb 0e dd 20 01 d0 64 86 a9 24 01 00 00 xx xx xx
+xx xx xx 01 01 00 00 00 00 00
 ```
+
+Bytes 13–18 are six printable mixed-case alphanumeric ASCII characters in
+the capture (redacted here — plausibly a per-unit code).
 
 | Offset | Length | Value | Description |
 |--------|--------|-------|-------------|
@@ -92,7 +95,7 @@ JBL PartyBox Stage 320 (frame 1):
   Sightings: 85
 
 JBL PartyBox Stage 320 (frame 2):
-  Manufacturer data: cb0edd2001d06486a92401000068593259334901010000000000
+  Manufacturer data: cb0edd2001d06486a924010000xxxxxxxxxxxx01010000000000
   Service Data: {"FDDF": ""}
   Sightings: 65
 ```
@@ -148,12 +151,12 @@ which is what pins the byte order:
 | `0x204F` | Flip 6 | 2021 | | | |
 
 ```
-57 00 | 07 21 | 01 34 | e7 8d 8f 1e | 01 00     (nameless Flip 7, 10 bytes)
+57 00 | 07 21 | 01 34 | xx xx xx xx | 01 00     (nameless Flip 7, 10 bytes)
  cid    PID LE   state   4-byte field   tail
 ```
 
 Everything after the id is still undecoded. On 2021+ models there is a
-4-byte field that *looks* per-unit (one Charge 6 held `aedad6fd` across
+4-byte field that *looks* per-unit (one Charge 6 held the same value across
 three records on three days) but `09 03 …` recurs in that position across
 models often enough that it is not safe to key identity on; the parser
 records it raw only. `20b3`, `20f7`, `20ce` have been seen in FDDF
@@ -193,7 +196,7 @@ contains no entry for `0x4F47`.
 ### Real Capture (May 2026)
 
 ```
-localName        : GO 3S 2E5JMP
+localName        : GO 3S XXXXXX
 manufacturerHex  : 47 4f 01 b4 02 01 01
 serviceUUIDs     : [BE80]
 ```
@@ -212,7 +215,7 @@ serviceUUIDs     : [BE80]
 | Field | Source | Example |
 |-------|--------|---------|
 | `model_family` | local-name prefix | `GO 3S` / `GO 3` / `GO 2` |
-| `serial_suffix` | local-name tail (5–6 alphanumeric chars) | `2E5JMP` |
+| `serial_suffix` | local-name tail (5–6 alphanumeric chars) | `XXXXXX` |
 | `frame_type` | payload byte 0, hex-formatted | `0x01` |
 | `payload_hex` | full 5-byte payload | `01b4020101` |
 | `wire_format` | constant | `jbl_go_vanity_cid` |

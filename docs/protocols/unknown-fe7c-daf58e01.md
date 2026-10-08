@@ -7,8 +7,8 @@
 
 ## Overview
 
-A single BLE device observed in a 2026-05-20 scan (Boston area, near Fenway
-Park, ~18:52 UTC / 14:52 EDT) advertising two signals that no public source
+A single BLE device observed in a 2026-05-20 scan (an urban street scene
+near a sports venue, ~18:52 UTC) advertising two signals that no public source
 attributes to a specific product family:
 
 1. **Manufacturer data CID `0xFE7C`** — appears in the company-identifier slot
@@ -32,7 +32,7 @@ area rather than a fixed installation.
 | Signal | Value |
 |---|---|
 | Manufacturer data CID | `0xFE7C` (bytes `7c fe`, little-endian) |
-| Manufacturer payload | `62 4b b7 3c 00 00` (6 bytes — 4 identifier-looking bytes + 2 reserved zeros) |
+| Manufacturer payload | `xx xx xx xx 00 00` (6 bytes — 4 identifier-looking bytes + 2 reserved zeros) |
 | Service UUID (128-bit, custom) | `DAF58E01-…` (CoreBluetooth exported only the 32-bit prefix in this capture) |
 | Local name | absent |
 | Service data | none |
@@ -41,8 +41,8 @@ area rather than a fixed installation.
 ### Captured sample
 
 ```
-deviceIdentifier:     687734C5-58D5-92AA-92D5-DEFC86EDE177
-manufacturerDataHex:  7cfe624bb73c0000
+deviceIdentifier:     <device-id>
+manufacturerDataHex:  7cfexxxxxxxx0000
 serviceUUIDsJSON:     ["DAF58E01"]
 sightingCount:        9   (over ~12 s)
 rssiMax/Min:          -83 / -92 dBm
@@ -59,7 +59,7 @@ unknown_fe7c_daf58e01:<mac>
 
 MAC-scoped because (a) we have only a single observation and so cannot
 identify which payload bytes (if any) are stable across MAC rotations, and
-(b) the 4-byte mid-payload (`62 4b b7 3c`) could plausibly be either a
+(b) the 4-byte mid-payload (`xx xx xx xx`) could plausibly be either a
 device serial OR a per-broadcast nonce — we lack the evidence to commit
 either way.
 
@@ -102,12 +102,12 @@ either way.
   `DAF58E01` custom UUID prevent confirmation. We deliberately leave the
   `vendor` metadata field unset.
 - **Product family.** Could be ticketing hardware, employee badge, asset
-  tag, concession terminal, sound-system controller, etc. The Fenway
-  Park context is suggestive but uncorroborated; the device's short
+  tag, concession terminal, sound-system controller, etc. The sports-venue
+  context is suggestive but uncorroborated; the device's short
   burst + weak RSSI is equally consistent with a pedestrian phone running
   a custom BLE app.
 - **Payload semantics.** The 4-byte identifier-looking prefix
-  `62 4b b7 3c` could be (a) a serial number, (b) a session nonce,
+  `xx xx xx xx` could be (a) a serial number, (b) a session nonce,
   (c) a truncated MAC, or (d) a checksum/tag of something else. Single
   observation, so we cannot distinguish.
 
@@ -123,14 +123,14 @@ either way.
 - GitHub code search for `"DAF58E01"` — 27 hits, all substring-collision
   false positives (e.g. binary `.db` files, JPEG resource paths,
   unrelated openssh ChangeLog noise).
-- GitHub code search for `"7cfe624bb73c"` and `"624bb73c"` — no
+- GitHub code search for the 6-byte payload hex (searched in full and by its 4-byte mid-section) — no
   bluetooth-relevant hits.
 - GitHub code search for `"DAF58E01" Telit`, `"DAF58E01" Stollmann`,
   `"DAF58E01" BlueMod` — zero hits each.
 - Web searches for `"0xFE7C" bluetooth`, `"DAF58E01" bluetooth`,
   `BlueMod custom UUID DAF5`, `Stollmann DAF5 SPP` — only generic
   documentation, no product match.
-- Cross-export check: the payload `7cfe624bb73c` and the service UUID
+- Cross-export check: the payload `7cfexxxxxxxx` and the service UUID
   `DAF58E01` are present in *only* `adwatch_export 8.json` — not in any
   earlier export. This is a brand-new sighting, not a recurring device.
 

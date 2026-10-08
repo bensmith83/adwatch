@@ -183,12 +183,13 @@ class TestIBeaconParser:
 class TestIBeaconBigEndianCompanyId:
     """Test iBeacon ads with big-endian company ID (0x004c as bytes 00 4c)."""
 
-    # Real-world observed payload: company ID in big-endian byte order
-    # 004c02152686f39cbada4658854aa62e7e5e8b8d00010000c9
+    # Payload shape observed in the wild (proximity UUID replaced with a synthetic value):
+    # company ID in big-endian byte order
+    # 004c02151111111122223333444455555555555500010000c9
     BIG_ENDIAN_PAYLOAD = bytes.fromhex(
-        "004c02152686f39cbada4658854aa62e7e5e8b8d00010000c9"
+        "004c02151111111122223333444455555555555500010000c9"
     )
-    EXPECTED_UUID = "2686f39c-bada-4658-854a-a62e7e5e8b8d"
+    EXPECTED_UUID = "11111111-2222-3333-4444-555555555555"
 
     def test_parse_succeeds(self, parser):
         """Big-endian company ID 004c should still be recognized as Apple."""

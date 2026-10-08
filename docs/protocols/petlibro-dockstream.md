@@ -41,7 +41,7 @@ The two-letter family code drives device class:
 
 | Capture | Inference |
 |---|---|
-| CID `0xA398` + name `PLWF105` + payload `16 4b ad ac` | model `PLWF105`, family `Dockstream Smart Fountain`, class `pet_water_fountain` |
+| CID `0xA398` + name `PLWF105` + payload `xx xx xx xx` | model `PLWF105`, family `Dockstream Smart Fountain`, class `pet_water_fountain` |
 | CID `0xA398` + name `PLWF305` | model `PLWF305`, family `Dockstream RFID Smart Fountain`, class `pet_water_fountain` |
 | CID `0xA398` + name `PLAF103` | model `PLAF103`, class `pet_feeder` |
 | name `PLWF105` only, no `0xA398` CID | rejected (CID required) |

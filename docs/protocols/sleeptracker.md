@@ -28,7 +28,7 @@ Total: 10 bytes (2 company ID + 8 payload)
 #### Example
 
 ```
-ef 01 00 22 97 9b 3c 06 01 0f
+ef 01 00 22 xx xx xx xx 01 0f
 ```
 
 | Offset | Length | Value | Description |
@@ -36,7 +36,7 @@ ef 01 00 22 97 9b 3c 06 01 0f
 | 0-1 | 2 | `ef 01` | Company ID 0x01EF (little-endian) |
 | 2 | 1 | `00` | Protocol version or status flag |
 | 3 | 1 | `22` | Device state/mode indicator |
-| 4-7 | 4 | `97 9b 3c 06` | Device identifier or rolling counter |
+| 4-7 | 4 | `xx xx xx xx` | Device identifier or rolling counter |
 | 8-9 | 2 | `01 0f` | Firmware version or status flags |
 
 ### What We Can Parse from Advertisements

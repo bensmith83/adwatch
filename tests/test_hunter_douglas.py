@@ -48,11 +48,11 @@ def _make_raw(
     )
 
 
-# Observed SIL data: 19088a6c170000000000c2
-# Observed DUE data: 1908116009400b000000c2
+# Observed SIL data: 19083412170000000000c2
+# Observed DUE data: 1908785609400b000000c2
 
-SIL_MFR_DATA = bytes.fromhex("19088a6c170000000000c2")
-DUE_MFR_DATA = bytes.fromhex("1908116009400b000000c2")
+SIL_MFR_DATA = bytes.fromhex("19083412170000000000c2")
+DUE_MFR_DATA = bytes.fromhex("1908785609400b000000c2")
 FDC1_UUID = "0000fdc1-0000-1000-8000-00805f9b34fb"
 
 
@@ -60,7 +60,7 @@ class TestHunterDouglasParser:
     def test_parses_silhouette_shade(self):
         parser = HunterDouglasPowerViewParser()
         raw = _make_raw(
-            local_name="SIL:4914",
+            local_name="SIL:1111",
             manufacturer_data=SIL_MFR_DATA,
             service_uuids=[FDC1_UUID],
         )
@@ -73,7 +73,7 @@ class TestHunterDouglasParser:
     def test_parses_duette_shade(self):
         parser = HunterDouglasPowerViewParser()
         raw = _make_raw(
-            local_name="DUE:1568",
+            local_name="DUE:3333",
             manufacturer_data=DUE_MFR_DATA,
             service_uuids=[FDC1_UUID],
         )
@@ -84,15 +84,15 @@ class TestHunterDouglasParser:
     def test_extracts_silhouette_metadata(self):
         parser = HunterDouglasPowerViewParser()
         raw = _make_raw(
-            local_name="SIL:4914",
+            local_name="SIL:1111",
             manufacturer_data=SIL_MFR_DATA,
             service_uuids=[FDC1_UUID],
         )
         result = parser.parse(raw)
         m = result.metadata
         assert m["product_line"] == "Silhouette"
-        assert m["device_id"] == "4914"
-        assert m["home_id"] == "0x6c8a"
+        assert m["device_id"] == "1111"
+        assert m["home_id"] == "0x1234"
         assert m["type_id"] == 23
         assert m["position_pct"] == 0.0
         assert m["tilt"] == 0
@@ -102,15 +102,15 @@ class TestHunterDouglasParser:
     def test_extracts_duette_metadata(self):
         parser = HunterDouglasPowerViewParser()
         raw = _make_raw(
-            local_name="DUE:1568",
+            local_name="DUE:3333",
             manufacturer_data=DUE_MFR_DATA,
             service_uuids=[FDC1_UUID],
         )
         result = parser.parse(raw)
         m = result.metadata
         assert m["product_line"] == "Duette"
-        assert m["device_id"] == "1568"
-        assert m["home_id"] == "0x6011"
+        assert m["device_id"] == "3333"
+        assert m["home_id"] == "0x5678"
         assert m["type_id"] == 9
         assert m["battery"] == "100%"
         # position1 raw bytes at offset 3-4 (after company ID removal): 40 0b
@@ -139,7 +139,7 @@ class TestHunterDouglasParser:
     def test_identifier_hash_stable(self):
         parser = HunterDouglasPowerViewParser()
         raw = _make_raw(
-            local_name="SIL:4914",
+            local_name="SIL:1111",
             manufacturer_data=SIL_MFR_DATA,
             service_uuids=[FDC1_UUID],
         )
@@ -151,12 +151,12 @@ class TestHunterDouglasParser:
     def test_different_shades_different_hashes(self):
         parser = HunterDouglasPowerViewParser()
         raw1 = _make_raw(
-            local_name="SIL:4914",
+            local_name="SIL:1111",
             manufacturer_data=SIL_MFR_DATA,
             mac="AA:BB:CC:DD:EE:01",
         )
         raw2 = _make_raw(
-            local_name="SIL:E869",
+            local_name="SIL:2222",
             manufacturer_data=SIL_MFR_DATA,
             mac="AA:BB:CC:DD:EE:02",
         )
@@ -170,7 +170,7 @@ class TestHunterDouglasParser:
         data = bytearray(SIL_MFR_DATA)
         data[5] = 0x01  # bits [1:0] = 01 = closing
         raw = _make_raw(
-            local_name="SIL:4914",
+            local_name="SIL:1111",
             manufacturer_data=bytes(data),
             service_uuids=[FDC1_UUID],
         )
@@ -183,7 +183,7 @@ class TestHunterDouglasParser:
             data = bytearray(SIL_MFR_DATA)
             data[10] = status_byte
             raw = _make_raw(
-                local_name="SIL:4914",
+                local_name="SIL:1111",
                 manufacturer_data=bytes(data),
                 service_uuids=[FDC1_UUID],
             )
@@ -203,6 +203,6 @@ class TestHunterDouglasRegistration:
 
     def test_matches_local_name(self):
         registry = _make_registry()
-        raw = _make_raw(local_name="SIL:4914")
+        raw = _make_raw(local_name="SIL:1111")
         matches = registry.match(raw)
         assert len(matches) >= 1

@@ -47,12 +47,12 @@ Six devices from `nearsight_export 7.json`. Manufacturer data shown including
 the 2-byte CID:
 
 ```
-980c010861048c4748110300                              (1 rec:  01)
+980c0108xxxxxxxxxxxxxxxx                              (1 rec:  01)
 980c08020000090200000b01000d01000c020000040410001005  (6 recs: 08 09 0b 0d 0c 04)
 980c060800a0c72b47dd4317070809000000000000000a0100    (3 recs: 06 07 0a)
 980c0e04000000000f01001009000000000000000000          (3 recs: 0e 0f 10)
-980c0208e61a38030000000003010c05040e00010100020700    (4 recs: 02 03 05 00)
-980c0208e11a38030000000003010c05040e00010100020700    (4 recs: 02 03 05 00)
+980c0208xxxxxx030000000003010c05040e00010100020700    (4 recs: 02 03 05 00)
+980c0208yyyyyy030000000003010c05040e00010100020700    (4 recs: 02 03 05 00)
 ```
 
 ### Observed tags and lengths
@@ -74,7 +74,7 @@ invent or decode meaning.
 ### Tag `0x02` is the per-device id
 
 The last two frames are byte-for-byte identical **except** for tag `0x02`'s
-value (`e61a3803…` vs `e11a3803…`). That isolates tag `0x02` as the per-unit
+value (`xxxxxx03…` vs `yyyyyy03…`). That isolates tag `0x02` as the per-unit
 identifier, so we surface it as the stable identity anchor.
 
 ## Identification

@@ -37,12 +37,12 @@ two.
 |-------|--------|---------|
 | `MODEL` | Uppercase alphanumeric | `E5R`, `BWL7`, `CD06` |
 | `REGION` | Optional 2-letter regulatory token | `US`, `EU`, `JP` |
-| `SERIAL` | Uppercase alphanumeric, unit-specific | `SGA0791A`, `047262`, `ABC1234` |
+| `SERIAL` | Uppercase alphanumeric, unit-specific | `XXXXXXXX`, `XXXXXX`, `ABC1234` |
 
 Examples observed in the field:
 
-- `E5R-US-SGA0791A` — Solarcycle Morph, US variant
-- `BWL7-047262` — BWL7-generation floor light, region token elided
+- `E5R-US-XXXXXXXX` — Solarcycle Morph, US variant
+- `BWL7-XXXXXX` — BWL7-generation floor light, region token elided
 - `CD06-US-ABC1234` — original Lightcycle Morph, US variant (documented in
   community integrations)
 

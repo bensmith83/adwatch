@@ -30,34 +30,34 @@ def make_raw(manufacturer_data=None, service_data=None, service_uuids=None, loca
 
 
 # Full Clover mfr data with ASCII serial
-CLOVER_MFR_FULL = bytes.fromhex("71030104620002004a424855333436343237")
+CLOVER_MFR_FULL = bytes.fromhex("71030104620002004a424855303030303030")
 CLOVER_MFR_SHORT = bytes.fromhex("710301044b00")
 
 
 class TestCloverParsing:
     def test_parse_valid_data(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert result.parser_name == "clover"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert result.beacon_type == "clover"
 
     def test_device_class(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert result.device_class == "payment_terminal"
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
@@ -65,7 +65,7 @@ class TestCloverParsing:
     def test_identity_hash_value(self, parser):
         raw = make_raw(
             manufacturer_data=CLOVER_MFR_FULL,
-            local_name="CCJB621450531",
+            local_name="CCJB123456789",
             mac_address="11:22:33:44:55:66",
         )
         result = parser.parse(raw)
@@ -73,34 +73,34 @@ class TestCloverParsing:
         assert result.identifier_hash == expected
 
     def test_model_code_jb(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert result.metadata["model_code"] == "JB"
         assert result.metadata["model"] == "Clover Flex"
 
     def test_model_code_gb(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_SHORT, local_name="CCGB616512155")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_SHORT, local_name="CCGB123456789")
         result = parser.parse(raw)
         assert result.metadata["model_code"] == "GB"
         assert result.metadata["model"] == "Clover Go"
 
     def test_local_serial(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
-        assert result.metadata["local_serial"] == "621450531"
+        assert result.metadata["local_serial"] == "123456789"
 
     def test_hardware_serial_extracted(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
-        assert result.metadata["hardware_serial"] == "JBHU346427"
+        assert result.metadata["hardware_serial"] == "JBHU000000"
 
     def test_no_hardware_serial_short_payload(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_SHORT, local_name="CCGB616512155")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_SHORT, local_name="CCGB123456789")
         result = parser.parse(raw)
         assert "hardware_serial" not in result.metadata
 
     def test_protocol_version(self, parser):
-        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB621450531")
+        raw = make_raw(manufacturer_data=CLOVER_MFR_FULL, local_name="CCJB123456789")
         result = parser.parse(raw)
         assert result.metadata["protocol_version"] == 1
 
@@ -119,7 +119,7 @@ class TestCloverParsing:
 
 class TestCloverMalformed:
     def test_returns_none_no_mfr_data(self, parser):
-        raw = make_raw(local_name="CCJB621450531")
+        raw = make_raw(local_name="CCJB123456789")
         assert parser.parse(raw) is None
 
     def test_returns_none_wrong_company_id(self, parser):

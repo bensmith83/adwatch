@@ -19,14 +19,14 @@ Vendor-unconfirmed BLE asset-tag family identified by a single 128-bit vendor se
 
 `<6 digits>_<MAC suffix>` where:
 
-- The 6-digit prefix is a site / fleet / account code burned at provisioning. It recurs across multiple captures with the same value (`113685`, `113360`, `110092` observed).
-- The suffix is either the full 12-hex MAC (e.g. `9C139E556148`) or a shortened 4-hex tail (e.g. `8AD4`). The full form is the persistent printed MAC; the short form is the broadcast hint.
+- The 6-digit prefix is a site / fleet / account code burned at provisioning. It recurs across multiple captures with the same value (three distinct codes observed).
+- The suffix is either the full 12-hex MAC (e.g. `XXXXXXXXXXXX`) or a shortened 4-hex tail (e.g. `XXXX`). The full form is the persistent printed MAC; the short form is the broadcast hint.
 
 | Captured names |
 |----------------|
-| `113685_9C139E556148` |
-| `113360_30EDA08F0820` |
-| `110092_8AD4` |
+| `NNNNNN_XXXXXXXXXXXX` |
+| `NNNNNN_XXXXXXXXXXXX` |
+| `NNNNNN_XXXX` |
 
 ### What We Can Parse
 

@@ -38,7 +38,7 @@ def make_raw(
 # Company ID 0x09C8 in little-endian = bytes [0xC8, 0x09] + payload
 XUNTONG_COMPANY_ID = 0x09C8
 # Example manufacturer data: company_id LE bytes + serial-like payload
-FLOCK_MFR_DATA = bytes([0xC8, 0x09]) + b"TN72023022000771"
+FLOCK_MFR_DATA = bytes([0xC8, 0x09]) + b"TN00000000000001"
 
 
 class TestFlockSafetyBasicParsing:

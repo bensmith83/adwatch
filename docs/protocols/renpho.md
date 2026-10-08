@@ -35,7 +35,7 @@ no Qingniu manufacturer-data weight preview is decoded.
 ## Wire Format
 
 ```
-d0 06 | 01 | de f2 b2 be 5b c4 | c6 | 2c | 02 02 02
+d0 06 | 01 | xx xx xx xx xx xx | c6 | 2c | 02 02 02
 └─┬─┘   └┬┘   └────────┬───────┘   └┬┘   └┬┘   └──┬──┘
  cid    op     device id (6B)      sep   product   trailer
                                           token
@@ -44,7 +44,7 @@ d0 06 | 01 | de f2 b2 be 5b c4 | c6 | 2c | 02 02 02
 | Offset (post-cid) | Bytes        | Meaning |
 |-------------------|--------------|---------|
 | 0                 | `01`         | Opcode / frame type (constant `0x01` observed) |
-| 1–6               | `def2b2be5bc4` | Per-unit device identifier (MAC-derived hash, stable per physical device) |
+| 1–6               | `xxxxxxxxxxxx` | Per-unit device identifier (MAC-derived hash, stable per physical device) |
 | 7                 | `c6`         | Separator / config byte (constant observed) |
 | 8                 | `2c`         | Product token — distinguishes SKUs (e.g. `0x2C`=Core 400S, `0x25`=Classic 300S) |
 | 9–11              | `02 02 02`   | Trailer (constant observed) |

@@ -46,7 +46,7 @@ class TestDreameMatching:
         registry = _make_registry()
         ad = _make_ad(
             service_uuids=["0000fd92-0000-1000-8000-00805f9b34fb"],
-            local_name="DL-1102102677",
+            local_name="DL-1234567890",
         )
         matches = registry.match(ad)
         assert len(matches) == 1
@@ -54,7 +54,7 @@ class TestDreameMatching:
     def test_matches_local_name(self):
         """Matches on DL- prefix."""
         registry = _make_registry()
-        ad = _make_ad(local_name="DL-1102102677")
+        ad = _make_ad(local_name="DL-1234567890")
         matches = registry.match(ad)
         assert len(matches) == 1
 
@@ -71,7 +71,7 @@ class TestDreameParsing:
         """Parses Dreame vacuum advertisement."""
         parser = DreameParser()
         ad = _make_ad(
-            local_name="DL-1102102677",
+            local_name="DL-1234567890",
             service_uuids=["0000fd92-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)
@@ -84,28 +84,28 @@ class TestDreameParsing:
         """Serial number extracted from local name."""
         parser = DreameParser()
         ad = _make_ad(
-            local_name="DL-1102102677",
+            local_name="DL-1234567890",
             service_uuids=["0000fd92-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)
-        assert result.metadata["serial"] == "1102102677"
+        assert result.metadata["serial"] == "1234567890"
 
     def test_device_name_in_metadata(self):
         """Full device name stored in metadata."""
         parser = DreameParser()
         ad = _make_ad(
-            local_name="DL-1102102677",
+            local_name="DL-1234567890",
             service_uuids=["0000fd92-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "DL-1102102677"
+        assert result.metadata["device_name"] == "DL-1234567890"
 
     def test_identity_hash(self):
         """Identity hash is SHA256('dreame:{mac}')[:16]."""
         mac = "11:22:33:44:55:66"
         parser = DreameParser()
         ad = _make_ad(
-            local_name="DL-1102102677",
+            local_name="DL-1234567890",
             service_uuids=["0000fd92-0000-1000-8000-00805f9b34fb"],
             mac_address=mac,
         )
@@ -125,7 +125,7 @@ class TestDreameParsing:
     def test_name_only_match(self):
         """Matches on DL- name alone."""
         parser = DreameParser()
-        ad = _make_ad(local_name="DL-1102102677")
+        ad = _make_ad(local_name="DL-1234567890")
         result = parser.parse(ad)
         assert result is not None
 

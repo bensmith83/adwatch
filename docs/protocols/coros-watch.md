@@ -12,7 +12,7 @@ This parser pulls the watch family (PACE 3 / APEX 2 / VERTIX 2 / …) and the pe
 
 | Signal | Value | Notes |
 |---|---|---|
-| Local name | `^COROS .+ [0-9A-Fa-f]{6}$` | E.g. `"COROS PACE 3 805FB7"`. The 6-hex suffix is the last three bytes of the BD_ADDR — same value across consecutive ads of the same physical watch. |
+| Local name | `^COROS .+ [0-9A-Fa-f]{6}$` | E.g. `"COROS PACE 3 XXXXXX"`. The 6-hex suffix is the last three bytes of the BD_ADDR — same value across consecutive ads of the same physical watch. |
 | Service UUID | `0xFEE7` | Tencent Holdings Limited (SIG member services). Reused by COROS because they ship Tencent's BLE SDK. **Not** COROS-exclusive — Tencent SDK appears in many Chinese-vendor wearables — so we only rank-rather-than-gate on this UUID. |
 | Service UUID | `0x3802` (custom) | Not in any SIG range; COROS/Tencent-SDK specific. The 6-byte service-data payload is exposed in metadata as `service_data_3802`. |
 | Service UUID | `0x180F`, `0x180A` | Standard Battery + Device Information. |
@@ -22,13 +22,13 @@ This parser pulls the watch family (PACE 3 / APEX 2 / VERTIX 2 / …) and the pe
 
 `COROS <FAMILY> <MODEL> <6-hex MAC suffix>`
 
-Example: `"COROS PACE 3 805FB7"` → model `PACE 3`, MAC suffix `805FB7`.
+Example: `"COROS PACE 3 XXXXXX"` → model `PACE 3`, MAC suffix `XXXXXX`.
 
 The regex captures any model token between the `COROS ` prefix and the trailing 6-hex suffix, so newer products following the same scheme (`COROS APEX 3`, `COROS VERTIX 3`, …) parse without code changes.
 
 ### Service Data 0x3802
 
-6 bytes per advertisement (e.g. `f7 af 1d 2c 03 90`). The payload is **not** the same as the MAC suffix in the local name. Most likely a device or firmware identifier / pairing token / per-session TLV consumed by the COROS app for fast device recognition during scan. Surfaced as `service_data_3802` in metadata for inspection.
+6 bytes per advertisement (e.g. `xx xx xx xx xx xx`). The payload is **not** the same as the MAC suffix in the local name. Most likely a device or firmware identifier / pairing token / per-session TLV consumed by the COROS app for fast device recognition during scan. Surfaced as `service_data_3802` in metadata for inspection.
 
 ## Detection Significance
 

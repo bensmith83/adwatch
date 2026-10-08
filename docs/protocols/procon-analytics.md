@@ -40,7 +40,7 @@ distinguish product lines within the Procon family.
 
 ```
 ArrowQ capture
-mfr_hex = d3 0b | 08 62 09 40 67 19 69 15
+mfr_hex = d3 0b | 08 62 xx xx xx xx 69 15
           └─┬─┘ └───────────┬───────────┘
            CID          8-byte payload
 ```
@@ -51,7 +51,7 @@ Per-byte best-guess interpretation (unverified — single-unit capture):
 |--------|-------|------------|
 | 0      | `08`        | Frame type / version (`0x08`) |
 | 1      | `62`        | Sub-type / state |
-| 2–5    | `09 40 67 19` | Unit serial or session token (4 bytes) |
+| 2–5    | `xx xx xx xx` | Unit serial or session token (4 bytes) |
 | 6–7    | `69 15`     | Counter / rolling-code-like sequence (the trailing two bytes are the most likely to vary across captures) |
 
 We surface the full 8-byte payload verbatim as `payload_hex` and
@@ -73,7 +73,7 @@ payload bytes because (a) they're plausibly the unit serial and
 ## Captured Examples
 
 ```
-local_name="ArrowQ"   mfr=d3 0b 08 62 09 40 67 19 69 15   svc_uuid=(none)
+local_name="ArrowQ"   mfr=d3 0b 08 62 xx xx xx xx 69 15   svc_uuid=(none)
 ```
 
 One sighting in one capture; rare in residential scans because

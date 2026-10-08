@@ -8,9 +8,9 @@ Three distinct devices appeared in the capture, each advertising for the full sc
 
 | Local name | Sightings | Address type |
 |---|---|---|
-| `T59024E4` | 96 | random |
-| `T09025E1` | 92 | random |
-| `T5902907` | 95 | random |
+| `TXXXXXXX` | 96 | random |
+| `TYYYYYYY` | 92 | random |
+| `TZZZZZZZ` | 95 | random |
 
 All three advertise exactly one custom service UUID — `72D53E62-E515-452E-9416-5F4392F27701` — and no manufacturer data, no service data. The local-name pattern is `T` followed by exactly 7 uppercase hex characters, which is plausibly a hardware-serial-derived broadcast name.
 
@@ -23,7 +23,7 @@ The UUID is **not** registered in [NordicSemiconductor/bluetooth-numbers-databas
 | Signal | Value |
 |---|---|
 | Service UUID (128-bit, custom) | `72D53E62-E515-452E-9416-5F4392F27701` |
-| Local name | `T<HEX7>` — capital `T` followed by exactly 7 uppercase hex characters, e.g. `T59024E4` |
+| Local name | `T<HEX7>` — capital `T` followed by exactly 7 uppercase hex characters, e.g. `TXXXXXXX` |
 | Manufacturer data | none |
 | Service data | none |
 | Address type | random (rotates) |
@@ -31,7 +31,7 @@ The UUID is **not** registered in [NordicSemiconductor/bluetooth-numbers-databas
 ### Local Name Format
 
 ```
-T59024E4
+TXXXXXXX
 │└──┬───┘
 │   └── 7-char uppercase hex serial — assumed device-unique
 └────── literal 'T' family marker
@@ -53,7 +53,7 @@ The parser extracts the 7-char hex tail as `serial` and scopes the stable key to
 
 ## References
 
-- `research/adwatch_export 6.json` — the three captured devices (local entries: `T59024E4`, `T09025E1`, `T5902907`)
+- `research/adwatch_export 6.json` — the three captured devices (local entries: `TXXXXXXX`, `TYYYYYYY`, `TZZZZZZZ`)
 - [NordicSemiconductor/bluetooth-numbers-database — `v1/service_uuids.json`](https://github.com/NordicSemiconductor/bluetooth-numbers-database/blob/master/v1/service_uuids.json) — checked 2026-05-20; UUID `72D53E62-E515-452E-9416-5F4392F27701` is not present
 - GitHub code search for `72D53E62-E515-452E-9416-5F4392F27701` — no public results as of 2026-05-20
 - Google search for the bare UUID — no public results as of 2026-05-20

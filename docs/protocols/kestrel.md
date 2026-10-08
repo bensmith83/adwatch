@@ -60,14 +60,14 @@ sampled devices, consistent with AES-encrypted payload (a
 ## Local Name Decoding
 
 ```
-"K151020"
+"K######"
  │ └─┬──┘
  │   └── 6-digit unit serial
  └────── Product / firmware-family prefix letter
 ```
 
 In NK's official documentation the BLE name is `<Model>-<Serial>`
-(e.g. `K4500-677561`), but devices in our captures broadcast only
+(e.g. `K4500-NNNNNN`), but devices in our captures broadcast only
 the 7-char serial without the dash. Why isn't documented; possible
 explanations are (a) short-name truncation at scan time, (b) older
 firmware revisions used a serial-only name, or (c) the device only
@@ -96,8 +96,8 @@ identity.
 ## Captured Examples
 
 ```
-K151020   svc=C74EDD21-…   mfr= 00 06 4a8a71e7c27b301bb8921dfec3175584 0009
-c975020   svc=C74EDD21-…   mfr= 00 06 69ba7162b09c4a9f91761edc4368e1d2 0019
+KXXXXXX   svc=C74EDD21-…   mfr= 00 06 4a8a71e7c27b301bb8921dfec3175584 0009
+cXXXXXX   svc=C74EDD21-…   mfr= 00 06 69ba7162b09c4a9f91761edc4368e1d2 0019
 ```
 
 55 sightings across 2 distinct units in our test capture.

@@ -73,23 +73,23 @@ class TestTempdropMatching:
 
 class TestTempdropParsing:
     def test_parses_presence(self):
-        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 4F21"))
+        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 1234"))
         assert result is not None
         assert result.parser_name == "tempdrop"
         assert result.beacon_type == "tempdrop"
         assert result.device_class == "medical"
         assert result.metadata["vendor"] == "Tempdrop"
         assert result.metadata["product"] == "Tempdrop BBT wearable"
-        assert result.metadata["device_name"] == "Tempdrop 4F21"
+        assert result.metadata["device_name"] == "Tempdrop 1234"
 
     def test_flags_sensitive_category(self):
-        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 4F21"))
+        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 1234"))
         assert result.metadata["sensitive"] is True
         assert result.metadata["sensitive_category"] == "reproductive_health"
 
     def test_confidence_high_with_service_uuid(self):
         ad = _make_ad(
-            local_name="Tempdrop 4F21",
+            local_name="Tempdrop 1234",
             service_uuids=["0000f000-0000-1000-8000-00805f9b34fb"],
         )
         result = TempdropParser().parse(ad)
@@ -97,17 +97,17 @@ class TestTempdropParsing:
         assert result.metadata["service_uuid_seen"] is True
 
     def test_confidence_medium_without_service_uuid(self):
-        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 4F21"))
+        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 1234"))
         assert result.metadata["confidence"] == "medium"
         assert result.metadata["service_uuid_seen"] is False
 
     def test_no_telemetry_claimed(self):
         """Report is explicit: nothing but presence is broadcast."""
-        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 4F21"))
+        result = TempdropParser().parse(_make_ad(local_name="Tempdrop 1234"))
         assert result.metadata["telemetry"] == "none (connect-only GATT)"
 
     def test_identity_hash_from_mac(self):
-        ad = _make_ad(local_name="Tempdrop 4F21")
+        ad = _make_ad(local_name="Tempdrop 1234")
         result = TempdropParser().parse(ad)
         expected = hashlib.sha256(
             b"tempdrop:C4:BE:84:11:22:33"

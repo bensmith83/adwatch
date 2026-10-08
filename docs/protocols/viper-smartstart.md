@@ -25,7 +25,7 @@ name — a stable, long-lived identifier for the installed vehicle.
 |--------|-------|-------|
 | Company ID | `0xFFFF` | Reserved-for-testing / invalid usage by DEI |
 | Service UUID | `B4520100-A308-4E56-8A52-536C2AD07147` | DEI proprietary primary service |
-| Local name | `DEI-<7-or-8-digit-serial>` | e.g. `DEI-8580252` |
+| Local name | `DEI-<7-or-8-digit-serial>` | e.g. `DEI-#######` |
 
 DEI's choice of company ID `0xFFFF` is non-compliant with the
 Bluetooth SIG assigned-numbers spec (`0xFFFF` is reserved for
@@ -36,7 +36,7 @@ no other commercial product known to adwatch shares both.
 ## Wire Format (real-world capture)
 
 ```
-Local name: "DEI-8580252"
+Local name: "DEI-#######"
 Mfr data:   ff ff 06 0a 50 0a 46
             └─┬─┘ └──────┬──────┘
              cid    payload (5 bytes, opaque)
@@ -54,7 +54,7 @@ behavior expected from automotive remote-start hardware), so the
 parser does not attempt to decode it — it is captured verbatim as
 `payload_hex` for forensic comparison.
 
-The local-name serial (`8580252`) is fixed per module and matches the
+The local-name serial (`#######`) is fixed per module and matches the
 serial printed on the bottom of the VSM/DS-series enclosure. This
 serial is what the SmartStart cloud account uses to bind a vehicle to
 a user.

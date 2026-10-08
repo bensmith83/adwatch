@@ -22,8 +22,10 @@ Technology; the two should never be conflated.
 
 Contains a known Fujifilm model token. Currently recognized: `X100VI` (a
 real, current — 2024 — compact camera). Observed real capture:
-`903BX100VI-903B` (the `903B` prefix/suffix is likely an internal
-SKU/variant code; unconfirmed).
+`XXXXX100VI-XXXX` (the same 4-hex token appears as both prefix and
+suffix; redacted here — it is most likely a per-unit token, since Fujifilm
+assigns each camera a unique default name, though an internal SKU/variant
+code is not ruled out).
 
 ### Manufacturer Data
 
@@ -57,7 +59,7 @@ as a match anchor.
 
 - Payload byte-level structure (n=1 sample, no field boundaries).
 - Camera state (recording, connected, battery, shooting mode).
-- What the `903B` local-name segments denote.
+- What the 4-hex local-name prefix/suffix segments denote.
 
 ## Stable Identity
 

@@ -14,7 +14,7 @@ This parser surfaces the cam's model number and unit serial, both of which are e
 |--------|-------|-------|
 | Company ID | `0x0087` | Garmin International, Inc. (SIG). Shared with sport watches and the existing `GarminParser`. |
 | Service UUID | `0xFE1F` | Garmin's SIG member service UUID. |
-| Local name | `^DC\d{2,3}-\d{3,8}$` | E.g. `"DC47-14316"` (Dash Cam 47, unit 14316). |
+| Local name | `^DC\d{2,3}-\d{3,8}$` | E.g. `"DC47-XXXXX"` (Dash Cam 47, unit XXXXX). |
 
 The existing `GarminParser` covers the Forerunner / fenix / vivoactive / Edge / Instinct / Index / Lily / vivosmart / vivomove / HRM- sport-watch families on the same company ID. That parser explicitly rejects anything outside its sport-watch name regex, so this dash-cam parser does not conflict.
 
@@ -27,7 +27,7 @@ The Bluetooth SIG member-services registry lists `0xFE1F = Garmin International,
 - `DCxx` — the Dash Cam model number (e.g. `DC47` = Dash Cam 47, `DC67` = Dash Cam 67W).
 - The trailing 3-8 digit number is the per-unit serial visible on the back of the cam.
 
-Example: `"DC47-14316"` → model `DC47`, serial `14316`.
+Example: `"DC47-XXXXX"` → model `DC47`, serial `XXXXX`.
 
 ### Manufacturer Data
 
@@ -47,7 +47,7 @@ There is **no per-unit serial in the BLE name** on the X-series — only the mod
 
 The parser splits the two naming conventions via a `model_family` metadata key:
 
-- `DC-series` — legacy hyphen form (`DC47-14316`, `DC67-…`). Surfaces `model` + `serial`.
+- `DC-series` — legacy hyphen form (`DC47-XXXXX`, `DC67-…`). Surfaces `model` + `serial`.
 - `DCX-series` — 2024 X-series (`DC X110`, `DC X130`). Surfaces `model` only.
 
 ## Detection Significance

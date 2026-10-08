@@ -43,9 +43,9 @@ Observed across the 3 captures:
 
 | Local name | Token | LL | Model bytes | Decoded |
 |---|---|---|---|---|
-| `ASHDJW61F37100131` | `41 35 70` | 05 | `44 4a 57 36 04` | `DJW6` (with `\x04` trailer) |
-| `AQLDJW61G03300208` | `8d 5b c2` | 05 | `44 4a 57 36 04` | `DJW6` (with `\x04` trailer) |
-| `AFYDL570G04401374` | `92 cb 9c` | 04 | `35 59 55 00`    | `5YU` (NUL-padded) |
+| `ASHDJW61XXXXXXXXX` | `xx xx xx` | 05 | `44 4a 57 36 04` | `DJW6` (with `\x04` trailer) |
+| `AQLDJW61XXXXXXXXX` | `xx xx xx` | 05 | `44 4a 57 36 04` | `DJW6` (with `\x04` trailer) |
+| `AFYDL570XXXXXXXXX` | `xx xx xx` | 04 | `35 59 55 00`    | `5YU` (NUL-padded) |
 
 Note that the LL byte does not perfectly bracket the printable ASCII content — for LL=5 captures, the last byte (`0x04`) is non-printable, suggesting the field is actually 4 ASCII chars + 1 byte trailer or that 0x04 is part of the model identifier encoded as a numeric. Our parser surfaces both the ASCII-decoded `model_code` (when the trimmed bytes are entirely alphanumeric) and the raw `model_code_hex` for honest reproducibility — analysts can resolve the ambiguity once more samples arrive.
 

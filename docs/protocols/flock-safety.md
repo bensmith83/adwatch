@@ -35,7 +35,7 @@ Byte 0-1: 0xC8 0x09  — Company ID (XUNTONG, little-endian)
 Byte 2+:  payload     — Device-specific data (includes serial number)
 ```
 
-**Example serial number format:** `TN72023022000771`
+**Example serial number format:** `TNXXXXXXXXXXXXXX`
 
 The internal payload structure varies by device type and firmware version. The serial number encoding is not fully documented — the payload is captured as raw hex for further analysis.
 

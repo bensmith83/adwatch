@@ -131,8 +131,8 @@ class TestParsing:
             b"eko:AA:BB:CC:DD:EE:FF").hexdigest()[:16]
 
     def test_device_name_surfaced(self):
-        r = EkoStethoscopeParser().parse(_make_ad(local_name="Eko DUO 4412"))
-        assert r.metadata["device_name"] == "Eko DUO 4412"
+        r = EkoStethoscopeParser().parse(_make_ad(local_name="Eko DUO 1234"))
+        assert r.metadata["device_name"] == "Eko DUO 1234"
 
     def test_returns_none_for_unrelated(self):
         assert EkoStethoscopeParser().parse(

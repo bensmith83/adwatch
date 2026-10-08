@@ -19,7 +19,7 @@ The BLE advertisement itself does **not** expose door state, and passive observa
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `MyQ-XXX` pattern | 3-char alphanumeric suffix = last 3 chars of hub serial (e.g. `MyQ-017`, `MyQ-75D`, `MyQ-EF0`) |
+| Local name | `MyQ-XXX` pattern | 3-char alphanumeric suffix = last 3 chars of hub serial |
 | Service UUID | `26D91A37-C279-4D0F-96A1-532CE41CE0F6` | 128-bit custom UUID, not registered with Bluetooth SIG |
 | Manufacturer data prefix | `7808` | Company ID `0x0878` (The Chamberlain Group, Inc.) |
 | Company ID | `0x0878` (decimal 2168) | Registered to The Chamberlain Group, Inc. by Bluetooth SIG |
@@ -43,7 +43,7 @@ The 128-bit UUID `26D91A37-C279-4D0F-96A1-532CE41CE0F6` is advertised as a compl
 | Field | Source | Notes |
 |-------|--------|-------|
 | Device presence | local_name | MyQ garage door opener nearby |
-| Device ID | local_name suffix | e.g. `75D` from `MyQ-75D` |
+| Device ID | local_name suffix | e.g. `XXX` from `MyQ-XXX` |
 | Manufacturer | company_id `0x0878` | Chamberlain Group |
 
 ### What We Cannot Parse (requires GATT)
@@ -60,7 +60,7 @@ The 128-bit UUID `26D91A37-C279-4D0F-96A1-532CE41CE0F6` is advertised as a compl
 MyQ-{device_id}
 ```
 
-Examples: `MyQ-75D`, `MyQ-017`, `MyQ-EF0`
+Example: `MyQ-XXX`
 
 Per Chamberlain/LiftMaster setup documentation, the suffix is the **last three characters of the hub's serial number**. The same pattern is used as the SoftAP Wi-Fi SSID during fallback web-based provisioning (`setup.myqdevice.com`). MyQ serial numbers are alphanumeric (10–12 chars, mixed letters and digits), so the suffix may contain any alphanumeric characters — observed examples happen to be hex-compatible but the parser should not assume hex validity.
 
@@ -127,11 +127,11 @@ The myQ cloud API uses OAuth-based authentication and provides door state, door 
 
 | Field | Value |
 |-------|-------|
-| Devices seen | 3 (`MyQ-017`, `MyQ-75D`, `MyQ-EF0`) |
+| Devices seen | 3 |
 | Address type | random |
 | Service UUID | `26D91A37-C279-4D0F-96A1-532CE41CE0F6` |
 | Manufacturer data | `78082e00` (4 bytes on one device) |
-| Sighting count | 124 over ~5 hours (MyQ-017) |
+| Sighting count | 124 over ~5 hours (MyQ-XXX) |
 | RSSI range | -84 to -100 dBm |
 
 All three devices advertise the same custom service UUID. The continuous advertisement pattern (124 sightings over 5 hours) indicates the BLE radio stays active after commissioning. The exact reason is unconfirmed — likely re-discovery / re-pairing support, given that MyQ's "arrive home and open" feature itself uses GPS geofencing through the cloud, not BLE. RSSI values (-84 to -100 dBm) suggest 10-30+ meters distance, consistent with garage-mounted devices observed from inside an adjacent home.

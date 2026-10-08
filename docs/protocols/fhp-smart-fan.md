@@ -47,8 +47,8 @@ device.
 Example payload (research/adwatch_export 13.json):
 
 ```
-hex:   57 46 48 31 30 30 36 30 30 30 35 41 30 32 58 32 34 34 37 30 33 33 31
-ascii: W  F  H  1  0  0  6  0  0  0  5  A  0  2  X  2  4  4  7  0  3  3  1
+hex:   57 46 48 31 30 30 36 30 30 30 35 41 30 32 58 32 34 xx xx xx xx xx xx
+ascii: W  F  H  1  0  0  6  0  0  0  5  A  0  2  X  2  4  x  x  x  x  x  x
 ```
 
 Best-effort field decode:
@@ -60,7 +60,7 @@ Best-effort field decode:
 | 7      | 4   | variant_code   | `0005`  | 4-digit variant / SKU |
 | 11     | 3   | hw_rev         | `A02`   | Hardware revision marker |
 | 14     | 3   | batch_marker   | `X24`   | Manufacturing year / batch (likely "year 24" → 2024) |
-| 17     | tail | serial        | `470331`| Per-unit serial — matches the `_470331` in `localName` |
+| 17     | tail | serial        | `XXXXXX`| Per-unit serial — matches the `_XXXXXX` in `localName` |
 
 The structural offsets above are inferred from **one** captured device
 (both observed records were the same fan). Field labels should be
@@ -71,7 +71,7 @@ treated as best-guess until we get a second SKU to compare.
 Localname pattern: `FHP_<digits>` where the digits equal the serial
 tail of the mfg blob. Captures show:
 
-- Both fields populated (`FHP_470331` + full mfg blob)
+- Both fields populated (`FHP_XXXXXX` + full mfg blob)
 - Mfg-only frames (`localName == nil`)
 - (Plausibly) LocalName-only frames — the parser accepts these too
 

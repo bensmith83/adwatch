@@ -34,36 +34,36 @@ IHEALTH_MFR = bytes.fromhex("0e020100020002")
 
 class TestIHealthParsing:
     def test_parse_valid(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
         assert result.parser_name == "ihealth"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
         assert result.beacon_type == "ihealth"
 
     def test_device_class(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
         assert result.device_class == "health_monitor"
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
 
     def test_metadata_device_id(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
-        assert result.metadata["device_id"] == "000000BAEA9D7A5D9F79"
+        assert result.metadata["device_id"] == "000000AABBCCDDEEFF00"
 
     def test_match_by_uuid_only(self, parser):
         raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"])
@@ -76,7 +76,7 @@ class TestIHealthParsing:
         assert result is not None
 
     def test_raw_payload_hex(self, parser):
-        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000BAEA9D7A5D9F79")
+        raw = make_raw(manufacturer_data=IHEALTH_MFR, service_uuids=["fe4a"], local_name="BLESmart_000000AABBCCDDEEFF00")
         result = parser.parse(raw)
         assert result.raw_payload_hex == IHEALTH_MFR.hex()
 

@@ -103,7 +103,7 @@ connected GATT session.
 
 | local_name | device_id | sightings | RSSI max | UUID |
 |------------|-----------|-----------|----------|------|
-| `LVS-J0123` | `BC99072D-…-2D28ED304536` | 835 | −70 dBm | `4A300001-0023-4BD4-BBD5-A6920E4C5653` |
+| `LVS-J0123` | `xxxxxxxx-…-xxxxxxxxxxxx` | 835 | −70 dBm | `4A300001-0023-4BD4-BBD5-A6920E4C5653` |
 | `LVS-J0123` | (same device) | 17 | −77 dBm | *(none — secondary advert)* |
 
 The single physical device emits two distinct advertisement

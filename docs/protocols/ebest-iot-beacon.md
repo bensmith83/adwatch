@@ -26,7 +26,7 @@ address is random.
 Real capture (`nearsight_export 6`, 1–2 devices, ~14 sightings):
 
 ```
-37 04 | 48 E6 95 1C 4F B0 | 3D 0B 32 00 A8 FD 00 80 24 06 8F 00 61 00 43 42
+37 04 | 48 E6 95 xx xx xx | 3D 0B 32 00 A8 FD 00 80 24 06 8F 00 61 00 43 42
  CID  |   device MAC      |        16-byte undocumented telemetry tail
 ```
 

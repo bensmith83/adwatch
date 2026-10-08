@@ -12,7 +12,7 @@ SONY_COMPANY_ID = 0x012D
 
 # Real samples from CSV
 # LE_SRS-XB33 manufacturer data (20 bytes including company ID)
-SONY_MFR_DATA = bytes.fromhex("2d0104000101100415afc3d60206c20000000000")
+SONY_MFR_DATA = bytes.fromhex("2d01040001011004aabbccdd0206c20000000000")
 
 # LE_SRS-XB33 fe2c service data (frame type 0x00, sub-type 0x90)
 SONY_FE2C_TYPE00_90 = bytes.fromhex("0090d435499156ec2890ac110e")

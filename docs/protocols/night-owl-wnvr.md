@@ -28,7 +28,7 @@ company identifier.
 Observed shape (sweep 2026-07-17, n=1 distinct value):
 
 ```
-301b976be7b8_71FJ8MOAV0ZM_0
+xxxxxxxxxxxx_XXXXXXXXXXXX_0
 └────┬─────┘ └─────┬─────┘ │
  12-hex, MAC-  pairing/     revision
  like segment  serial token digit

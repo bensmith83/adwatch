@@ -58,10 +58,10 @@ unparsed.
 
 ### Named TVs (type 0x4204)
 ```
-[TV] UN75JU641D:       750042040101ae14bb6eb39bd616bb6eb39bd501000000000000
+[TV] UN75JU641D:       750042040101xxxxxxxxxxxxxxxxxxxxxxxxd501000000000000
 [TV] Samsung Q6DAA 75: 75004204012067210f0022014b01010001000000000000000004
 [AV] Samsung N850:     (similar structure)
-75" Crystal UHD:       75004204018060d003dfbb3ff5d203dfbb3ff401000000000000
+75" Crystal UHD:       750042040180yyyyyyyyyyyyyyyyyyyyyyyyf401000000000000
 ```
 
 ### Unnamed (type 0x0218)

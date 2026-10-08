@@ -59,26 +59,25 @@ Observed samples from `research/adwatch_export 6.json`:
 
 | Local name | Manufacturer hex | Variable payload | Constant tail |
 |---|---|---|---|
-| `DXCMKC` | `d0003e981204` | `3e 98 12` | `04` |
-| `DXCMRx` | `d000661b0204` | `66 1b 02` | `04` |
+| `DXCM<XX>` | `d000xxxxxx04` | `xx xx xx` | `04` |
 
 We surface the four bytes after the company ID as `payload_hex` so future
 captures can be diffed against these baselines without re-parsing.
 
 ### Local Name Format
 
-`DXCM` (4 ASCII chars) + 2 ASCII chars per-sensor slot (e.g. `KC`, `Rx`,
+`DXCM` (4 ASCII chars) + 2 ASCII chars per-sensor slot (e.g. `<XX>`,
 `AB`). The 2-char slot is **not** the four-digit pairing code from the
 applicator — it appears to be a Bluetooth-layer rotating identifier so
 that multiple sensors used in series by the same person each get a
 distinct entry in iOS/Android's "Other Devices" list. We expose it as
 `metadata["serial_slot"]` and key the stable identifier on the full
-local name (`dexcom_dxcm:DXCMKC`) so the same sensor across multiple
+local name (`dexcom_dxcm:DXCM<XX>`) so the same sensor across multiple
 sightings collapses to one logical device.
 
 ### Stable Key
 
-`dexcom_dxcm:<localName>` (e.g. `dexcom_dxcm:DXCMKC`). When the
+`dexcom_dxcm:<localName>` (e.g. `dexcom_dxcm:DXCM<XX>`). When the
 advertisement carries no local name and only matches via CID+FEBC, we
 fall back to a MAC-hash identifier so we still log the sighting.
 

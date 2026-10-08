@@ -14,7 +14,7 @@ signals that no public source attributes to a specific product:
    `NordicSemiconductor/bluetooth-numbers-database`.
 
 **Sibling of [`unknown-fe7c-daf58e01.md`](unknown-fe7c-daf58e01.md).** That
-device advertised `7cfe624bb73c0000` (CID `0xFE7C`) with serviceUUID
+device advertised `7cfexxxxxxxx0000` (CID `0xFE7C`) with serviceUUID
 `DAF58E01`. The two devices share:
 
 - the 128-bit custom UUID **stem `DAF58`** — differing only at the 6th nibble
@@ -34,7 +34,7 @@ the sibling, **no vendor is claimed** — the signals are surfaced (including a
 | Signal | Value |
 |---|---|
 | Manufacturer data CID | `0x6C14` (bytes `14 6c`, little-endian) |
-| Manufacturer payload | `27 63 f0 7a 00 00` (4 identifier-looking bytes + 2 reserved zeros) |
+| Manufacturer payload | `xx xx xx xx 00 00` (4 identifier-looking bytes + 2 reserved zeros) |
 | Service UUID (128-bit, custom) | `DAF58A01-…` (CoreBluetooth exported the 32-bit prefix in this capture) |
 | Local name | absent |
 | Service data | none |
@@ -43,7 +43,7 @@ the sibling, **no vendor is claimed** — the signals are surfaced (including a
 ### Captured sample
 
 ```
-manufacturerDataHex:  146c2763f07a0000
+manufacturerDataHex:  146cxxxxxxxx0000
 serviceUUIDsJSON:     ["DAF58A01"]
 sightingCount:        14   (single window; all folded to one adSignature)
 rssiMax/Min:          -70 / -96 dBm
@@ -51,7 +51,7 @@ addressType:          random
 ```
 
 The 14 sightings collapsed to a single `adSignature` → the manufacturer bytes
-(including `27 63 f0 7a`) were byte-identical across the whole window; if the
+(including `xx xx xx xx`) were byte-identical across the whole window; if the
 4-byte identifier rotated, each value would have produced a distinct record.
 This shows non-rotation over ~14 sightings in one window, not long-term
 behaviour across MAC rotations.
@@ -63,7 +63,7 @@ unknown_6c14_daf58a01:<mac>
 ```
 
 MAC-scoped: single device, single window — we cannot yet tell whether the
-4-byte mid-payload (`27 63 f0 7a`) is a stable device serial or a per-broadcast
+4-byte mid-payload (`xx xx xx xx`) is a stable device serial or a per-broadcast
 nonce.
 
 ## What We Figured Out
@@ -80,7 +80,7 @@ nonce.
 ## What We Could NOT Figure Out
 
 - **Vendor identity / product family.** No public references for `DAF58A01`,
-  `DAF58`, `0x6C14`, or the payload prefix `27 63 f0 7a`.
+  `DAF58`, `0x6C14`, or the captured 4-byte payload value (redacted here).
 - **Payload semantics.** The 4-byte identifier field could be a serial, a
   session nonce, a truncated MAC, or a tag — one window, so undecidable.
 

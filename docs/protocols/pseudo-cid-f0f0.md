@@ -22,12 +22,12 @@ Seven distinct devices in `research/nearsight_export 2.json`,
 
 | Payload (hex) | localName | Sightings | Devices |
 |---|---|---|---|
-| `098bc5fb071cdecbead630213fb67754` | `"2"` | 14 | 2 |
-| `4fd3b04b897ff11d34d3b862daafa599` | `"7"` | 4 | 2 |
-| `ae89b04f1506c0ea3929cf548f002008` | (none) | 3 | 1 |
-| `44acce91211a49f617f88818418833fa` | (none) | 2 | 1 |
-| `5519da302da7571faa3a97442c024096` | (none) | 3 | 2 |
-| `f48990e111bca445a0925c4fd7828873` | (none) | 1 | 1 |
+| `<16-byte payload #1>` | `"2"` | 14 | 2 |
+| `<16-byte payload #2>` | `"7"` | 4 | 2 |
+| `<16-byte payload #3>` | (none) | 3 | 1 |
+| `<16-byte payload #4>` | (none) | 2 | 1 |
+| `<16-byte payload #5>` | (none) | 3 | 2 |
+| `<16-byte payload #6>` | (none) | 1 | 1 |
 
 All payloads are exactly **16 bytes** after the 2-byte `f0 f0` CID
 prefix. 16 bytes is exactly the AES-128 block size — strong heuristic

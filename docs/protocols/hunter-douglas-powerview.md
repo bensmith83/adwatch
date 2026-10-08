@@ -158,8 +158,8 @@ All commands: 2-byte command code (LE) + 1-byte sequence ID + 1-byte data length
 
 | Local Name | Sighting Count | RSSI Range | Home ID | Position | Battery |
 |------------|---------------|------------|---------|----------|---------|
-| `SIL:4914` | 185 | -86 to -104 dBm | 0x6C8A | Fully closed, tilt 0 | 100% |
-| `SIL:E869` | 156 | -86 to -104 dBm | 0x6C8A | Fully closed, tilt 0 | 100% |
+| `SIL:XXXX` | 185 | -86 to -104 dBm | `<home-id-1>` | Fully closed, tilt 0 | 100% |
+| `SIL:YYYY` | 156 | -86 to -104 dBm | `<home-id-1>` | Fully closed, tilt 0 | 100% |
 
 Both on the same home network, fully closed during the ~5 hour observation.
 
@@ -167,23 +167,23 @@ Both on the same home network, fully closed during the ~5 hour observation.
 
 | Local Name | Sighting Count | RSSI Range | Home ID | Type | Position | Battery |
 |------------|---------------|------------|---------|------|----------|---------|
-| `DUE:1568` | 2 | -95 to -96 dBm | 0x6011 | DuoLite TDBU (9) | 72% open | 100% |
+| `DUE:ZZZZ` | 2 | -95 to -96 dBm | `<home-id-2>` | DuoLite TDBU (9) | 72% open | 100% |
 
 Different home network from the Silhouette shades. Brief appearance (only 2 sightings), likely at edge of BLE range.
 
 ### Raw Manufacturer Data Decodes
 
-**SIL shades**: `19 08 8a 6c 17 00 00 00 00 00 c2` — home_id=0x6C8A, type=23 (Silhouette), position=0%, tilt=0, battery=100%
+**SIL shades**: `19 08 xx xx 17 00 00 00 00 00 c2` — home_id=`<home-id-1>`, type=23 (Silhouette), position=0%, tilt=0, battery=100%
 
-**DUE shade**: `19 08 11 60 09 40 0b 00 00 00 c2` — home_id=0x6011, type=9 (Duette DuoLite TDBU), position=72%, battery=100%
+**DUE shade**: `19 08 xx xx 09 40 0b 00 00 00 c2` — home_id=`<home-id-2>`, type=9 (Duette DuoLite TDBU), position=72%, battery=100%
 
-**R31 roller (2026 export)**: `19 08 96 d7 05 a0 0f 00 00 00 c0` — home_id=0xD796, type=5, position=1000 (raw, ÷10 → 100%), battery=100%, motion=stopped. Eight distinct devices on the same home all carry the same `96 d7` home_id.
+**R31 roller (2026 export)**: `19 08 xx xx 05 a0 0f 00 00 00 c0` — home_id=`<home-id-3>`, type=5, position=1000 (raw, ÷10 → 100%), battery=100%, motion=stopped. Eight distinct devices on the same home all carry the same home_id.
 
-**PWW wand (2026 export)**: `19 08 ff b3 13 a0 0f 00 00 00 e0` — home_id=0xB3FF, type=19, position=1000, battery=100%. Same payload bytes across three distinct PWW devices — the wand reports a fixed state when idle.
+**PWW wand (2026 export)**: `19 08 xx xx 13 a0 0f 00 00 00 e0` — home_id=`<home-id-4>`, type=19, position=1000, battery=100%. Same payload bytes across three distinct PWW devices — the wand reports a fixed state when idle.
 
-**VIG Vignette (2026 export)**: `19 08 29 cf 21 00 00 fa 00 00 c0` — home_id=0xCF29, type=33, position=0 (closed), position2=0xFA, battery=100%.
+**VIG Vignette (2026 export)**: `19 08 xx xx 21 00 00 fa 00 00 c0` — home_id=`<home-id-5>`, type=33, position=0 (closed), position2=0xFA, battery=100%.
 
-**FAB shade (2026 export)**: `19 08 3f 75 05 a0 0f 00 00 00 c2` — home_id=0x753F, type=5, position=1000, battery=100%.
+**FAB shade (2026 export)**: `19 08 xx xx 05 a0 0f 00 00 00 c2` — home_id=`<home-id-6>`, type=5, position=1000, battery=100%.
 
 ## Disambiguation: NOT Sylvania / LEDVANCE
 

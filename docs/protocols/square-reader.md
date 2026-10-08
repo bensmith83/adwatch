@@ -24,7 +24,7 @@ fingerprint, distinguished only by the local name.
 | Manufacturer-data CID | `0x827E` (little-endian on wire: `7e 82`) — Block, Inc. |
 | Manufacturer-data sample | `7e820000000000` (CID + five zero bytes — beacon-only frame) |
 | Service UUID (128-bit) | `1581EE61-0815-4B7C-B117-BED8758FEE7C` (Square reader-pairing service) |
-| Local name | `"Square Reader "` + 4-digit pairing code, e.g. `"Square Reader 8765"`, `"Square Reader 9157"` |
+| Local name | `"Square Reader "` + 4-digit pairing code, e.g. `"Square Reader NNNN"`, `"Square Reader MMMM"` |
 
 A reader typically emits all three signals in the same advertisement, but we
 match if **any** of them is present so we still classify the device when the
@@ -44,7 +44,7 @@ Notes on the company identifier:
 
 If the local name has the prefix `"Square Reader "` followed by a non-empty
 trailing token we extract that token into `metadata["serial_suffix"]` (e.g.
-`"8765"`). The local name is the stable key: `square_reader:<localName>`. We
+`"NNNN"`). The local name is the stable key: `square_reader:<localName>`. We
 require a non-empty trailing token so a bare `"Square Reader "` does not
 false-match.
 
@@ -52,7 +52,7 @@ false-match.
 
 | Capture | Inference |
 |---|---|
-| mfr-data `7e820000000000` + service UUID `1581EE61-…` + local name `"Square Reader 8765"` | `vendor = "Block, Inc."`, `serial_suffix = "8765"`, `device_class = payment_terminal`, stable key `square_reader:Square Reader 8765` |
+| mfr-data `7e820000000000` + service UUID `1581EE61-…` + local name `"Square Reader NNNN"` | `vendor = "Block, Inc."`, `serial_suffix = "NNNN"`, `device_class = payment_terminal`, stable key `square_reader:Square Reader NNNN` |
 | service UUID `1581EE61-…` only | matched on UUID; no `serial_suffix`; stable key falls back to MAC-derived hash |
 | local name `"Square Reader 1234"` only | matched on name; `serial_suffix = "1234"` |
 

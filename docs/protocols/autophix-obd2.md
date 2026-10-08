@@ -12,7 +12,7 @@ Autophix OBD2 scanners are automotive diagnostic tools that use BLE to bridge co
 |--------|-------|-------|
 | Local name | `Autophix XXXX` pattern | e.g. `Autophix 3210`, suffix is the model number |
 | Service UUID (advertised) | `fff0` | 16-bit generic custom service, shared by many BLE devices |
-| Manufacturer data prefix | `a4c1383efaab` | Company ID `0xC1A4` |
+| Manufacturer data prefix | `a4c138xxxxxx` | Company ID `0xC1A4` (the 6 bytes read as a MAC with the Telink OUI `A4:C1:38`; per-unit part redacted) |
 
 The `FFF0` service UUID is extremely common across unrelated BLE devices. Identification must rely on the `local_name_pattern` in combination with the service UUID to avoid false matches.
 
@@ -21,7 +21,7 @@ The `FFF0` service UUID is extremely common across unrelated BLE devices. Identi
 | Offset | Length | Field | Notes |
 |--------|--------|-------|-------|
 | 0-1 | 2 bytes | Company ID | `0xC1A4` (little-endian: `a4c1`) |
-| 2-5 | 4 bytes | Device data | `383efaab` — purpose unknown, possibly a serial or hardware ID |
+| 2-5 | 4 bytes | Device data | `38xxxxxx` — per-unit; likely the tail of the device MAC (OUI byte `38` + 3 unit bytes) |
 
 ### What We Can Parse from Advertisements
 

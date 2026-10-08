@@ -24,7 +24,7 @@ When a labelled specimen turns up (e.g. an associated phone app, an FCC ID for t
 | Signal | Value |
 |---|---|
 | Service UUID (128-bit) | `2456E1B9-26E2-8F83-E744-F34F01E9D701` (proprietary) |
-| Local name pattern | `^CDSNA_[0-9]+_OPENGATE$`  — e.g. `CDSNA_34060040141_OPENGATE` |
+| Local name pattern | `^CDSNA_[0-9]+_OPENGATE$`  — e.g. `CDSNA_<serial>_OPENGATE` |
 | Manufacturer data | absent |
 | Address type | random |
 
@@ -35,11 +35,11 @@ We match if **either** the service UUID is present (case-insensitive) **or** the
 
 ### Serial extraction
 
-The digits between `CDSNA_` and `_OPENGATE` are captured into `metadata["serial"]`. In the observed sighting the serial was `34060040141` (11 digits) — long enough to plausibly be a per-unit hardware serial number rather than a per-deployment label.
+The digits between `CDSNA_` and `_OPENGATE` are captured into `metadata["serial"]`. In the observed sighting the serial was an 11-digit number — long enough to plausibly be a per-unit hardware serial number rather than a per-deployment label.
 
 ### Stable key
 
-- When the serial is known: `opengate:<serial>` (e.g. `opengate:34060040141`).
+- When the serial is known: `opengate:<serial>` (e.g. `opengate:<serial>`).
 - When only the service UUID matched (no parseable name): `opengate:<MAC>` as a fallback. We surface the device-class without claiming serial-level identity.
 
 ### Device class
@@ -50,7 +50,7 @@ The digits between `CDSNA_` and `_OPENGATE` are captured into `metadata["serial"
 
 | Capture | Inference |
 |---|---|
-| service UUID + name `CDSNA_34060040141_OPENGATE` | serial = `34060040141`, class = `access_control`, stableKey = `opengate:34060040141` |
+| service UUID + name `CDSNA_<serial>_OPENGATE` | serial = `<serial>`, class = `access_control`, stableKey = `opengate:<serial>` |
 | service UUID only | matched on UUID; serial unknown; stableKey = `opengate:<MAC>` |
 | name `CDSNA_999_OPENGATE` only | serial = `999`, class = `access_control`, stableKey = `opengate:999` |
 

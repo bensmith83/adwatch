@@ -72,10 +72,10 @@ unit and SKU).
 | Token | Source | Meaning |
 |-------|--------|---------|
 | `G7Xm3` | model prefix | PowerShot **G7 X Mark III** (Canon's compact-camera lineage: G7 → G7X → G7X Mk II → G7X Mk III) |
-| `CA2680` | 6-hex serial tail | Stable per-camera token used in Canon's onboarding (matches the QR code shown on the camera's "Connect to smartphone" screen) |
+| `XXXXXX` | 6-hex serial tail | Stable per-camera token used in Canon's onboarding (matches the QR code shown on the camera's "Connect to smartphone" screen) |
 
 We do **not** see the unit-id bytes from the manufacturer-data
-(`68 4b`) encoded into the local-name suffix `CA2680` — they are
+(`68 4b`) encoded into the local-name suffix `XXXXXX` — they are
 separate identifiers (different sizes, different namespaces). Treat
 the mfg-data `unit_id_hex` as a coarse 16-bit token and the local-name
 `serial_suffix` as the stable serial.

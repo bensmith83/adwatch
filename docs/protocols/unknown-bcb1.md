@@ -40,7 +40,7 @@ bc b1 | HH HH HH HH HH HH HH HH HH | MM MM MM MM MM | TT TT TT TT TT
 
 (The original design brief sketched a 9/5/4 split that summed to 18 bytes, but every observed body is 19 bytes — we widen the tail from 4 to 5 so the slices reconstruct the body exactly.)
 
-#### Captured walkthrough — device `D41BCB24-C00A-BEA9-74CA-50F6E3F3B10B` (6 sightings)
+#### Captured walkthrough — device `<device-id-1>` (6 sightings)
 
 | Wire bytes | head (9) | mid (5) | tail (5) |
 |---|---|---|---|
@@ -56,8 +56,8 @@ bc b1 | HH HH HH HH HH HH HH HH HH | MM MM MM MM MM | TT TT TT TT TT
 
 The design brief hypothesised that the 9-byte head is a *stable per-device identifier* and the 5-byte mid is the only thing that rolls. **The captured data disagrees with that hypothesis.** Two patterns rule it out:
 
-1. **Within a single CoreBluetooth deviceIdentifier the entire body changes between sightings**, not just the mid slice. The `D41BCB24-…` table above shows 7 completely-different heads across 6 sightings within seconds.
-2. **The exact same 21-byte manufacturer payload was observed simultaneously from 2–3 different deviceIdentifiers.** For example, at `16:23:48Z` three distinct `deviceIdentifier` UUIDs (`D41BCB24`, `D749BCC1`, `8444BFE4`) all emit `bcb15ef1cf7aab3a4a890734709c2dd64fdb36eb54` byte-for-byte. A per-device head would never collide across hosts in lockstep.
+1. **Within a single CoreBluetooth deviceIdentifier the entire body changes between sightings**, not just the mid slice. The `<device-id-1>` table above shows 7 completely-different heads across 6 sightings within seconds.
+2. **The exact same 21-byte manufacturer payload was observed simultaneously from 2–3 different deviceIdentifiers.** For example, at `16:23:48Z` three distinct `deviceIdentifier` UUIDs (`<device-id-1>`, `<device-id-2>`, `<device-id-3>`) all emit `bcb15ef1cf7aab3a4a890734709c2dd64fdb36eb54` byte-for-byte. A per-device head would never collide across hosts in lockstep.
 
 The most plausible interpretation is that the **manufacturer-data frame as a whole is a rotating broadcast token** — possibly a relayed offline-finding payload, a shared environment / zone beacon, or a mesh-routing packet — not a stable per-device fingerprint. The much more stable signal is the paired `B1BB` service-data payload (see below).
 
@@ -69,10 +69,10 @@ We nevertheless follow the brief's head/mid/tail decomposition in the parser met
 
 | deviceIdentifier | B1BB service-data payload |
 |---|---|
-| `D41BCB24-C00A-BEA9-74CA-50F6E3F3B10B` | `b1bbe49b8af7a5d51083671d70638eecb2d22bfed3b34fffb08111` |
-| `D749BCC1-6C61-3892-AE10-8B807ED06C9A` | `b1bb5b1afb6c1bf9ac36b795e627f768b627a234f3d2c6f654b4c2` |
-| `8444BFE4-6F07-91D8-964C-F7330333257B` | `b1bb512f900a29cc68d1fec598db47a3f4be988854a0bc11274350` |
-| `B3BDEE48-6E68-2F12-E4B9-451D83C09B1D` | `b1bbedfc3875d984003ab6ba392c3d052dae34b19e61584bd22624` |
+| `<device-id-1>` | `b1bb` + `<25-byte per-device body #1>` |
+| `<device-id-2>` | `b1bb` + `<25-byte per-device body #2>` |
+| `<device-id-3>` | `b1bb` + `<25-byte per-device body #3>` |
+| `<device-id-4>` | `b1bb` + `<25-byte per-device body #4>` |
 
 The mirrored-prefix design (`bc b1` → CID `0xb1bc`; `b1 bb` → service UUID `B1BB`) is the same SDK fingerprint as the sibling `UnknownCDB1Parser` (`cd b1` → CID `0xb1cd`; `b1 bb` → service UUID `B1BB`).
 

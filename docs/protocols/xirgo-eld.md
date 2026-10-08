@@ -41,7 +41,7 @@ UUID family at the start of the XT6300 product line.
 ## Local Name Decoding
 
 ```
-"HarpBT230412586"
+"HarpBT#########"
  └──┬─┘ └────┬────┘
     │        └── 9-digit unit serial (opaque per-device unique id)
     └── product codename + "BT" (BLE radio suffix)
@@ -49,8 +49,8 @@ UUID family at the start of the XT6300 product line.
 
 The 9-digit suffix is treated as opaque — it is *not* a
 manufacturing-date prefix (the Blue2thprinting metadata flags it as
-a unique id, and another sighting in the wild was `HarpBT195007401`
-which doesn't fit a YYMM date prefix). Surface verbatim as `serial`.
+a unique id, and another sighting in the wild had a suffix whose
+digits 3–4 are not a valid month, so it doesn't fit a YYMM date prefix). Surface verbatim as `serial`.
 
 ## Wire Format
 

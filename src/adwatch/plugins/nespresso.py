@@ -57,7 +57,7 @@ class NespressoParser:
                 metadata["state_byte"] = payload[0]
 
         # Extract model info from local name (machine path only).
-        # Patterns: Vertuo_CV6_FCB46765786E, Venus_D8132A9D825A
+        # Patterns: Vertuo_CV6_XXXXXXXXXXXX, Venus_XXXXXXXXXXXX
         if raw.local_name:
             parts = raw.local_name.split("_")
             if parts:

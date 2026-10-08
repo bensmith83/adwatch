@@ -10,8 +10,8 @@ load-bearing feature is the ASCII marker **"OPEN"**:
 
 | Role | Local-name shape | Company ID | mfg length |
 |---|---|---|---|
-| Repeater | `RP-<12 hex>` (e.g. `RP-F47E8E4A2EED`) | `0x0131` (Cypress Semiconductor) | 26 bytes |
-| Access point gen 2 | `AP2-<12 hex>-<fw>` (e.g. `AP2-C0005B33AC52-12070002`) | `0x0059` (Nordic Semiconductor) | 24 bytes |
+| Repeater | `RP-<12 hex>` (e.g. `RP-XXXXXXXXXXXX`) | `0x0131` (Cypress Semiconductor) | 26 bytes |
+| Access point gen 2 | `AP2-<12 hex>-<fw>` (e.g. `AP2-XXXXXXXXXXXX-12070002`) | `0x0059` (Nordic Semiconductor) | 24 bytes |
 
 The two roles share one network and clearly belong to one product family
 (identical frame, shared installation ID, complementary role codes). The
@@ -67,15 +67,15 @@ chip CIDs (e.g. iTECH Fusion on Nordic 0x0059) without false positives.
 ### Byte map (offsets AFTER the 2-byte company ID)
 
 ```
-RP  31 01 | 9730cf43ea36 | 00 | 4f50454e | 51 | 00 | 6a2dae22 | 0a 00000001 0000
-AP2 59 00 | 9730cf43ea36 | 00 | 4f50454e | 8a | 00 | 6a2daee5 | 00000000 01
+RP  31 01 | xxxxxxxxxxxx | 00 | 4f50454e | 51 | 00 | 6a2dae22 | 0a 00000001 0000
+AP2 59 00 | xxxxxxxxxxxx | 00 | 4f50454e | 8a | 00 | 6a2daee5 | 00000000 01
            \__network ID_/  \_  "OPEN"  _/ role  fl  \_clock_/  \_ trailing _/
 off:        0..5            6   7..10     11   12   13..16       17..
 ```
 
 | Offset | Field | Notes |
 |---|---|---|
-| 0..5 | network/installation ID | 6 bytes, **constant** across all 22 nodes (`9730cf43ea36`) |
+| 0..5 | network/installation ID | 6 bytes, **constant** across all 22 nodes (`xxxxxxxxxxxx`) |
 | 6 | separator | `0x00` |
 | 7..10 | `"OPEN"` marker | `4f 50 45 4e` |
 | 11 | role code | `0x51` = RP/repeater, `0x8a` = AP2/access point |

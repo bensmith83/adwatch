@@ -93,7 +93,7 @@ class TestJblParsing:
     def test_parse_with_harman_mfr_data(self):
         """Parses Harman manufacturer data."""
         parser = JblParser()
-        mfr = bytes.fromhex("cb0edd2001d06486a92401000068593259334901010000000000")
+        mfr = bytes.fromhex("cb0edd2001d06486a92401000041414141414101010000000000")
         ad = _make_ad(
             local_name="JBL PartyBox Stage 320",
             manufacturer_data=mfr,

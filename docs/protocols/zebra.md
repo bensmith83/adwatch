@@ -25,11 +25,11 @@ The local name is configured by the retailer's IT team (via Zebra StageNow or En
 
 | Example Name | Store | Department | Device |
 |--------------|-------|------------|--------|
-| `096_PDZebra1` | 096 | PD (Produce) | Zebra1 |
-| `096_PDZebra2` | 096 | PD (Produce) | Zebra2 |
-| `096_PharmZebra` | 096 | Pharm (Pharmacy) | Zebra |
-| `096_CA_CAC` | 096 | CA (Checkout Area) | CAC |
-| `096_CA_Floral` | 096 | CA (Checkout Area) | Floral |
+| `NNN_PDZebra1` | NNN | PD (Produce) | Zebra1 |
+| `NNN_PDZebra2` | NNN | PD (Produce) | Zebra2 |
+| `NNN_PharmZebra` | NNN | Pharm (Pharmacy) | Zebra |
+| `NNN_CA_CAC` | NNN | CA (Checkout Area) | CAC |
+| `NNN_CA_Floral` | NNN | CA (Checkout Area) | Floral |
 
 Known department codes:
 - **PD** — Produce Department
@@ -52,7 +52,7 @@ parser now accepts either source; the metadata field
 (`service_data` or `service_uuid_only`).
 
 `fleet_id` metadata is set from the leading `_`-delimited segment
-of the local name (e.g. `096_CA_CAC` → `fleet_id = 096`) so
+of the local name (e.g. `NNN_CA_CAC` → `fleet_id = NNN`) so
 multiple devices in the same store / fleet group together cleanly.
 
 ### Device Types

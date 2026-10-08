@@ -29,7 +29,7 @@ Offset  Length  Field           Description
 
 ### Observed Patterns
 
-All observed ads from MAC CC:19:5F:2E:FF:A3 (single device):
+All observed ads from MAC CC:19:5F:xx:xx:xx (single device):
 - Service data starts with `0030000000` consistently
 - Bytes 5-8 vary (rotating identifier)
 - Bytes 9-11 contain `347fe4` prefix with varying last byte

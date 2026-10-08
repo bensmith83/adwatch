@@ -73,7 +73,7 @@ readings are inferred; the app surfaces the bytes as
 `extension_prefix_hex` and the characters as `extension_ascii_tag`
 without asserting either meaning. The same devices also sent 14-byte
 short frames, and one co-advertised the FE51 service data
-`0d 03 c1 f5 fc 3c 32 04 81` (system blob `c1f5fc3c32`, trailing pair
+`0d 03 xx xx xx xx xx 04 81` (5-byte system blob redacted, trailing pair
 `04 81`) — so the TLV and ASCII extension shapes coexist on one
 firmware generation.
 

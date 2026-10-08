@@ -7,7 +7,7 @@ Sphero makes programmable robotic balls and educational robots. The Sphero BOLT 
 ## Identifiers
 
 - **Service UUID:** `00010001-574F-4F20-5370-6865726F2121` (128-bit, decodes to ASCII "WOO Sphero!!")
-- **Local name pattern:** `SB-XXXX` (e.g., `SB-9B13`, `SB-A6B9`)
+- **Local name pattern:** `SB-XXXX` (e.g., `SB-XXXX`)
 - **Device class:** `toy`
 
 ## BLE Advertisement Format
@@ -52,14 +52,7 @@ Reading bytes 5-16 as ASCII: "WOO Sphero!!"
 From captured data, 8 unique Sphero BOLT devices were observed:
 
 ```
-SB-9B13: sightings=66
-SB-9DD2: sightings=78
-SB-A6B9: sightings=90
-SB-2C30: sightings=57
-SB-238A: sightings=54
-SB-B821: sightings=65
-SB-8019: sightings=63
-SB-BF86: sightings=54
+SB-XXXX: 8 distinct names, 54-90 sightings each
 ```
 
 All share the same service UUID and have no manufacturer data or service data — identification is purely by UUID and local name.

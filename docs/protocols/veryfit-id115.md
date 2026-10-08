@@ -36,7 +36,7 @@ Captured in adwatch:
 
 ```
 Local name: "ID115Plus HR "  (note the trailing space — included by firmware)
-Mfr data:   73 01 e4 ec 4d 90 bf 3d
+Mfr data:   73 01 xx xx xx xx xx xx
             └─┬─┘ └─────────┬─────────┘
              cid     6-byte payload
 Svc UUIDs:  [0AF0]
@@ -46,7 +46,7 @@ Svc UUIDs:  [0AF0]
 
 | Offset (post-cid) | Bytes | Meaning |
 |-------------------|-------|---------|
-| 0–5               | `e4 ec 4d 90 bf 3d` | Device identifier — appears to be a MAC-derived hash |
+| 0–5               | `xx xx xx xx xx xx` | Device identifier — appears to be a MAC-derived hash |
 
 The 6-byte payload is fixed per physical band — it does **not**
 encode live sensor readings (heart rate, steps, battery). All live

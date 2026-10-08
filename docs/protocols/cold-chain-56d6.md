@@ -44,9 +44,9 @@ Offset  Bytes      Meaning
 Three observed sensor IDs (all from same store, same minute):
 
 ```
-SSFYV3
-1ZNQGY
-LYHR3S
+<sensor-id-1>   (6 chars, [A-Z0-9])
+<sensor-id-2>   (6 chars, [A-Z0-9])
+<sensor-id-3>   (6 chars, [A-Z0-9])
 ```
 
 Pattern is uppercase letters and digits only — looks base32-ish.

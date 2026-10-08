@@ -26,7 +26,7 @@ strong place fingerprint and a mild privacy signal.
 | Signal | Value | Notes |
 |---|---|---|
 | Service UUID | `8EC1E808-67C9-11E6-8B77-86F30CA893D3` | Vendor-allocated 128-bit; the decisive anchor |
-| Local name | room number, `^\d{3,4}$` | e.g. `610`, `213`, `1208` — floor + room |
+| Local name | room number, `^\d{3,4}$` | `FRR` / `FFRR` — floor + room |
 | Manufacturer data | none | — |
 | Address type | `random` | rotating; room number is the stable identity |
 
@@ -60,13 +60,11 @@ slot on that floor:
 
 | Local name | Floor | Unit |
 |---|---|---|
-| `610` | 6 | 10 |
-| `213` | 2 | 13 |
-| `308` | 3 | 08 |
-| `1208` (4-digit) | 12 | 08 |
+| `FRR` (3-digit) | `F` | `RR` |
+| `FFRR` (4-digit) | `FF` | `RR` |
 
-Observed cluster (one capture): 208, 210, 213, 308, 310, 410, 508, 512, 609,
-610, 708, 810 — floors 2–8, rooms 08–13: a tight multi-floor wing of one
+Observed cluster (one capture): 12 room numbers (list redacted) on floors
+2–8, room slots 08–13: a tight multi-floor wing of one
 property, 12 controllers = 12 nearby guestrooms.
 
 ### What we can surface

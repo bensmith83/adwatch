@@ -16,7 +16,7 @@ Captured in `research/nearsight_export.json` (one distinct device, seven
 sightings):
 
 ```
-localName    = "POWERDRIVER-L2FBA"
+localName    = "POWERDRIVER-XXXXX"
 serviceUUIDs = []
 mdata        = (absent)
 addressType  = random
@@ -33,13 +33,13 @@ tier.
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `POWERDRIVER-<5-alphanumeric>` | e.g. `POWERDRIVER-L2FBA`. Five uppercase A-Z/0-9 characters, factory default. User may rename via the app, in which case the parser stops matching |
+| Local name | `POWERDRIVER-<5-alphanumeric>` | e.g. `POWERDRIVER-XXXXX`. Five uppercase A-Z/0-9 characters, factory default. User may rename via the app, in which case the parser stops matching |
 | Manufacturer data | (absent) | — |
 | Service UUIDs | (absent in advertisement) | The vendor GATT service appears only after connect; not advertised |
 | Service data | (absent) | — |
 | Address type | `random` | Rotating private address |
 
-The suffix `L2FBA` (and similar) is a per-unit device hash, almost certainly
+The suffix (5 alphanumerics) is a per-unit device hash, almost certainly
 the last 5 nibbles of the BLE MAC or a factory serial. It is stable for a
 given physical inverter as long as the user has not renamed the device in
 the app.

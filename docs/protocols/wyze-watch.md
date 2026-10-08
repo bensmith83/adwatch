@@ -30,7 +30,7 @@ Total: 12 bytes (2 company ID + 10 payload)
 #### Example
 
 ```
-49 06 02 09 00 00 2c aa 8e d2 62 82
+49 06 02 09 00 00 2c aa 8e xx xx xx
 ```
 
 | Offset | Length | Value | Description |
@@ -38,12 +38,12 @@ Total: 12 bytes (2 company ID + 10 payload)
 | 0-1 | 2 | `49 06` | Company ID 0x0649 (little-endian) |
 | 2-3 | 2 | `02 09` | Device type/model identifier |
 | 4-5 | 2 | `00 00` | Reserved/padding |
-| 6-11 | 6 | `2c aa 8e d2 62 82` | BLE MAC address |
+| 6-11 | 6 | `2c aa 8e xx xx xx` | BLE MAC address |
 
 ### MiBeacon Service Data (FE95)
 
 ```
-31 20 8f 03 00 2c aa 8e d2 62 82 09
+31 20 8f 03 00 2c aa 8e xx xx xx 09
 ```
 
 | Offset | Length | Value | Description |
@@ -51,7 +51,7 @@ Total: 12 bytes (2 company ID + 10 payload)
 | 0-1 | 2 | `31 20` | Frame control (capabilities/encryption flags) |
 | 2-3 | 2 | `8f 03` | Device type (0x038F LE = Wyze Watch variant) |
 | 4 | 1 | `00` | Frame counter |
-| 5-10 | 6 | `2c aa 8e d2 62 82` | MAC address |
+| 5-10 | 6 | `2c aa 8e xx xx xx` | MAC address |
 | 11 | 1 | `09` | Capability/pairing flags |
 
 ### Known Variants

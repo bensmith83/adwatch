@@ -31,7 +31,7 @@ nRF54L15 with a HackRF and decoded with
 |-------|-----------------------------|
 | PHY version | 1 |
 | chipset (from synth step) | Nordic (meas. 488.46 Hz vs 488.28) |
-| network id | `0x7EE37B21` |
+| network id | `0xXXXXXXXX` (redacted) |
 | sequence | 130 |
 | auth tag | `0xABC42A5B` |
 | channel / hop-seq index | 8 / 1 (of 4 sequences x 19 channels) |

@@ -66,10 +66,10 @@ extensible lookup — only two entries are known so far.
 
 | local name | mfr data |
 |------------|----------|
-| `SZG CL3650UFDID` | `10 10 00 06 80 32 d1 bd 11 0b 02 03 05 05` |
-| `SZG CL3650UFDID` | `10 10 00 06 80 32 c9 2a 11 0b 02 03 05 05` |
-| `SZG SO3050PMSP` | `10 10 00 06 80 32 dd 32 11 0f 01 03 05 05` |
-| (none) | `10 10 00 06 80 2f ae 5f` |
+| `SZG CL3650UFDID` | `10 10 00 06 80 xx xx xx 11 0b 02 03 05 05` |
+| `SZG CL3650UFDID` | `10 10 00 06 80 yy yy yy 11 0b 02 03 05 05` |
+| `SZG SO3050PMSP` | `10 10 00 06 80 zz zz zz 11 0f 01 03 05 05` |
+| (none) | `10 10 00 06 80 ww ww ww` |
 
 ## What We Can Parse
 

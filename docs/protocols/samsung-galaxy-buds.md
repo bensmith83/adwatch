@@ -27,7 +27,7 @@ Samsung Galaxy Buds (Buds, Buds+, Buds Pro, Buds2, Buds3, Buds3 Pro, Buds FE) br
 ## Sample Advertisements
 
 ```
-Galaxy Buds3 Pro (E757) LE:
+Galaxy Buds3 Pro (XXXX) LE:
   Service UUID: FD69
   Service data: 005fe6f74080c94e5ded74a54e4000
 

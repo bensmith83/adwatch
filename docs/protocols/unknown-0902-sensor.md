@@ -30,7 +30,7 @@ no product.
 |--------|-------|-------|
 | Company ID | `0x0902` (wire `02 09`) | SIG: TSC Auto-ID Technology Co., Ltd. — uncorroborated |
 | Manufacturer payload | exactly 27 bytes after the CID (29 on the wire) | every record in both captures |
-| Unit code | bytes 6–10, `[0-9A-Z]{5}` | `W0VWF`, `YEEZA` (08-01); `QXGPB`, `24MBF` (08-25) |
+| Unit code | bytes 6–10, `[0-9A-Z]{5}` | four distinct codes, two on 08-01 and two on 08-25 (values redacted) |
 | Service UUIDs / service data / name | none | |
 | Address | random | rotates; the unit id and code do not |
 
@@ -38,7 +38,7 @@ no product.
 
 | Offset | Field | Size | Observed |
 |--------|-------|------|----------|
-| 0–5 | unit id | 6 | `ce6c311fe811`, `4827e218604e` (08-01); `d5a2e9db351a`, `f46888e2de4d` (08-25). Only `48:27:E2` is a registered OUI (Espressif); the others are not, in either byte order, so it is reported as an id rather than a MAC |
+| 0–5 | unit id | 6 | four distinct 6-byte ids (two on 08-01, two on 08-25; values redacted). Only one, starting `48:27:E2`, is a registered OUI (Espressif); the others are not, in either byte order, so it is reported as an id rather than a MAC |
 | 6–10 | unit code | 5 | uppercase alphanumeric ASCII |
 | 11–12 | frame type | 2 | `03 07` in both 08-25 units — reported raw |
 | 13 | variant | 1 | `81` / `85` — per-unit constant, reported raw |
@@ -56,8 +56,8 @@ big-endian words at 14–15 and 16–17. Read as ×0.01 fixed point:
 
 | Unit | Reading A | Reading B |
 |------|-----------|-----------|
-| `QXGPB` (08-25, 02:18 UTC) | 26.80 → 26.79 | 40.43 → 40.38 |
-| `24MBF` (08-25, 02:18 UTC) | 29.71 | 37.03 |
+| `<unit-code-1>` (08-25, 02:18 UTC) | 26.80 → 26.79 | 40.43 → 40.38 |
+| `<unit-code-2>` (08-25, 02:18 UTC) | 29.71 | 37.03 |
 
 A late-August indoor temperature (°C) and relative humidity (%) pair in the
 SHT-style centi-unit scaling many sensor firmwares use, drifting by
@@ -66,14 +66,14 @@ and 100+ frames, but no vendor document confirms it — so the parser reports
 the values under `inferred_temperature_c` / `inferred_humidity_pct` with
 `reading_decode = inferred_be16_x0.01`, and the raw words alongside.
 
-### Examples (real bytes)
+### Examples (real bytes; unit id and unit code redacted)
 
 ```
-02 09 | d5 a2 e9 db 35 1a | 51 58 47 50 42 | 03 07 | 81 | 0a 78 | 0f cb | 00 01 80 00 c8 04 00 00 00
-CID     unit id             "QXGPB"          type    var  26.80   40.43   tail
+02 09 | xx xx xx xx xx xx | xx xx xx xx xx | 03 07 | 81 | 0a 78 | 0f cb | 00 01 80 00 c8 04 00 00 00
+CID     unit id             "XXXXX"          type    var  26.80   40.43   tail
 
-02 09 | f4 68 88 e2 de 4d | 32 34 4d 42 46 | 03 07 | 85 | 0b 9b | 0e 77 | 00 03 40 00 fa 04 00 00 00
-CID     unit id             "24MBF"          type    var  29.71   37.03   tail
+02 09 | yy yy yy yy yy yy | yy yy yy yy yy | 03 07 | 85 | 0b 9b | 0e 77 | 00 03 40 00 fa 04 00 00 00
+CID     unit id             "YYYYY"          type    var  29.71   37.03   tail
 ```
 
 ## Parser Scope (passive-only)

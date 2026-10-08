@@ -20,7 +20,7 @@ The marketing name varies across resellers ("AsteraBox WIFI", "AsteraBox Wi-Fi C
 
 | Signal | Value |
 |---|---|
-| Local name | `ART7WIFI <8-digit serial> ` — note the **trailing space** observed in captures, and the 8-digit zero-padded serial (e.g. `"ART7WIFI 00102101 "`). |
+| Local name | `ART7WIFI <8-digit serial> ` — note the **trailing space** observed in captures, and the 8-digit zero-padded serial (e.g. `"ART7WIFI XXXXXXXX "`). |
 | Manufacturer data | None observed. |
 | Service UUIDs | None observed. |
 | Service data | Optional `{"2A8C": "02"}` — see below. |
@@ -36,7 +36,7 @@ We capture the byte verbatim in metadata as `service_data_2a8c` but do **not** i
 
 ### Serial number format
 
-The trailing 8-digit numeric is a zero-padded unit serial. The sole observed value `00102101` parses as either decimal `102,101` or, if it's a date-style code, possibly `0010-21-01` (week / day / etc.) — we can't tell from one sample. We treat it as an opaque decimal string and use it as the stable key.
+The trailing 8-digit numeric is a zero-padded unit serial. The sole observed value `XXXXXXXX` is a zero-padded decimal number; whether it is a plain counter or a date-style code (week / day / etc.) can't be told from one sample. We treat it as an opaque decimal string and use it as the stable key.
 
 ### Stable Key
 
@@ -45,7 +45,7 @@ We use `astera_art7wifi:<serial>` so MAC rotations on the underlying random BD_A
 ## Detection Significance
 
 - **Film / broadcast set marker.** Like the legacy AsteraBox, the AsteraBox WIFI is not consumer kit — it retails around USD 1,500 and is essentially only found in the hands of professional gaffers, DPs, rental houses, and corporate / venue AV departments. A sighting in a residential or commercial scan strongly suggests a film, video, photo, or live-event shoot is underway nearby, **or** that the device has been semi-permanently installed as part of a venue's AV infrastructure.
-- **The 37-sighting sustained presence is informative.** In our first capture the unit was seen 37 times over a continuous ~24 h window in the Fenway area of Boston, which is inconsistent with a portable on-set use case (rigs usually move). It's more consistent with the box being deployed as **fixed infrastructure** — for example a permanent CRMX-to-Astera-fixtures bridge in a venue's house-light rig, a museum / gallery / corporate-lobby installation, or a video/photo studio's pre-rigged grid.
+- **The 37-sighting sustained presence is informative.** In our first capture the unit was seen 37 times over a continuous ~24 h window at one urban location, which is inconsistent with a portable on-set use case (rigs usually move). It's more consistent with the box being deployed as **fixed infrastructure** — for example a permanent CRMX-to-Astera-fixtures bridge in a venue's house-light rig, a museum / gallery / corporate-lobby installation, or a video/photo studio's pre-rigged grid.
 - **Travels with a fleet.** Where there's an AsteraBox of either generation, there are very likely Astera fixtures within ~50 m. Once those parsers exist, co-occurrence becomes a reliable "Astera kit on site" signal. The legacy and WIFI parsers share `deviceClass = "lighting_controller"` and an `Astera` vendor field, so a downstream "Astera presence" rollup can union them by vendor.
 - **Rare and stable.** Per-unit serials are engraved on the case and don't change. The 8-digit serial is a robust per-device key for fleet tracking — useful for spotting the same rental box returning to different locations over time, or for confirming a particular installed unit.
 

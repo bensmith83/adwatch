@@ -31,14 +31,14 @@ OUI-valid sub-family.
 
 | Pattern | Notes |
 |---------|-------|
-| `BLE_<12 hex chars>` | e.g. `BLE_BC57291E4EDC`, `BLE_DD34020AAE19` |
+| `BLE_<12 hex chars>` | e.g. `BLE_XXXXXXXXXXXX` |
 
 MAC-prefix split (first 3 bytes of the embedded hex):
 
 | Prefix example | OUI lookup | Interpretation |
 |---|---|---|
 | `BC:57:29` | Shenzhen KKM (real, unicast) | genuine factory MAC, module-vendor lead only |
-| `DD:34:02` | no match; multicast bit set | synthetic / locally-administered, not a real OUI |
+| `DD:xx:xx` | no match; multicast bit set (first octet `0xDD`) | synthetic / locally-administered, not a real OUI |
 
 ### Service Data (6 bytes)
 
@@ -95,5 +95,5 @@ Anchored on the BLE MAC — `stable_key = unknown_2080_ble_name:<mac>`.
   characteristic_uuids, company_identifiers YAML mirrors) — confirms
   `0x2080` absent from all four.
 - IEEE OUI registry mirror — confirms `BC:57:29` = Shenzhen KKM (real,
-  unicast) and `DD:34:02` has no assignment (multicast bit set, so by
+  unicast) and the `DD:…` prefix has no assignment (multicast bit set, so by
   definition cannot be a real OUI).

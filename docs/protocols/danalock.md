@@ -44,7 +44,7 @@ Danalock devices advertise with a `DL-` prefix followed by a numeric identifier:
 DL-{device_id}
 ```
 
-Examples: `DL-1234567890`, `DL-0042851963`, `DL-9876543210`
+Examples: `DL-1234567890`, `DL-NNNNNNNNNN`, `DL-NNNNNNNNNN`
 
 The numeric ID uniquely identifies the lock unit and is printed on the device label.
 
@@ -57,7 +57,7 @@ Danalock V3:
 
 Danalock V4:
   Service UUID: fd92
-  Local name: DL-0042851963
+  Local name: DL-NNNNNNNNNN
 ```
 
 ## Identity Hashing

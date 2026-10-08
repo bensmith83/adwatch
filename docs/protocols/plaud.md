@@ -26,8 +26,8 @@ PLAUD devices send manufacturer-specific data with a TLV-like structure. Both mo
 #### PLAUD NOTE Example (29 bytes)
 
 ```
-59 00 02 78 03 04 56 5f 00 00 09 88 83 16 37 43
-89 71 98 85 0a 00 04 f5 78 ed 1e 01 01
+59 00 02 78 03 04 56 5f 00 00 09 88 8x xx xx xx
+xx xx xx xx 0a 00 04 f5 78 ed 1e 01 01
 ```
 
 | Offset | Length | Value | Description |
@@ -43,7 +43,7 @@ PLAUD devices send manufacturer-specific data with a TLV-like structure. Both mo
 #### PLAUD NotePin Example (26 bytes)
 
 ```
-5d 00 04 56 d5 00 00 08 88 00 04 01 22 73 62 61
+5d 00 04 56 d5 00 00 08 88 xx xx xx xx xx xx xx
 44 0a 00 04 00 18 28 57 01 01
 ```
 
@@ -63,22 +63,22 @@ Both models share the pattern `0a 00 04 [4 bytes] 01 01` at the end. The `0x0A` 
 
 PLAUD NOTE also sends simpler advertisements with only the local name and no manufacturer data. These are likely connectable advertisements used for initial pairing discovery.
 
-### Note Pro / Asastre 28-byte signature
+### Note Pro / renamed-unit 28-byte signature
 
-Recent captures of the 2024-2025 Plaud Note Pro flagship (and an unnamed Plaud-Asastre unit) carry a structurally identical 28-byte manufacturer-data payload (2-byte CID + 27 payload bytes). Crucially, the SIG **company ID varies by BLE chipset**, so the parser anchors on **local name + tail signature**, not on the CID.
+Recent captures of the 2024-2025 Plaud Note Pro flagship (and a second Plaud unit with a user-assigned name) carry a structurally identical 28-byte manufacturer-data payload (2-byte CID + 27 payload bytes). Crucially, the SIG **company ID varies by BLE chipset**, so the parser anchors on **local name + tail signature**, not on the CID.
 
 #### Plaud Note Pro example (CID 0x005D — Realtek)
 
 ```
-5d 00 02 71 03 04 56 07 04 01 08 88 10 b5 02 79
-67 59 18 44 14 00 04 83 e3 a7 1b 01 01
+5d 00 02 71 03 04 56 07 04 01 08 88 xx xx xx xx
+xx xx xx 44 14 00 04 83 e3 a7 1b 01 01
 ```
 
-#### Plaud-Asastre67 example (CID 0x0059 — Nordic)
+#### `Plaud-<user-assigned name>` example (CID 0x0059 — Nordic)
 
 ```
-59 00 02 78 03 04 56 5f 00 00 09 88 83 16 98 77
-06 44 98 88 0a 00 04 fa d2 86 91 01 01
+59 00 02 78 03 04 56 5f 00 00 09 88 8x xx xx xx
+xx xx xx xx 0a 00 04 fa d2 86 91 01 01
 ```
 
 | Offset | Length | Value | Description |
@@ -93,7 +93,7 @@ Recent captures of the 2024-2025 Plaud Note Pro flagship (and an unnamed Plaud-A
 The same Plaud product line ships on different BLE SoCs and therefore advertises with different SIG-assigned company IDs. Observed so far:
 
 - `0x005D` — Realtek Semiconductor Corp (Note Pro)
-- `0x0059` — Nordic Semiconductor ASA (older Plaud-Asastre unit)
+- `0x0059` — Nordic Semiconductor ASA (older, user-renamed Plaud unit)
 
 Because the CID changes, the parser must NOT gate on it. Instead the signature path matches when:
 

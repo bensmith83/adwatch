@@ -29,8 +29,8 @@ def make_raw(manufacturer_data=None, service_data=None, service_uuids=None, loca
     )
 
 
-EPOS_MFR_DATA = bytes.fromhex("820060bf74941600")
-EPOS_PAYLOAD = bytes.fromhex("60bf74941600")
+EPOS_MFR_DATA = bytes.fromhex("820060bfaabb1600")
+EPOS_PAYLOAD = bytes.fromhex("60bfaabb1600")
 
 
 class TestEposParsing:
@@ -79,7 +79,7 @@ class TestEposParsing:
     def test_device_id_bytes(self, parser):
         raw = make_raw(manufacturer_data=EPOS_MFR_DATA, local_name="EPOS EXPAND 40")
         result = parser.parse(raw)
-        assert result.metadata["device_id"] == "7494"
+        assert result.metadata["device_id"] == "aabb"
 
     def test_protocol_version(self, parser):
         raw = make_raw(manufacturer_data=EPOS_MFR_DATA, local_name="EPOS EXPAND 40")
@@ -92,7 +92,7 @@ class TestEposParsing:
         assert result.metadata["state_hex"] == "60bf"
 
     def test_different_state_bytes(self, parser):
-        data = bytes.fromhex("8200e0c074941600")
+        data = bytes.fromhex("8200e0c0aabb1600")
         raw = make_raw(manufacturer_data=data, local_name="EPOS EXPAND 40")
         result = parser.parse(raw)
         assert result.metadata["state_hex"] == "e0c0"
@@ -110,7 +110,7 @@ class TestEposMalformed:
         assert parser.parse(raw) is None
 
     def test_returns_none_wrong_company_id(self, parser):
-        raw = make_raw(manufacturer_data=bytes.fromhex("4c0060bf74941600"))
+        raw = make_raw(manufacturer_data=bytes.fromhex("4c0060bfaabb1600"))
         assert parser.parse(raw) is None
 
     def test_returns_none_too_short(self, parser):

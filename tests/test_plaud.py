@@ -73,7 +73,7 @@ class TestPlaudParsing:
     def test_parse_plaud_note_with_mfr_data(self):
         """Parses PLAUD NOTE with manufacturer data."""
         parser = PlaudParser()
-        mfr = bytes.fromhex("590002780304565f0000098883163743897198850a0004f578ed1e0101")
+        mfr = bytes.fromhex("590002780304565f0000098880000000000000010a0004f578ed1e0101")
         ad = _make_ad(local_name="PLAUD_NOTE", manufacturer_data=mfr)
         result = parser.parse(ad)
         assert result is not None
@@ -85,7 +85,7 @@ class TestPlaudParsing:
     def test_parse_plaud_notepin_with_mfr_data(self):
         """Parses PLAUD NotePin with manufacturer data."""
         parser = PlaudParser()
-        mfr = bytes.fromhex("5d000456d50000088800040122736261440a0004001828570101")
+        mfr = bytes.fromhex("5d000456d50000088800000000000001440a0004001828570101")
         ad = _make_ad(local_name="PLAUD NotePin", manufacturer_data=mfr)
         result = parser.parse(ad)
         assert result is not None
@@ -112,7 +112,7 @@ class TestPlaudParsing:
     def test_raw_payload_hex(self):
         """raw_payload_hex contains manufacturer data when present."""
         parser = PlaudParser()
-        mfr = bytes.fromhex("590002780304565f0000098883163743897198850a0004f578ed1e0101")
+        mfr = bytes.fromhex("590002780304565f0000098880000000000000010a0004f578ed1e0101")
         ad = _make_ad(local_name="PLAUD_NOTE", manufacturer_data=mfr)
         result = parser.parse(ad)
         assert result.raw_payload_hex == mfr.hex()
@@ -127,7 +127,7 @@ class TestPlaudParsing:
     def test_company_id_in_metadata_note(self):
         """Company ID is extracted for PLAUD NOTE."""
         parser = PlaudParser()
-        mfr = bytes.fromhex("590002780304565f0000098883163743897198850a0004f578ed1e0101")
+        mfr = bytes.fromhex("590002780304565f0000098880000000000000010a0004f578ed1e0101")
         ad = _make_ad(local_name="PLAUD_NOTE", manufacturer_data=mfr)
         result = parser.parse(ad)
         assert result.metadata["company_id"] == 0x0059
@@ -135,7 +135,7 @@ class TestPlaudParsing:
     def test_company_id_in_metadata_notepin(self):
         """Company ID is extracted for PLAUD NotePin."""
         parser = PlaudParser()
-        mfr = bytes.fromhex("5d000456d50000088800040122736261440a0004001828570101")
+        mfr = bytes.fromhex("5d000456d50000088800000000000001440a0004001828570101")
         ad = _make_ad(local_name="PLAUD NotePin", manufacturer_data=mfr)
         result = parser.parse(ad)
         assert result.metadata["company_id"] == 0x005D
@@ -160,8 +160,8 @@ class TestPlaudParsing:
 # payload == adwatch manufacturer_payload (no offset shift). Integers are
 # little-endian (native libtnt_ble_utils readInt; model 0x0378 == 888 confirms).
 
-NOTE_MFR = bytes.fromhex("590002780304565f0000098883163743897198850a0004f578ed1e0101")
-PIN_MFR = bytes.fromhex("5d000456d50000088800040122736261440a0004001828570101")
+NOTE_MFR = bytes.fromhex("590002780304565f0000098880000000000000010a0004f578ed1e0101")
+PIN_MFR = bytes.fromhex("5d000456d50000088800000000000001440a0004001828570101")
 
 
 class TestPlaudMfrDecode:
@@ -172,7 +172,7 @@ class TestPlaudMfrDecode:
         assert md["model_id"] == 888
         assert md["version_char"] == "V"
         assert md["version_number"] == 0x5F
-        assert md["serial"] == "888316374389719885"
+        assert md["serial"] == "888000000000000001"
         assert md["product_code"] == "888"
         assert md["product"] == "Plaud Note"
 
@@ -182,7 +182,7 @@ class TestPlaudMfrDecode:
         assert "model_id" not in md
         assert md["version_char"] == "V"
         assert md["version_number"] == 0xD5
-        assert md["serial"] == "8800040122736261"
+        assert md["serial"] == "8800000000000001"
         assert md["product"] == "Plaud NotePin"
 
     def test_nameless_advert_parses_from_mfr_shape(self):
@@ -198,7 +198,7 @@ class TestPlaudMfrDecode:
         a = p.parse(_make_ad(manufacturer_data=NOTE_MFR, mac_address="11:11:11:11:11:11"))
         b = p.parse(_make_ad(manufacturer_data=NOTE_MFR, mac_address="22:22:22:22:22:22"))
         assert a.identifier_hash == b.identifier_hash
-        expected = hashlib.sha256(b"plaud:888316374389719885").hexdigest()[:16]
+        expected = hashlib.sha256(b"plaud:888000000000000001").hexdigest()[:16]
         assert a.identifier_hash == expected
 
     @pytest.mark.parametrize("code,product", [

@@ -46,7 +46,7 @@ _NAME_MODEL_RE = re.compile(r"H?(5\d{3})")
 _IBEACON_PREFIX = bytes.fromhex("4c000215")
 _INTELLI_ROCKS = b"INTELLI_ROCKS_HW"
 # Corpus inference (NearSight telemetry): the HWQw device also advertises as
-# GVH5177_B1E1; HWPu rides on 6-byte 0xEC88 H5072/H5075 frames.
+# GVH5177_1234; HWPu rides on 6-byte 0xEC88 H5072/H5075 frames.
 _IBEACON_MODEL_HINTS = {"HWPu": "H5075", "HWQw": "H5177"}
 
 # govee-ble MIN_TEMP / MAX_TEMP sanity window.

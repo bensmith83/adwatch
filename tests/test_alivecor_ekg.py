@@ -69,7 +69,7 @@ class TestAliveCorEkgRegistry:
     def test_does_not_match_ekg_name_or_espressif_uuid(self):
         """The retracted v1 keys (EKG- name, Espressif prov UUID) no longer route here."""
         registry = _make_registry()
-        assert registry.match(_make_ad(local_name="EKG-99-23-4c")) == []
+        assert registry.match(_make_ad(local_name="EKG-aa-bb-cc")) == []
         assert registry.match(_make_ad(service_uuids=[ESPRESSIF_PROV_UUID])) == []
 
 
@@ -123,7 +123,7 @@ class TestAliveCorEkgParser:
 
     def test_returns_none_for_personal_name_even_with_kardia_uuid(self):
         """A present non-Kardia name is never claimed (name-gate safety)."""
-        ad = _make_ad(local_name="Ben's ECG", service_uuids=[KARDIA_6L_UUID])
+        ad = _make_ad(local_name="Alice's ECG", service_uuids=[KARDIA_6L_UUID])
         assert AliveCorEkgParser().parse(ad) is None
 
 
@@ -131,11 +131,11 @@ class TestAliveCorRetractedEkgPath:
     """The EKG-<hex tail> family is a Fellow kettle, not AliveCor — must be rejected."""
 
     def test_ekg_name_rejected(self):
-        assert AliveCorEkgParser().parse(_make_ad(local_name="EKG-99-23-4c")) is None
+        assert AliveCorEkgParser().parse(_make_ad(local_name="EKG-aa-bb-cc")) is None
         assert AliveCorEkgParser().parse(_make_ad(local_name="EKG-")) is None
 
     def test_ekg_name_with_espressif_prov_uuid_rejected(self):
-        ad = _make_ad(local_name="EKG-99-23-4c", service_uuids=[ESPRESSIF_PROV_UUID])
+        ad = _make_ad(local_name="EKG-aa-bb-cc", service_uuids=[ESPRESSIF_PROV_UUID])
         assert AliveCorEkgParser().parse(ad) is None
 
     def test_espressif_prov_uuid_alone_rejected(self):

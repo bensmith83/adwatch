@@ -25,14 +25,14 @@ Twenty-seven distinct beacons in a single 48 h capture window is high enough den
 >
 > | capture | bytes 1..6 (wire, LE) | → BD_ADDR | byte 7 |
 > |---|---|---|---|
-> | 2026-07 A | `c6 af 7b a0 1a f0` | F0:1A:A0:7B:AF:C6 | `0x29` |
-> | 2026-07 B | `54 ee 7a a0 1a f0` | F0:1A:A0:7A:EE:54 | `0x29` |
-> | 2026-08 (26 rec) | `06 1e 7c a0 1a f0` | F0:1A:A0:7C:1E:06 | `0x2f` |
+> | 2026-07 A | `xx xx xx a0 1a f0` | F0:1A:A0:xx:xx:xx | `0x29` |
+> | 2026-07 B | `xx xx xx a0 1a f0` | F0:1A:A0:xx:xx:xx | `0x29` |
+> | 2026-08 (26 rec) | `xx xx xx a0 1a f0` | F0:1A:A0:xx:xx:xx | `0x2f` |
 >
 > `F0:1A:A0` is IEEE-registered to Hewlett Packard Enterprise. The "magic"
 > straddled the address's last byte (`a0 1a f0` is the OUI in wire order),
 > and byte 7 is a separate per-device field. The earlier observation that
-> "three of four unit IDs end in `af7ba0`" was this same OUI showing
+> "three of four unit IDs end in `xxxxa0`" was this same OUI showing
 > through. Only `51 4b 83 01 00` is actually constant.
 
 ### Manufacturer Data Layout (19 bytes after company ID)
@@ -54,7 +54,7 @@ The embedded address is **the** stable identifier — CoreBluetooth rotates
 the advertising MAC, but the burned-in address persists across rotations
 and reboots. The parser surfaces the full address as `bd_addr` and keeps
 its original `unit_id` (= the address's low four bytes in wire order, e.g.
-`c6af7ba0` for F0:1A:A0:7B:AF:C6) as the stable-key pre-image so the
+`xxxxxxa0` for F0:1A:A0:xx:xx:xx) as the stable-key pre-image so the
 layout correction needed no identity migration.
 
 ### Second frame shape (subtype `0x0a`, not decoded)

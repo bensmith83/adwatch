@@ -8,7 +8,7 @@ The captures we have are consistent with a **Google internal campus / Workspace 
 - a now-deprecated [Google Beacon Platform / Nearby Notifications](https://hackernoon.com/google-just-killed-android-nearby-notifications-whats-next-for-proximity-marketing-using-beacons-3714d2861e31) deployment (EOL April 2021) repurposed for in-building location, **or**
 - a Google Meet hardware room sensor.
 
-The operator-set local name `"Room 8039"` matches Google office building conventions (4-digit room numbers). The vendor product is unconfirmed; the parser is shipped as a "low-confidence Google room beacon".
+The operator-set local name `"Room NNNN"` matches Google office building conventions (4-digit room numbers). The vendor product is unconfirmed; the parser is shipped as a "low-confidence Google room beacon".
 
 ## BLE Advertisement Format
 
@@ -18,7 +18,7 @@ The operator-set local name `"Room 8039"` matches Google office building convent
 |--------|-------|-------|
 | Service UUID | `0xFEA0` | SIG-registered to Google LLC. |
 | Service data length | 13 or 15 bytes | Older firmware emits the 13-byte canonical frame; newer firmware appends 2 trailing bytes (purpose unknown). |
-| Local name | optional, operator-set (e.g. `"Room 8039"`, `"Living Room display 2"`) | Only present in ~50% of captures of the same emitter. |
+| Local name | optional, operator-set (e.g. `"Room NNNN"`, `"<room> display 2"`) | Only present in ~50% of captures of the same emitter. |
 
 ### Service Data Layout (13 or 15 bytes)
 
@@ -32,7 +32,7 @@ Bytes 8..10  : 0x20 0x20 0x20      — fixed-width label slot (3 ASCII spaces in
                                       is in the GAP local-name field instead)
 Bytes 11..12 : bf ff              — constant footer
 Bytes 13..14 : optional 2-byte trailing field on newer firmware (e.g. `6a 5c` on
-                "Living Room display 2"). Surfaced as `trailing_bytes_hex` in
+                "<room> display 2"). Surfaced as `trailing_bytes_hex` in
                 metadata; purpose not yet decoded. Could be tx-power, frame
                 counter, or a checksum.
 ```

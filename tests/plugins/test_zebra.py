@@ -31,28 +31,28 @@ def make_raw(service_uuids=None, local_name=None, manufacturer_data=None, servic
 
 class TestZebraParsing:
     def test_parse_by_service_uuid(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert result is not None
         assert isinstance(result, ParseResult)
 
     def test_parser_name(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert result.parser_name == "zebra"
 
     def test_beacon_type(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert result.beacon_type == "zebra"
 
     def test_device_class(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert result.device_class == "barcode_scanner"
 
     def test_identity_hash_format(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert len(result.identifier_hash) == 16
         int(result.identifier_hash, 16)
@@ -60,7 +60,7 @@ class TestZebraParsing:
     def test_identity_hash_value(self, parser):
         raw = make_raw(
             service_uuids=["fe79"],
-            local_name="096_PDZebra1",
+            local_name="123_PDZebra1",
             mac_address="11:22:33:44:55:66",
         )
         result = parser.parse(raw)
@@ -68,40 +68,40 @@ class TestZebraParsing:
         assert result.identifier_hash == expected
 
     def test_store_number_extracted(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
-        assert result.metadata["store_number"] == "096"
+        assert result.metadata["store_number"] == "123"
 
     def test_department_code_pd(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert result.metadata["department_code"] == "PD"
         assert result.metadata["department"] == "Produce"
 
     def test_department_code_pharm(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PharmZebra")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PharmZebra")
         result = parser.parse(raw)
         assert result.metadata["department_code"] == "Pharm"
         assert result.metadata["department"] == "Pharmacy"
 
     def test_department_code_ca(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_CA_CAC")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_CA_CAC")
         result = parser.parse(raw)
         assert result.metadata["department_code"] == "CA"
         assert result.metadata["department"] == "Checkout Area"
 
     def test_device_name_extracted(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_PDZebra1")
         result = parser.parse(raw)
         assert result.metadata["device_name"] == "Zebra1"
 
     def test_device_name_floral(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_CA_Floral")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_CA_Floral")
         result = parser.parse(raw)
         assert result.metadata["device_name"] == "Floral"
 
     def test_unknown_department(self, parser):
-        raw = make_raw(service_uuids=["fe79"], local_name="096_XY_Device1")
+        raw = make_raw(service_uuids=["fe79"], local_name="123_XY_Device1")
         result = parser.parse(raw)
         assert result.metadata["department_code"] == "XY"
         assert result.metadata["department"] == "Unknown"
@@ -121,11 +121,11 @@ class TestZebraParsing:
 
 class TestZebraMalformed:
     def test_returns_none_no_service_uuid(self, parser):
-        raw = make_raw(service_uuids=[], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=[], local_name="123_PDZebra1")
         assert parser.parse(raw) is None
 
     def test_returns_none_wrong_service_uuid(self, parser):
-        raw = make_raw(service_uuids=["fe78"], local_name="096_PDZebra1")
+        raw = make_raw(service_uuids=["fe78"], local_name="123_PDZebra1")
         assert parser.parse(raw) is None
 
 

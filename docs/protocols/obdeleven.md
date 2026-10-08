@@ -42,7 +42,7 @@ A match requires **all three** gates. We deliberately reject:
 
 ### Manufacturer Data Layout
 
-Captured: `48 4D 00 1E 42 2B A9 93` (8 bytes total)
+Captured: `48 4D xx xx xx xx xx xx` (8 bytes total)
 
 | Offset | Field | Size | Notes |
 |--------|-------|------|-------|

@@ -1,7 +1,7 @@
 """Tests for Fellow (Stagg/Corvo "EKG") kettle plugin.
 
 v1.1.0 adds the ``EKG-<hex tail>`` setup-beacon path: the only such unit ever
-observed (``EKG-99-23-4c``) advertises the Espressif Wi-Fi-provisioning UUID
+observed (``EKG-xx-xx-xx``) advertises the Espressif Wi-Fi-provisioning UUID
 and was misattributed to AliveCor for a long time (docs/protocols/fellow.md).
 """
 
@@ -119,7 +119,7 @@ class TestFellowEkgSetupBeacon:
     def test_registry_routes_ekg_tail_name(self):
         registry = ParserRegistry()
         _register(registry)
-        assert len(registry.match(_make_ad(local_name="EKG-99-23-4c"))) == 1
+        assert len(registry.match(_make_ad(local_name="EKG-aa-bb-cc"))) == 1
 
     def test_registry_does_not_route_bare_espressif_prov_uuid(self):
         registry = ParserRegistry()
@@ -127,12 +127,12 @@ class TestFellowEkgSetupBeacon:
         assert registry.match(_make_ad(service_uuids=[ESPRESSIF_PROV_UUID])) == []
 
     def test_corpus_record_parses_with_provisioning_flag(self):
-        ad = _make_ad(local_name="EKG-99-23-4c", service_uuids=[ESPRESSIF_PROV_UUID])
+        ad = _make_ad(local_name="EKG-aa-bb-cc", service_uuids=[ESPRESSIF_PROV_UUID])
         result = FellowParser().parse(ad)
         assert result is not None
         assert result.parser_name == "fellow"
         assert result.device_class == "kettle"
-        assert result.metadata["device_id"] == "99-23-4c"
+        assert result.metadata["device_id"] == "aa-bb-cc"
         assert result.metadata["provisioning_mode"] is True
         assert result.metadata["match_basis"] == "name_ekg_tail+espressif_prov_uuid"
         assert "model_hint" in result.metadata
@@ -145,10 +145,10 @@ class TestFellowEkgSetupBeacon:
         assert result.metadata["match_basis"] == "name_ekg_tail"
 
     def test_ekg_tail_identity_is_mac_independent(self):
-        a = FellowParser().parse(_make_ad(local_name="EKG-99-23-4c", mac_address="11:11:11:11:11:11"))
-        b = FellowParser().parse(_make_ad(local_name="EKG-99-23-4c", mac_address="22:22:22:22:22:22"))
+        a = FellowParser().parse(_make_ad(local_name="EKG-aa-bb-cc", mac_address="11:11:11:11:11:11"))
+        b = FellowParser().parse(_make_ad(local_name="EKG-aa-bb-cc", mac_address="22:22:22:22:22:22"))
         assert a.identifier_hash == b.identifier_hash
-        assert a.identifier_hash == hashlib.sha256(b"fellow:99-23-4c").hexdigest()[:16]
+        assert a.identifier_hash == hashlib.sha256(b"fellow:aa-bb-cc").hexdigest()[:16]
 
     def test_ekg_non_hex_tail_rejected(self):
         assert FellowParser().parse(_make_ad(local_name="EKG-monitor")) is None
@@ -159,7 +159,7 @@ class TestFellowEkgSetupBeacon:
         assert FellowParser().parse(_make_ad(local_name="PROV_1234", service_uuids=[ESPRESSIF_PROV_UUID])) is None
 
     def test_personal_name_with_fellow_uuid_rejected(self):
-        ad = _make_ad(local_name="Ben's kettle", service_uuids=[FELLOW_PRIMARY_UUID])
+        ad = _make_ad(local_name="Alice's kettle", service_uuids=[FELLOW_PRIMARY_UUID])
         assert FellowParser().parse(ad) is None
 
     def test_kardia_not_claimed(self):

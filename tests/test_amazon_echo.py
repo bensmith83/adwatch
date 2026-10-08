@@ -41,9 +41,9 @@ def _make_registry():
 
 class TestAmazonEchoRegistry:
     def test_matches_local_name_pattern(self):
-        """Matches on local_name 'Echo Pop-35U' via name pattern."""
+        """Matches on local_name 'Echo Pop-XYZ' via name pattern."""
         registry = _make_registry()
-        ad = _make_ad(local_name="Echo Pop-35U")
+        ad = _make_ad(local_name="Echo Pop-XYZ")
         matches = registry.match(ad)
         assert len(matches) >= 1
 
@@ -59,28 +59,28 @@ class TestAmazonEchoParser:
     def test_parser_name(self):
         """parser_name is 'amazon_echo'."""
         parser = AmazonEchoParser()
-        ad = _make_ad(local_name="Echo Pop-35U")
+        ad = _make_ad(local_name="Echo Pop-XYZ")
         result = parser.parse(ad)
         assert result.parser_name == "amazon_echo"
 
     def test_beacon_type(self):
         """beacon_type is 'amazon_echo'."""
         parser = AmazonEchoParser()
-        ad = _make_ad(local_name="Echo Pop-35U")
+        ad = _make_ad(local_name="Echo Pop-XYZ")
         result = parser.parse(ad)
         assert result.beacon_type == "amazon_echo"
 
     def test_device_class(self):
         """device_class is 'smart_speaker'."""
         parser = AmazonEchoParser()
-        ad = _make_ad(local_name="Echo Pop-35U")
+        ad = _make_ad(local_name="Echo Pop-XYZ")
         result = parser.parse(ad)
         assert result.device_class == "smart_speaker"
 
     def test_model_echo_pop(self):
-        """'Echo Pop-35U' -> metadata['model'] == 'Echo Pop'."""
+        """'Echo Pop-XYZ' -> metadata['model'] == 'Echo Pop'."""
         parser = AmazonEchoParser()
-        ad = _make_ad(local_name="Echo Pop-35U")
+        ad = _make_ad(local_name="Echo Pop-XYZ")
         result = parser.parse(ad)
         assert result.metadata["model"] == "Echo Pop"
 
@@ -92,17 +92,17 @@ class TestAmazonEchoParser:
         assert result.metadata["model"] == "Echo Dot"
 
     def test_device_name_in_metadata(self):
-        """metadata['device_name'] == 'Echo Pop-35U'."""
+        """metadata['device_name'] == 'Echo Pop-XYZ'."""
         parser = AmazonEchoParser()
-        ad = _make_ad(local_name="Echo Pop-35U")
+        ad = _make_ad(local_name="Echo Pop-XYZ")
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "Echo Pop-35U"
+        assert result.metadata["device_name"] == "Echo Pop-XYZ"
 
     def test_identity_hash(self):
         """Identity hash is SHA256(mac_address:amazon_echo)[:16]."""
         mac = "11:22:33:44:55:66"
         parser = AmazonEchoParser()
-        ad = _make_ad(local_name="Echo Pop-35U", mac_address=mac)
+        ad = _make_ad(local_name="Echo Pop-XYZ", mac_address=mac)
         result = parser.parse(ad)
         expected = hashlib.sha256(f"{mac}:amazon_echo".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected

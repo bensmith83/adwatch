@@ -20,7 +20,7 @@ def _make_ad(**kwargs):
         "address_type": "public",
         "manufacturer_data": None,
         "service_data": None,
-        "local_name": "Frontier X2 3A7F",
+        "local_name": "Frontier X2 1234",
     }
     defaults.update(kwargs)
     return RawAdvertisement(**defaults)
@@ -65,14 +65,14 @@ class TestFrontierMatching:
 
 class TestFrontierParse:
     def test_model_x2(self):
-        result = FrontierXParser().parse(_make_ad(local_name="Frontier X2 3A7F"))
+        result = FrontierXParser().parse(_make_ad(local_name="Frontier X2 1234"))
         assert result is not None
         assert result.parser_name == "frontier_x"
         assert result.device_class == "medical"
         assert result.metadata["vendor"] == "Fourth Frontier"
         assert result.metadata["model"] == "Frontier X2"
-        assert result.metadata["device_name"] == "Frontier X2 3A7F"
-        assert result.metadata["name_suffix"] == "3A7F"
+        assert result.metadata["device_name"] == "Frontier X2 1234"
+        assert result.metadata["name_suffix"] == "1234"
         assert result.metadata["vendor_attribution"] == "confirmed"
 
     def test_model_base_x(self):
@@ -81,9 +81,9 @@ class TestFrontierParse:
         assert "name_suffix" not in result.metadata
 
     def test_model_x3(self):
-        result = FrontierXParser().parse(_make_ad(local_name="Frontier X3-0091"))
+        result = FrontierXParser().parse(_make_ad(local_name="Frontier X3-1234"))
         assert result.metadata["model"] == "Frontier X3"
-        assert result.metadata["name_suffix"] == "0091"
+        assert result.metadata["name_suffix"] == "1234"
 
     def test_generic_frontier_name_is_uncertain(self):
         result = FrontierXParser().parse(_make_ad(local_name="Frontier Router"))
@@ -92,20 +92,20 @@ class TestFrontierParse:
         assert "model" not in result.metadata
 
     def test_identity_hash_uses_name(self):
-        result = FrontierXParser().parse(_make_ad(local_name="Frontier X2 3A7F"))
-        expected = hashlib.sha256(b"frontier_x:Frontier X2 3A7F").hexdigest()[:16]
+        result = FrontierXParser().parse(_make_ad(local_name="Frontier X2 1234"))
+        expected = hashlib.sha256(b"frontier_x:Frontier X2 1234").hexdigest()[:16]
         assert result.identifier_hash == expected
 
     def test_identity_stable_across_mac_change(self):
-        a = FrontierXParser().parse(_make_ad(local_name="Frontier X2 3A7F"))
+        a = FrontierXParser().parse(_make_ad(local_name="Frontier X2 1234"))
         b = FrontierXParser().parse(
-            _make_ad(local_name="Frontier X2 3A7F", mac_address="11:22:33:44:55:66")
+            _make_ad(local_name="Frontier X2 1234", mac_address="11:22:33:44:55:66")
         )
         assert a.identifier_hash == b.identifier_hash
 
     def test_distinct_units_get_distinct_hashes(self):
-        a = FrontierXParser().parse(_make_ad(local_name="Frontier X2 3A7F"))
-        b = FrontierXParser().parse(_make_ad(local_name="Frontier X2 9C11"))
+        a = FrontierXParser().parse(_make_ad(local_name="Frontier X2 1234"))
+        b = FrontierXParser().parse(_make_ad(local_name="Frontier X2 5678"))
         assert a.identifier_hash != b.identifier_hash
 
     def test_unrelated_returns_none(self):
@@ -115,5 +115,5 @@ class TestFrontierParse:
         assert FrontierXParser().parse(_make_ad(local_name=None)) is None
 
     def test_no_advertised_payload_claimed(self):
-        result = FrontierXParser().parse(_make_ad(local_name="Frontier X2 3A7F"))
+        result = FrontierXParser().parse(_make_ad(local_name="Frontier X2 1234"))
         assert result.raw_payload_hex == ""

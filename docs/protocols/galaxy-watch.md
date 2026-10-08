@@ -2,7 +2,7 @@
 
 ## Overview
 
-Samsung Galaxy Watch devices advertise via BLE with service UUID FD69 (Bluetooth SIG assigned to Samsung Electronics). The service data payload contains device identification and state information. When discoverable, the local name includes the model (e.g., "Galaxy Watch Active2(6105) LE").
+Samsung Galaxy Watch devices advertise via BLE with service UUID FD69 (Bluetooth SIG assigned to Samsung Electronics). The service data payload contains device identification and state information. When discoverable, the local name includes the model (e.g., "Galaxy Watch Active2(XXXX) LE").
 
 ## Identifiers
 
@@ -26,19 +26,19 @@ Variable length (14–20 bytes). Three formats observed:
 #### Short Format (14 bytes)
 
 ```
-03 58 e4 27 ee db 3e 59 ae 89 b6 32 ec 01
+03 xx xx xx xx xx xx xx xx xx xx xx xx 01
 ```
 
 | Offset | Length | Value | Description |
 |--------|--------|-------|-------------|
 | 0 | 1 | `03` | Unknown — possibly message type |
-| 1–12 | 12 | `58 e4...32 ec` | Device identifier / encrypted payload |
+| 1–12 | 12 | `xx ... xx` | Device identifier / encrypted payload |
 | 13 | 1 | `01` | Unknown — possibly state flag |
 
 #### Long Format (20 bytes)
 
 ```
-10 58 e4 27 ee db 3e 59 ae 89 b6 32 ec 52 00 1e 1a 20 ec 8b
+10 xx xx xx xx xx xx xx xx xx xx xx xx 52 00 1e 1a 20 ec 8b
 ```
 
 Extended payload, first byte `10` instead of `03`. May contain additional device state.
@@ -46,7 +46,7 @@ Extended payload, first byte `10` instead of `03`. May contain additional device
 #### Named Format (15 bytes)
 
 ```
-00 9a f2 44 5b 83 4b 4c 9a c7 20 7c 82 40 00
+00 xx xx xx xx xx xx xx xx xx xx xx xx 40 00
 ```
 
 Seen when local name is present. First byte `00` may indicate discoverable mode.

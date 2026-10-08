@@ -13,8 +13,8 @@ sightings, 2026-06-13) advertising a tiny static manufacturer-data frame and a
 
 - The `Scent-<hex>` BLE local-name convention is documented in the **Scent
   Tech app operation manual** (a connected diffuser appears as
-  `Scent-B501F0…` — same shape as the captured `Scent-A199DD` /
-  `Scent-4153FB`).
+  `Scent-B501F0…` — same shape as the captured `Scent-XXXXXX`
+  names).
 - Companion app: **Scent Tech** — iOS App Store id `1662466433` / Android
   `com.yooai.scentlife`, published by **Guangdong Grasse Environmental
   Technology Co.** (Grasse Aroma). Grasse's own guide confirms the diffusers
@@ -37,7 +37,7 @@ screenshot).
 |---|---|
 | Company ID | `0x5353` (ASCII "SS", vanity/forged) |
 | Manufacturer payload | ASCII `"B00000"` (static model marker) |
-| Local name | `^Scent-[0-9A-Fa-f]{6}$` (e.g. `Scent-A199DD`) |
+| Local name | `^Scent-[0-9A-Fa-f]{6}$` (e.g. `Scent-XXXXXX`) |
 | Address type | random |
 
 `mfg = 5353423030303030` → `53 53` ("SS") + `42 30 30 30 30 30` ("B00000").

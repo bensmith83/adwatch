@@ -38,7 +38,7 @@ Extending the list requires:
 
 Public web/GitHub searches for the literal string `"0102000000"` against Telink, Realtek RTL8762, Bluetrum AC6328, Jieli JL5800, Espressif, Beken, and Nordic SDK references did not turn up an authoritative attribution as of 2026-05-20. We therefore set `vendor = "Unknown"` and capture the exact default name so future research can correlate. This follows the same "no invented vendor" convention used by [`Unknown3E1D50CDParser`](../../Sources/Parsers/Unknown3E1D50CDParser.swift) and [`UnknownTSeriesParser`](../../Sources/Parsers/UnknownTSeriesParser.swift).
 
-Adjacent suspicious-default patterns (e.g. all-zero, other 10-digit numerics) are *not* in the curated list — we'd need capture evidence to claim them, and matching purely on shape would over-match real products (a Withings device named `882350440249905`, an iPad named `iPad (106)`, etc).
+Adjacent suspicious-default patterns (e.g. all-zero, other 10-digit numerics) are *not* in the curated list — we'd need capture evidence to claim them, and matching purely on shape would over-match real products (a Withings device named `<15 digits>`, an iPad named `iPad (106)`, etc).
 
 ## Stable Key
 

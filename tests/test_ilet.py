@@ -39,7 +39,7 @@ def _make_registry():
 class TestILetRegistry:
     def test_matches_on_name(self):
         registry = _make_registry()
-        ad = _make_ad(local_name="iLet4-0D28")
+        ad = _make_ad(local_name="iLet4-ABCD")
         assert len(registry.match(ad)) >= 1
 
     def test_matches_on_service_uuid(self):
@@ -56,7 +56,7 @@ class TestILetParser:
     def test_basic_fields(self):
         parser = ILetParser()
         ad = _make_ad(
-            local_name="iLet4-0D28",
+            local_name="iLet4-ABCD",
             service_uuids=[ILET_SERVICE_UUID],
         )
         result = parser.parse(ad)
@@ -67,11 +67,11 @@ class TestILetParser:
 
     def test_extracts_model_and_suffix(self):
         parser = ILetParser()
-        ad = _make_ad(local_name="iLet4-0D28")
+        ad = _make_ad(local_name="iLet4-ABCD")
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "iLet4-0D28"
+        assert result.metadata["device_name"] == "iLet4-ABCD"
         assert result.metadata["hardware_rev"] == "iLet4"
-        assert result.metadata["device_suffix"] == "0D28"
+        assert result.metadata["device_suffix"] == "ABCD"
 
     def test_identity_hash_uses_suffix(self):
         """Suffix is the stable identifier. Two ads with the same suffix but
@@ -79,11 +79,11 @@ class TestILetParser:
         parser = ILetParser()
         r1 = parser.parse(_make_ad(
             mac_address="AA:BB:CC:DD:EE:01",
-            local_name="iLet4-0D28",
+            local_name="iLet4-ABCD",
         ))
         r2 = parser.parse(_make_ad(
             mac_address="AA:BB:CC:DD:EE:02",
-            local_name="iLet4-0D28",
+            local_name="iLet4-ABCD",
         ))
         assert r1.identifier_hash == r2.identifier_hash
 

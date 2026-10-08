@@ -10,7 +10,7 @@ Govee LED light strips and smart bulbs broadcast BLE advertisements for setup an
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `Govee_HXXXX_XXXX` | e.g. `Govee_H618A_1234` |
+| Local name | `Govee_HXXXX_XXXX` | e.g. `Govee_H618A_XXXX` |
 | Local name | `GBK_HXXXX_XXXX` | Alternate branding prefix |
 | Local name | `ihoment_HXXXX_XXXX` | Legacy branding (pre-Govee rebrand) |
 | Manufacturer data | varies | Company IDs include `0x8843`, `0x8802`, and others |
@@ -25,7 +25,7 @@ GBK_H{model}_{device_id}
 ihoment_H{model}_{device_id}
 ```
 
-Examples: `Govee_H618A_7B3F`, `GBK_H6022_A1C0`, `ihoment_H6114_52DE`
+Examples: `Govee_H618A_XXXX`, `GBK_H6022_XXXX`, `ihoment_H6114_XXXX`
 
 The model number (`HXXXX`) identifies the specific LED product. The suffix is a short hex device identifier.
 

@@ -30,7 +30,7 @@ Two frame variants observed in the wild:
 #### Variant A — Short frame (17 bytes)
 
 ```
-a8 06 01 30 30 30 30 30 51 31 35 41 43 31 38 42 36
+a8 06 01 30 30 30 30 30 51 xx xx xx xx xx xx xx xx
 └─CID─┘ │  └────────── ASCII serial (14 bytes) ──┘
         └─ Frame type (0x01 = serial-only)
 ```
@@ -38,7 +38,7 @@ a8 06 01 30 30 30 30 30 51 31 35 41 43 31 38 42 36
 #### Variant B — Long frame (28 bytes)
 
 ```
-a8 06 01 30 30 30 30 30 51 31 35 41 43 31 38 42 36 01 41 1c 32 b7 18 a5 74 b8 54 00
+a8 06 01 30 30 30 30 30 51 xx xx xx xx xx xx xx xx 01 xx xx xx xx xx xx 74 b8 54 00
 └─CID─┘ │  └────────── ASCII serial (14 bytes) ──┘ │  └────── BD addr (6 bytes) ──┘ └── pad/status ──┘
         └─ Frame type (0x01)                       └─ Sub-marker (0x01 = MAC follows)
 ```
@@ -47,7 +47,7 @@ a8 06 01 30 30 30 30 30 51 31 35 41 43 31 38 42 36 01 41 1c 32 b7 18 a5 74 b8 54
 |--------|--------|-------------|
 | 0-1 | 2 | Company ID `0x06A8` (LE) |
 | 2 | 1 | Frame type — `0x01` observed |
-| 3-16 | 14 | ASCII serial number (e.g. `"00000Q15AC18B6"`) |
+| 3-16 | 14 | ASCII serial number (e.g. `"00000QXXXXXXXX"`) |
 | 17 | 1 | Sub-frame marker (long frame only) |
 | 18-23 | 6 | Bluetooth device address (long frame only) |
 | 24-27 | 4 | Status / pad bytes (long frame only) |
@@ -83,16 +83,16 @@ The 14-byte ASCII string follows Midea's SN convention:
 Variant A (short):
   Company ID:        0x06A8 (Midea)
   Local name:        net
-  Manufacturer data: a806013030303030513135414331384236
-  Serial number:     00000Q15AC18B6
+  Manufacturer data: a80601303030303051xxxxxxxxxxxxxxxx
+  Serial number:     00000QXXXXXXXX
   Sightings:         2
 
 Variant B (long):
   Company ID:        0x06A8 (Midea)
   Local name:        net
-  Manufacturer data: a80601303030303051313541433138423601411c32b718a574b85400
-  Serial number:     00000Q15AC18B6
-  Embedded BD addr:  41:1c:32:b7:18:a5
+  Manufacturer data: a80601303030303051xxxxxxxxxxxxxxxx01xxxxxxxxxxxx74b85400
+  Serial number:     00000QXXXXXXXX
+  Embedded BD addr:  xx:xx:xx:xx:xx:xx
   Sightings:         8
 ```
 

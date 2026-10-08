@@ -46,7 +46,7 @@ Meshtastic devices advertise with a fixed prefix and a 4-character hex suffix de
 Meshtastic_{node_id_suffix}
 ```
 
-Examples: `Meshtastic_a1b2`, `Meshtastic_3f4e`, `Meshtastic_00c7`
+Examples: `Meshtastic_xxxx`
 
 The suffix is the last 4 hex characters of the device's node number, providing a short identifier for the node within the mesh.
 
@@ -57,9 +57,9 @@ Meshtastic_a1b2:
   Service UUID: 6ba1b218-15a8-461f-9fa8-5dcae273eafd
   Local name: Meshtastic_a1b2
 
-Meshtastic_3f4e:
+Meshtastic_c3d4:
   Service UUID: 6ba1b218-15a8-461f-9fa8-5dcae273eafd
-  Local name: Meshtastic_3f4e
+  Local name: Meshtastic_c3d4
 ```
 
 ## Identity Hashing

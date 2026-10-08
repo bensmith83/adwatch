@@ -27,7 +27,7 @@ Other variant bytes may appear and will still parse — the parser surfaces the 
 |--------|-------|-------|
 | Company ID | `0x01F4` | UTC Fire and Security (SIG-registered). |
 | Service UUID | `0xFEA7` | UTC Fire and Security member UUID. |
-| Local name | `^\d{8}\.[0-9A-Fa-f]{8}$` | `<serial>.<model/fw suffix>`, e.g. `"49124674.0100108B"`. |
+| Local name | `^\d{8}\.[0-9A-Fa-f]{8}$` | `<serial>.<model/fw suffix>`, e.g. `"XXXXXXXX.0100108B"`. |
 
 The Bluetooth SIG company and member-UUID assignments are listed at the [SIG assigned-numbers index](https://www.bluetooth.com/specifications/assigned-numbers/) and mirrored at the [Bitbucket YAML source](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml).
 
@@ -48,10 +48,10 @@ The full 32-bit serial is `0x02_XX_YY_ZZ`, where `XX YY ZZ` are payload bytes 4.
 
 | Payload bytes 4..6 | Serial (hex) | Serial (decimal) | Observed local name |
 |---|---|---:|---|
-| `ed 95 42` | `0x02ED9542` | 49,124,674 | `49124674.0100108B` |
-| `ed 39 54` | `0x02ED3954` | 49,101,140 | `49101140.0100108B` |
-| `ed 39 b5` | `0x02ED39B5` | 49,101,237 | `49101237.0100108B` |
-| `ed 0a c9` | `0x02ED0AC9` | 49,089,225 | `49089225.00008005` |
+| `ed xx xx` | `0x02EDxxxx` | 49,xxx,xxx | `49xxxxxx.0100108B` |
+| `ed xx xx` | `0x02EDxxxx` | 49,xxx,xxx | `49xxxxxx.0100108B` |
+| `ed xx xx` | `0x02EDxxxx` | 49,xxx,xxx | `49xxxxxx.0100108B` |
+| `ed xx xx` | `0x02EDxxxx` | 49,xxx,xxx | `49xxxxxx.00008005` |
 
 The decimal serial is printed on every lock as a 7- or 8-digit sticker (model/serial label), so this number is what an installer or property manager will recognize when inventorying units.
 

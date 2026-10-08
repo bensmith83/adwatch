@@ -23,7 +23,7 @@ The manufacturer-data payload begins with ASCII `"M#"` (`0x4D 0x23`), so the ful
 ### Manufacturer Data Layout (captured sample, 10 bytes)
 
 ```
-45 43 4D 23 | 1C 34 F1 1C 0E D0
+45 43 4D 23 | xx xx xx xx xx xx
 \____  ___/  \________  ________/
      \/                \/
    "ECM#"          payload tail (6 bytes)
@@ -34,7 +34,7 @@ The manufacturer-data payload begins with ASCII `"M#"` (`0x4D 0x23`), so the ful
 |---|---|---|---|
 | 0..1 | `45 43` | Forged SIG CID | LE `0x4345`; ASCII `"EC"`. |
 | 2..3 | `4D 23` | ASCII `"M#"` | Completes the `"ECM#"` wire prefix. |
-| 4..9 | `1C 34 F1 1C 0E D0` | Payload tail (opaque) | 6 bytes — exactly MAC-address width. Captured as `payload_tail_hex`; serves as the stable-identity anchor (the BLE source MAC rotates on this emitter). |
+| 4..9 | `xx xx xx xx xx xx` | Payload tail (opaque) | 6 bytes — exactly MAC-address width. Captured as `payload_tail_hex`; serves as the stable-identity anchor (the BLE source MAC rotates on this emitter). |
 
 ### Observed sighting (research/adwatch_export 8.json)
 
@@ -45,7 +45,7 @@ The manufacturer-data payload begins with ASCII `"M#"` (`0x4D 0x23`), so the ful
 | Sustained for | ~11 seconds |
 | Sighting count | 7 |
 | RSSI range | -98 to -95 dBm (weak — likely outdoors, parked vehicle, neighbour's garage, etc.) |
-| Manufacturer data hex | `45434d231c34f11c0ed0` |
+| Manufacturer data hex | `45434d23xxxxxxxxxxxx` |
 | Address type | random |
 
 ## Vendor Attribution

@@ -54,7 +54,7 @@ the service UUID and the local name.
 ### Local Name
 
 The advertised local name is the **printed serial number** of the unit —
-typically a 9-digit numeric string such as `412201397`. This is a stable
+typically a 9-digit numeric string such as `NNNNNNNNN`. This is a stable
 per-unit identifier baked into firmware/EEPROM at manufacture.
 
 ```

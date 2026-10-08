@@ -62,10 +62,10 @@ constant 22-byte blob" and parked pending a second VW sighting; the
 all the same shape:
 
 ```
-FE30: 6913754b4f0f309ba8f30e42fcbe7f4f 0001 00000000
-FE30: 76d43f4db6655b9f531b71e6a476e7f5 0001 00000000
-FE30: 161b17e91b7d90ce0096d43fc6b76a85 0001 00000000
-FE31: 4d9c15155a868c97d589aea5c9da525f 0303 00000000
+FE30: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 0001 00000000   (emitter 1)
+FE30: yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy 0001 00000000   (emitter 2)
+FE30: zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz 0001 00000000   (emitter 3)
+FE31: wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww 0303 00000000   (emitter 4)
       └─────────── 16-byte blob ──────┘ tag  trailer
 ```
 

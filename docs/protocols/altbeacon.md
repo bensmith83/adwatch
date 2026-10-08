@@ -49,8 +49,8 @@ parsing logic would handle them.
 Real capture from adwatch research export (CID `0x0118`):
 
 ```
-18 01 BE AC 43 A2 BC 29 C1 11 4A 76 8B 6F 78 AE \
-            CB 14 2E 5A 00 32 17 AF BD 00
+18 01 BE AC xx xx xx xx xx xx xx xx xx xx xx xx \
+            xx xx xx xx xx xx xx xx BD 00
 ```
 
 Decoded:
@@ -58,9 +58,9 @@ Decoded:
 | Field        | Value |
 |--------------|-------|
 | Company ID   | `0x0118` (Radius Networks) |
-| UUID         | `43a2bc29-c111-4a76-8b6f-78aecb142e5a` |
-| Major        | 50 |
-| Minor        | 6063 |
+| UUID         | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
+| Major        | NN |
+| Minor        | NNNN |
 | Reference RSSI | -67 dBm @ 1m |
 | Mfg reserved | `0x00` |
 

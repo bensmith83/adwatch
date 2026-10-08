@@ -26,7 +26,7 @@ later annotated when a labelled specimen turns up.
 | 2–13 | 12 | sensor / telemetry body | Type A and Type B carry *different* 12-byte bodies |
 | 14 (Type A only) | 1 | slow-drift byte (e.g. `e2 → dd`) | Probable RSSI, battery, or temperature reading |
 | 26 | 1 | sub-counter / sequence | Decrements ~2 per Type-A frame |
-| 27–45 | 19 | **stable identity blob** | `11 02 11 02 3F 30 77 43 AC 00 01 3F 00 34 13 43 77 30 3E` — the device's persistent fingerprint |
+| 27–45 | 19 | **stable identity blob** | `11 02 11 02 xx xx xx xx AC 00 01 3F 00 xx xx xx xx xx 3E` — the device's persistent fingerprint (the 4-byte token and 5-byte constant are redacted; same Telink TLV layout as `cid-41a4-tracker.md` / `honor-ble.md`) |
 | 46–55 | 10 | SDK filler | `06 07 08 09 0A 0B 0C 0D 0E 0F` — textbook Nordic / ESP-IDF / Realtek / Cypress sample-firmware leftover |
 
 The short variant (~29-byte payload) truncates everything past the

@@ -10,7 +10,7 @@ Getac BC22 rugged barcode scanners broadcast BLE advertisements for pairing with
 
 | Signal | Value | Notes |
 |--------|-------|-------|
-| Local name | `BC22XXXXXXXXXXXXGetac` pattern | e.g. `BC220267720008Getac`, serial embedded in name |
+| Local name | `BC22XXXXXXXXXXXXGetac` pattern | e.g. `BC22XXXXXXXXXXGetac`, serial embedded in name |
 | Service UUID (advertised) | `00000000-0000-1000-1b7f-430ea194e6cf` | 128-bit custom Getac service |
 | Manufacturer data prefix | `0f00abd0540008` | Company ID `0x000F` (Texas Instruments) |
 
@@ -45,7 +45,7 @@ The TI company ID (`0x000F`) reflects the Bluetooth chipset used, not the device
 BC22{serial_number}Getac
 ```
 
-Examples: `BC220267720008Getac`
+Examples: `BC22XXXXXXXXXXGetac`
 
 The serial number portion is a numeric string embedded between the `BC22` model prefix and the `Getac` brand suffix.
 

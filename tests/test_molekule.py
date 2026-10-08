@@ -46,7 +46,7 @@ class TestMolekuleMatching:
         registry = _make_registry()
         ad = _make_ad(
             service_uuids=["0000fe4f-0000-1000-8000-00805f9b34fb"],
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
         )
         matches = registry.match(ad)
         assert len(matches) == 1
@@ -54,7 +54,7 @@ class TestMolekuleMatching:
     def test_matches_local_name(self):
         """Matches on MOLEKULE_ prefix."""
         registry = _make_registry()
-        ad = _make_ad(local_name="MOLEKULE_0868")
+        ad = _make_ad(local_name="MOLEKULE_1234")
         matches = registry.match(ad)
         assert len(matches) == 1
 
@@ -70,9 +70,9 @@ class TestMolekuleParsing:
     def test_parse_basic(self):
         """Parses Molekule air purifier advertisement."""
         parser = MolekuleParser()
-        mfr = bytes.fromhex("4d48314d2d5348413139303431352d303030383638e4")
+        mfr = bytes.fromhex("4d48314d2d5348413030303030302d303030303031e4")
         ad = _make_ad(
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
             manufacturer_data=mfr,
             service_uuids=["0000fe4f-0000-1000-8000-00805f9b34fb"],
         )
@@ -85,32 +85,32 @@ class TestMolekuleParsing:
     def test_serial_extracted_from_mfr_data(self):
         """Serial info extracted from ASCII manufacturer data."""
         parser = MolekuleParser()
-        # MH1M-SHA190415-000868 + trailing byte
-        mfr = bytes.fromhex("4d48314d2d5348413139303431352d303030383638e4")
+        # MH1M-SHA000000-000001 + trailing byte
+        mfr = bytes.fromhex("4d48314d2d5348413030303030302d303030303031e4")
         ad = _make_ad(
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
             manufacturer_data=mfr,
             service_uuids=["0000fe4f-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)
-        assert result.metadata["serial_info"] == "MH1M-SHA190415-000868"
+        assert result.metadata["serial_info"] == "MH1M-SHA000000-000001"
 
     def test_device_id_from_name(self):
         """Device ID extracted from local name suffix."""
         parser = MolekuleParser()
         ad = _make_ad(
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
             service_uuids=["0000fe4f-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)
-        assert result.metadata["device_id"] == "0868"
+        assert result.metadata["device_id"] == "1234"
 
     def test_identity_hash(self):
         """Identity hash is SHA256('molekule:{mac}')[:16]."""
         mac = "11:22:33:44:55:66"
         parser = MolekuleParser()
         ad = _make_ad(
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
             service_uuids=["0000fe4f-0000-1000-8000-00805f9b34fb"],
             mac_address=mac,
         )
@@ -121,9 +121,9 @@ class TestMolekuleParsing:
     def test_raw_payload_hex(self):
         """raw_payload_hex contains manufacturer data."""
         parser = MolekuleParser()
-        mfr = bytes.fromhex("4d48314d2d5348413139303431352d303030383638e4")
+        mfr = bytes.fromhex("4d48314d2d5348413030303030302d303030303031e4")
         ad = _make_ad(
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
             manufacturer_data=mfr,
         )
         result = parser.parse(ad)
@@ -133,7 +133,7 @@ class TestMolekuleParsing:
         """Parses with name + UUID even without manufacturer data."""
         parser = MolekuleParser()
         ad = _make_ad(
-            local_name="MOLEKULE_0868",
+            local_name="MOLEKULE_1234",
             service_uuids=["0000fe4f-0000-1000-8000-00805f9b34fb"],
         )
         result = parser.parse(ad)

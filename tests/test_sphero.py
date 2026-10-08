@@ -46,7 +46,7 @@ class TestSpheroMatching:
         registry = _make_registry()
         ad = _make_ad(
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
-            local_name="SB-9B13",
+            local_name="SB-1234",
         )
         matches = registry.match(ad)
         assert len(matches) == 1
@@ -54,7 +54,7 @@ class TestSpheroMatching:
     def test_matches_local_name_pattern(self):
         """Matches on SB-XXXX local name."""
         registry = _make_registry()
-        ad = _make_ad(local_name="SB-9B13")
+        ad = _make_ad(local_name="SB-1234")
         matches = registry.match(ad)
         assert len(matches) == 1
 
@@ -78,7 +78,7 @@ class TestSpheroParsing:
         """Parses Sphero bolt with UUID and name."""
         parser = SpherParser()
         ad = _make_ad(
-            local_name="SB-9B13",
+            local_name="SB-1234",
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
         )
         result = parser.parse(ad)
@@ -91,32 +91,32 @@ class TestSpheroParsing:
         """Extracts device ID from local name suffix."""
         parser = SpherParser()
         ad = _make_ad(
-            local_name="SB-A6B9",
+            local_name="SB-DEF0",
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
         )
         result = parser.parse(ad)
-        assert result.metadata["device_id"] == "A6B9"
+        assert result.metadata["device_id"] == "DEF0"
 
     def test_device_name_in_metadata(self):
         """Full device name stored in metadata."""
         parser = SpherParser()
         ad = _make_ad(
-            local_name="SB-2C30",
+            local_name="SB-5678",
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
         )
         result = parser.parse(ad)
-        assert result.metadata["device_name"] == "SB-2C30"
+        assert result.metadata["device_name"] == "SB-5678"
 
     def test_identity_hash_uses_stable_device_id_when_available(self):
         mac = "11:22:33:44:55:66"
         parser = SpherParser()
         ad = _make_ad(
-            local_name="SB-9B13",
+            local_name="SB-1234",
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
             mac_address=mac,
         )
         result = parser.parse(ad)
-        expected = hashlib.sha256("sphero:SB-9B13".encode()).hexdigest()[:16]
+        expected = hashlib.sha256("sphero:SB-1234".encode()).hexdigest()[:16]
         assert result.identifier_hash == expected
 
     def test_identity_hash_falls_back_to_mac(self):
@@ -142,16 +142,16 @@ class TestSpheroParsing:
     def test_name_only_match(self):
         """Matches on SB- name alone without UUID."""
         parser = SpherParser()
-        ad = _make_ad(local_name="SB-BF86")
+        ad = _make_ad(local_name="SB-9ABC")
         result = parser.parse(ad)
         assert result is not None
-        assert result.metadata["device_id"] == "BF86"
+        assert result.metadata["device_id"] == "9ABC"
 
     def test_model_metadata(self):
         """Model is 'BOLT' for SB- prefix devices."""
         parser = SpherParser()
         ad = _make_ad(
-            local_name="SB-9B13",
+            local_name="SB-1234",
             service_uuids=["00010001-574f-4f20-5370-6865726f2121"],
         )
         result = parser.parse(ad)

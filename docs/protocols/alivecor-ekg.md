@@ -4,7 +4,7 @@
 > AliveCor devices by the local name `EKG-*` and the service UUID
 > `021a9004-0382-4aea-bff4-6b3f1c5adfb4`. Both were wrong: that UUID is the
 > Espressif BLE Wi-Fi-provisioning service, and the only `EKG-` unit ever
-> observed (`EKG-99-23-4c`) is a Fellow "EKG" smart kettle in setup mode —
+> observed (`EKG-xx-xx-xx`) is a Fellow "EKG" smart kettle in setup mode —
 > see [fellow.md](fellow.md) and the retracted [medical-ekg.md](medical-ekg.md).
 > The identification below is the corrected, Kardia-only one (from the
 > decompiled Kardia app, apk-ble-hunting `alivecor-kardia_passive.md`).
@@ -62,7 +62,7 @@ identifier = SHA256("<mac>:alivecor_ekg")[:16]         # UUID-only sighting
 ## Observed in DB
 
 No genuine Kardia unit has been captured in the corpus yet; the sightings
-previously listed here (`EKG-99-23-4c`, 959k+) belong to
+previously listed here (`EKG-xx-xx-xx`, 959k+) belong to
 [fellow.md](fellow.md).
 
 ## References

@@ -1,7 +1,7 @@
 """Hunter Industries WVOM (Wireless Valve Output Module) BLE advertisement parser.
 
 WVOM modules for Hunter ICC2/HCC irrigation controllers advertise with a
-custom 128-bit service UUID and local names like "WVOM-147516".
+custom 128-bit service UUID and local names like "WVOM-123456".
 The advertisement is a discovery beacon — no sensor data in the ads.
 """
 

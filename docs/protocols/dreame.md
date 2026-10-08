@@ -7,7 +7,7 @@ Dreame is a Chinese manufacturer of robot vacuums and cleaning appliances. Their
 ## Identifiers
 
 - **Service UUID:** `FD92` (16-bit, Bluetooth SIG assigned to Dreame)
-- **Local name pattern:** `DL-XXXXXXXXXX` (e.g., `DL-1102102677`)
+- **Local name pattern:** `DL-XXXXXXXXXX` (e.g., `DL-##########`)
 - **Device class:** `vacuum`
 
 ## BLE Advertisement Format
@@ -47,9 +47,9 @@ The `DL` prefix likely stands for "Dreame Lidar" (LiDAR-equipped models). The se
 ## Sample Advertisements
 
 ```
-DL-1102102677:
+DL-##########:
   Service UUID: FD92
-  Local name: DL-1102102677
+  Local name: DL-##########
   Manufacturer data: (none)
   Sightings: 204
 ```

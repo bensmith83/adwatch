@@ -27,7 +27,7 @@ silently dropped — `parsed_by` was NULL for all of them.
 
 Two unique records with manufacturer-data prefix `00 4C 02 15 ...`,
 both byte-identical (357 + 158 = 515 sightings of the same physical
-beacon UUID `2686f39c-bada-4658-854a-a62e7e5e8b8d`). All Apple iBeacon
+beacon UUID `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). All Apple iBeacon
 traffic in the export is BE-encoded; no LE-encoded (`4C 00`) Apple
 iBeacons were captured.
 

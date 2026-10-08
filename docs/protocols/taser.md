@@ -42,7 +42,7 @@ shared with Axon body cams, dock stations, fleet hardware, etc.
 ## Serial Number
 
 Read from `0x2A25` Serial Number String. Observed format: a
-single letter prefix + 8 digits, e.g. `X87004693`. The `X` prefix
+single letter prefix + 8 digits, e.g. `X########`. The `X` prefix
 is documented by Axon for civilian-line serials; the digits encode
 the unit's identity. Also available **passively** via the 0x034D
 manufacturer frame below.
@@ -53,8 +53,8 @@ One real-world frame (2 sightings, 2026-08-08, same scene as the
 `axon-fe6b.md` fleet capture):
 
 ```
-4d 03 | 02 | 58 38 37 30 30 34 39 30 39 | 01 02 10 3b 33 00 04 02 01 20 00 00 00 00
- CID    type      "X87004909"                        tail (raw, uninterpreted)
+4d 03 | 02 | 58 xx xx xx xx xx xx xx xx | 01 02 10 3b 33 00 04 02 01 20 00 00 00 00
+ CID    type      "X########"                        tail (raw, uninterpreted)
 ```
 
 * 26 bytes total; frame-type `0x02` at [2].
@@ -71,7 +71,7 @@ One real-world frame (2 sightings, 2026-08-08, same scene as the
 | `0x2A26` Firmware | `04.02.0112030D1438` (Pulse+, 2021 capture) | Opaque; format probably is `<major>.<minor>.<build-blob>`. |
 | `0x2A27` Hardware | `17` | Single integer, board rev. |
 | `0x2A24` Model | `1` | One-digit model, not human-meaningful. |
-| `0x2A23` System ID | `00-25-DF-FF-FE-44-2E-C8` | EUI-64 derived from MAC by the standard FF:FE insertion. Confirms public address; no extra entropy. |
+| `0x2A23` System ID | `00-25-DF-FF-FE-xx-xx-xx` | EUI-64 derived from MAC by the standard FF:FE insertion. Confirms public address; no extra entropy. |
 
 ## GATT Layout (Pulse+)
 
@@ -132,7 +132,7 @@ across all units, so don't key off it.
 
 ## What Requires GATT
 
-- Serial number (`X87004693` etc.)
+- Serial number (`X########` etc.)
 - Firmware / hardware revisions
 - Cartridge state, charge level, discharge events
 - Owner identity bound to the User Data service
@@ -173,4 +173,4 @@ to a passive observer.
 - Noonlight Help Center: "End of Support for TASER Pulse+"
   (Pulse+ unpaired 2024-04-01; app sunset 2024-05-31)
 - Captured GATT trace: nRF Connect, 2021-08-09, Pulse+ s/n
-  `X87004693`, fw `04.02.0112030D1438`, MAC `00:25:DF:44:2E:C8`
+  `X########`, fw `04.02.0112030D1438`, MAC `00:25:DF:xx:xx:xx`

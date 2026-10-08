@@ -19,7 +19,7 @@ from adwatch.plugins.telit_terminal_io import (
 def _make_ad(**kw):
     defaults = {
         "timestamp": "2025-01-01T00:00:00Z",
-        "mac_address": "00:1B:44:11:3A:B7",
+        "mac_address": "00:1B:44:00:00:01",
         "address_type": "public",
         "manufacturer_data": None,
         "service_data": None,

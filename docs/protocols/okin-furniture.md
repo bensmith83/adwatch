@@ -21,7 +21,8 @@ behind GATT service `0000FFE0-…` and requires a paired connection.
 | Local name | `OKIN-BLE<8 decimal digits>` | The only signal in the advertisement |
 
 The 8 digits are a **zero-padded decimal serial**, not hex and not
-a MAC tail. Example: `OKIN-BLE00018255` is unit serial 18,255.
+a MAC tail. Example shape: `OKIN-BLE000#####` is a five-digit unit serial
+zero-padded to eight digits.
 Leading zeros are preserved as a string — don't parse to int and
 re-format.
 
@@ -30,7 +31,7 @@ re-format.
 No payload to decode. The local name is the entire signal.
 
 ```
-OKIN-BLE 0 0 0 1 8 2 5 5
+OKIN-BLE 0 0 0 # # # # #
 └───┬──┘ └──────┬──────┘
     │           └── zero-padded decimal serial (8 chars)
     └── product-line prefix (constant)

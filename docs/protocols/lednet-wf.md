@@ -48,7 +48,7 @@ them to this parser.
 ## Wire Format ("Format A", 29 bytes)
 
 ```
-00 | 5a 52 | 01 | 18 b9 05 c6 0e 3f | 00 33 | 1b | 09 | 01 02 03 04 05 06 07 08 09 a1 a2 a3 a4 a5 a6
+00 | 5a 52 | 01 | 18 b9 05 xx xx xx | 00 33 | 1b | 09 | 01 02 03 04 05 06 07 08 09 a1 a2 a3 a4 a5 a6
 └┬┘ └──┬─┘ └┬┘ └──────────┬───────┘ └──┬─┘ └┬┘ └┬┘ └─────────────────────┬──────────────────────────┘
  │     │    │             │            │    │   │                        └── state / RFU (live state on v5+ FW; filler on v1)
  │     │    │             │            │    │   └── led_version
@@ -100,7 +100,7 @@ surfaced verbatim.
 ## Local Name Decoding
 
 ```
-LEDnetWF 0 0 0 0 3 3 C 6 0 E 3 F
+LEDnetWF 0 0 0 0 3 3 X X X X X X
 └──┬───┘ └─────────┬──────────┘
    │               └── 12-hex device id (WiFi/primary radio identifier)
    └────────────── Product-line prefix
@@ -131,7 +131,7 @@ device rotates.
 ## Captured Examples
 
 ```
-LEDnetWF000033C60E3F   mfr= 00 5a 52 01 18b905c60e3f 0033 1b 09 010203040506070809 a1a2a3a4a5a6
+LEDnetWF000033XXXXXX   mfr= 00 5a 52 01 18b905xxxxxx 0033 1b 09 010203040506070809 a1a2a3a4a5a6
                        → vendor=Zengge   ble_ver=1   product=Ctrl_Mini_RGB_0x33   fw=27
 ```
 

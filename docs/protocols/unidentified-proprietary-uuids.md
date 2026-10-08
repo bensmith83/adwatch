@@ -15,8 +15,8 @@ These parsers exist to **stop classifying these as "unidentified beacons"** and 
 | Co-advertised service | `0x180A` (Device Information) |
 
 Observed local names:
-- `BOSRTPR7-006` → model `PR7`, unit `006` (3-digit, dash-separated; small-fleet shape)
-- `BOSRTDT833059` → model `DT`, serial `833059` (6-digit, no dash; larger-fleet shape)
+- `BOSRTPR7-###` → model `PR7`, unit `###` (3-digit, dash-separated; small-fleet shape)
+- `BOSRTDT######` → model `DT`, serial `######` (6-digit, no dash; larger-fleet shape)
 
 The `BOSRT` prefix is consistent across both — almost certainly a single vendor's SKU root. Expansion candidates considered but unconfirmed: Boston / Bosch / Bose-RealTime / Bostek; nothing matches in FCC, fccid.io, GitHub, or vendor catalogs. The co-advertised `180A` service means a GATT-connect would reveal the manufacturer name string and model number characteristic.
 
@@ -29,7 +29,7 @@ The `BOSRT` prefix is consistent across both — almost certainly a single vendo
 | Service UUID | `11500001-6215-11EE-8C99-0242AC120002` |
 | Local name pattern | `^WBB5BP(\d{7})$` |
 
-Observed local names: `WBB5BP0651247`, `WBB5BP0475839` — `WBB5BP` + 7-digit serial (~1M-unit address space → plausibly a high-volume health/fitness device). The `BP` substring tempts a "blood pressure" reading; the actual product is unconfirmed.
+Observed local names: `WBB5BP#######` (two units) — `WBB5BP` + 7-digit serial (~1M-unit address space → plausibly a high-volume health/fitness device). The `BP` substring tempts a "blood pressure" reading; the actual product is unconfirmed.
 
 ### A curious side-finding: the UUID was minted inside a Docker container
 

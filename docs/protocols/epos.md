@@ -28,10 +28,10 @@ Total: 8 bytes (2 company ID + 6 payload)
 #### Examples
 
 ```
-82 00 60 bf 74 94 16 00
-82 00 e0 c0 74 94 16 00
-82 00 74 bd 74 94 16 00
-82 00 53 bf 74 94 16 00
+82 00 60 bf xx xx 16 00
+82 00 e0 c0 xx xx 16 00
+82 00 74 bd xx xx 16 00
+82 00 53 bf xx xx 16 00
 ```
 
 | Offset | Length | Value | Description |
@@ -39,7 +39,7 @@ Total: 8 bytes (2 company ID + 6 payload)
 | 0-1 | 2 | `82 00` | Company ID 0x0082 (little-endian) |
 | 2 | 1 | varies | Status/state byte (varies between ads) |
 | 3 | 1 | varies | Status/state byte (varies between ads) |
-| 4-5 | 2 | `74 94` | Device identifier (consistent across ads for same device) |
+| 4-5 | 2 | `xx xx` | Device identifier (consistent across ads for same device) |
 | 6-7 | 2 | `16 00` | Protocol/firmware version |
 
 Bytes 2-3 change between advertisements from the same device, suggesting they encode connection state or status. Bytes 4-5 remain constant for the same physical device, acting as a device identifier.

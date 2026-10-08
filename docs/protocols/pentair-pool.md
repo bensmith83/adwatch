@@ -20,7 +20,7 @@ surface and the ScreenLogic TCP/IP protocol on the LAN.
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Service UUID | `0x0D18` | **Vendor-claimed, NOT SIG-assigned.** Used across the Pentair BLE lineup. |
-| Local name | `<Product> <serial>` | e.g. `EasyTouch 352015364`, `IntelliCenter 123456789` |
+| Local name | `<Product> <serial>` | e.g. `EasyTouch #########`, `IntelliCenter 123456789` |
 
 The 16-bit UUID `0x0D18` does not appear in any SIG-allocated UUID
 yaml (member_uuids or service_uuids). Pentair claims it as a
@@ -30,7 +30,7 @@ single anchor for Pentair-class detection.
 ## Local Name Decoding
 
 ```
-"EasyTouch 352015364"
+"EasyTouch #########"
  └────┬───┘ └────┬────┘
       │          └── 6–12 digit unit serial
       └── product-line prefix

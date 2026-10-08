@@ -19,7 +19,7 @@ This parser ignores the bogus 2-byte "company ID" prefix (we observe different v
 ### Manufacturer Data Layout (9 bytes, opaque)
 
 ```
-Bytes 0..8: 9-byte random-looking blob, e.g. "58fcc6f286d3845752" or "944bf84b6219b15752"
+Bytes 0..8: 9-byte random-looking blob, e.g. "58fcxxxxxxxxxx5752" or "944byyyyyyyyyy5752" (bytes 2..6 redacted)
             - Bytes 0..1: looks like a CID but is just the first two payload bytes;
               varies arbitrarily across units.
             - Bytes 7..8 ("57 52"): observed identical across both sampled units

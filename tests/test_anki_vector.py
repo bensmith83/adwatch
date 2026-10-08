@@ -35,7 +35,7 @@ class TestAnkiVectorMatching:
     def test_match_by_name(self):
         registry = ParserRegistry()
         _register(registry)
-        ad = _make_ad(local_name="Vector-E4X2")
+        ad = _make_ad(local_name="Vector-A0B0")
         assert len(registry.match(ad)) == 1
 
     def test_no_match_unrelated_name(self):
@@ -47,10 +47,10 @@ class TestAnkiVectorMatching:
 
 class TestAnkiVectorParsing:
     def test_extracts_esn_suffix_from_name(self):
-        ad = _make_ad(service_uuids=[VECTOR_SERVICE_UUID], local_name="Vector-E4X2")
+        ad = _make_ad(service_uuids=[VECTOR_SERVICE_UUID], local_name="Vector-A0B0")
         result = AnkiVectorParser().parse(ad)
         assert result is not None
-        assert result.metadata["esn_suffix"] == "E4X2"
+        assert result.metadata["esn_suffix"] == "A0B0"
         assert result.metadata["pairing_mode"] is True
 
     def test_uuid_only_no_esn_no_pairing_state(self):
@@ -77,7 +77,7 @@ class TestAnkiVectorParsing:
         assert AnkiVectorParser().parse(ad) is None
 
     def test_basics(self):
-        ad = _make_ad(service_uuids=[VECTOR_SERVICE_UUID], local_name="Vector-E4X2")
+        ad = _make_ad(service_uuids=[VECTOR_SERVICE_UUID], local_name="Vector-A0B0")
         result = AnkiVectorParser().parse(ad)
         assert result.parser_name == "anki_vector"
         assert result.beacon_type == "anki_vector"

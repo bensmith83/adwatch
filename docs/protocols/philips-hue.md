@@ -9,7 +9,7 @@ All Hue BLE traffic surfaces under the Bluetooth SIG 16-bit member UUID **`0xFE0
 ## Identifiers
 
 - **Service UUID:** `FE0F` (16-bit, SIG-allocated to Signify Netherlands B.V.)
-- **Local name pattern:** user-assigned room/zone label, often with a trailing space (e.g. `"Sala "`, `"Entrance "`, `"Living Room "`)
+- **Local name pattern:** user-assigned room/zone label, often with a trailing space (e.g. `"<room label> "` — a room or zone name such as `"Living Room "`)
 - **Device class:** `lighting`
 
 ## BLE Advertisement Format
@@ -67,14 +67,14 @@ Byte map:
 ## Sample Advertisements
 
 ```
-"Sala " — 6 sightings
+"<room label A> " — 6 sightings
   Service UUID: FE0F
   Service data: { "FE0F": "0210ffff02" }
   Manufacturer data: (none)
 ```
 
 ```
-"Entrance " — 5 sightings
+"<room label B> " — 5 sightings
   Service UUID: FE0F
   Service data: { "FE0F": "0210ffff02" }
   Manufacturer data: (none)

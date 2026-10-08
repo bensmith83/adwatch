@@ -21,7 +21,7 @@ prefix range).
 |--------|-------|-------|
 | Service UUID | `0x0AF0` | Unregistered; shared across re-brands — **the routing key since 2026-08-30** |
 | Company ID | Vendor-varying (`0x1EAB`, `0x1F33`, `0x1DEC`, `0x1E25`, `0x1ECE`, `0x1EED`, ...) | Little-endian in mfg data; per-OEM, so never a sufficient routing key |
-| Embedded device ID | 6 bytes | MAC-shaped, stable per unit; every unit seen so far starts `f4` except one `50 d8 2b …` |
+| Embedded device ID | 6 bytes | MAC-shaped, stable per unit; every unit seen so far starts `f4` except one |
 | Pivot marker | `0x02 0x01` | At offset 8–9 of mfg payload |
 
 ### Third-OEM company IDs (2026-08-30 sweep)
@@ -33,11 +33,11 @@ routing was CID-only:
 
 | CID | Frame (mfg data) | First seen | Sightings |
 |-----|------------------|------------|-----------|
-| `0x1ECE` | `ce 1e 50 d8 2b 78 dd ba  02 01 01 01 01 01` | 2026-08-02 | 2 |
-| `0x1EED` | `ed 1e f4 a5 ed 78 47 4f  02 01 0a 01 01 01` | 2026-08-23 | 2 |
-| `0x1DEC` | `ec 1d f4 8a 43 d9 42 dc  02 01 08 01 01 01` | 2026-08-23 | 7 |
-| `0x1E25` | `25 1e f4 6b f9 b9 5b a6  02 01 05 01 01 01` | 2026-08-28 | 22 |
-| `0x1DEC` | `ec 1d f4 d1 87 e9 c3 cd  02 01 08 01 01 01` | 2026-08-29 | 2 |
+| `0x1ECE` | `ce 1e xx xx xx xx xx xx  02 01 01 01 01 01` | 2026-08-02 | 2 |
+| `0x1EED` | `ed 1e f4 xx xx xx xx xx  02 01 0a 01 01 01` | 2026-08-23 | 2 |
+| `0x1DEC` | `ec 1d f4 xx xx xx xx xx  02 01 08 01 01 01` | 2026-08-23 | 7 |
+| `0x1E25` | `25 1e f4 xx xx xx xx xx  02 01 05 01 01 01` | 2026-08-28 | 22 |
+| `0x1DEC` | `ec 1d f4 xx xx xx xx xx  02 01 08 01 01 01` | 2026-08-29 | 2 |
 
 None of the five CIDs is SIG-assigned. The NearSight parser now routes on
 the `0x0AF0` service UUID as well as the two original CIDs (bead
@@ -46,9 +46,9 @@ actual discriminator.
 
 **Not this family — same UUID, different pivot.** A second product line
 advertises `0x0AF0` with a `03 01` pivot and a 16-byte frame:
-`7b 1f 09 d6 c4 06 be 82  03 01 08 08 00 00 00 62` (named `DR05`, a
-dashcam — CID `0x1F7B`), `75 1f 25 2e c0 e7 21 e4  03 01 07 08 00 00 00 62`,
-`4c 1f 14 58 e3 74 58 cb  03 01 11 08 00 00 00 62`. The pivot check rejects
+`7b 1f xx xx xx xx xx xx  03 01 08 08 00 00 00 62` (named `DR05`, a
+dashcam — CID `0x1F7B`), `75 1f xx xx xx xx xx xx  03 01 07 08 00 00 00 62`,
+`4c 1f xx xx xx xx xx xx  03 01 11 08 00 00 00 62`. The pivot check rejects
 these, so the service-UUID route does not over-claim them; they are on the
 NearSight watchlist (DR05 dashcam, CID 0x1F7B) as a separate family.
 
@@ -59,7 +59,7 @@ Observed 14-byte payload (len may vary slightly by firmware):
 ```
 Offset   Bytes                  Meaning
   0-1    ab 1e  (or 33 1f)      Company ID (little-endian)
-  2-7    f4 06 c8 8a 71 36      Embedded device ID (MAC-shaped)
+  2-7    xx xx xx xx xx xx      Embedded device ID (MAC-shaped)
   8-9    02 01                  Fixed pivot / protocol magic
  10      01 | 07 | ...          State / counter byte (varies)
  11-13   01 01 01               Padding (observed constant)
@@ -67,8 +67,8 @@ Offset   Bytes                  Meaning
 
 ### Concrete Samples
 
-- `BIGGERFIVE Brave 2`: `ab 1e f4 06 c8 8a 71 36  02 01 07 01 01 01`
-- `IDW20`            : `33 1f f4 3a a2 2d ea 34  02 01 01 01 01 01`
+- `BIGGERFIVE Brave 2`: `ab 1e f4 xx xx xx xx xx  02 01 07 01 01 01`
+- `IDW20`            : `33 1f f4 xx xx xx xx xx  02 01 01 01 01 01`
 
 ## What We Can Parse
 

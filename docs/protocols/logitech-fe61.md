@@ -66,11 +66,11 @@ form is captured.
 ## Captured Examples
 
 ```
-mfg = 03 00 00 00 30 63 00 00 02 28 c7 09 cb cb b7
-            12 00 00 00 30 63 00 00 02 28 c7 09 cb cb b7
-            c0 28 8d 5d 06 3a 12                          (64 sightings)
+mfg = 03 00 xx xx xx xx xx xx xx xx xx xx xx xx xx
+            12 00 xx xx xx xx xx xx xx xx xx xx xx xx xx
+            c0 28 8d xx xx xx 12                          (64 sightings)
 
-mfg = 03 00 00 00 30 63 00 00 02 28 c7 09 cb cb b7 12     (4 sightings)
+mfg = 03 00 xx xx xx xx xx xx xx xx xx xx xx xx xx 12     (4 sightings)
 ```
 
 Captured 2026-05-31 in `research/adwatch_export 14.json` — single

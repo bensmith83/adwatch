@@ -14,7 +14,7 @@ equipment is shipped under unbranded Chinese ODM labels (WUQI-microchip-
 based bikes, generic foot pods, off-brand treadmills) where the
 advertisement carries no manufacturer data, no service data, no vendor-
 specific UUID — only the SIG profile UUID and a serial-style localName.
-Attempting to identify the OEM from a name like `WQ-88X102810034`
+Attempting to identify the OEM from a name like `WQ-88XNNNNNNNNN`
 without further capture is unreliable, but classifying the device as a
 cycle/treadmill/power-meter category is still actionable.
 
@@ -40,14 +40,14 @@ When the localName follows the canonical "industrial OEM" pattern
 serial>`, the parser decomposes it into:
 
 ```
-WQ-88X102810034
+WQ-88XNNNNNNNNN
 └┬┘  └┬┘└────┬───┘
 brand model  serial
 ```
 
 | Localname           | brand_prefix | model_code | serial      |
 |---------------------|--------------|------------|-------------|
-| `WQ-88X102810034`   | `WQ`         | `88X`      | `102810034` |
+| `WQ-88XNNNNNNNNN`   | `WQ`         | `88X`      | `NNNNNNNNN` |
 | `TM-A20012345678`   | `TM`         | `A20`      | `012345678` |
 | `Treadmill-1234`    | (none — fails strict pattern) | — | — |
 
@@ -60,7 +60,7 @@ wild:
 
 | Prefix | Notes |
 |--------|-------|
-| `WQ-`  | Most common — generic CSC bike sensors, no other branding. Captured 516 sightings × 4 exports on `WQ-88X102810034`. |
+| `WQ-`  | Most common — generic CSC bike sensors, no other branding. Captured 516 sightings × 4 exports on `WQ-88XNNNNNNNNN`. |
 | `TM-`  | Treadmill-class devices on the same SoC family. |
 
 Add new prefixes here only after a recurring cross-export capture is
@@ -123,5 +123,5 @@ Any one of those usually pins the SKU.
 - [Bluetooth SIG — Fitness Machine Service 1.0](https://www.bluetooth.com/specifications/specs/fitness-machine-service-1-0/)
 - [Bluetooth SIG — Running Speed and Cadence Service 1.0](https://www.bluetooth.com/specifications/specs/running-speed-and-cadence-service-1-0/)
 - [Bluetooth SIG — Cycling Power Service 1.0](https://www.bluetooth.com/specifications/specs/cycling-power-service-1-0/)
-- Captured device `WQ-88X102810034` in `research/adwatch_export 14.json`
+- Captured device `WQ-88XNNNNNNNNN` in `research/adwatch_export 14.json`
   (129 sightings, 1 device, CSC profile only).

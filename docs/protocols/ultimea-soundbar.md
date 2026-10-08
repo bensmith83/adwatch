@@ -40,7 +40,7 @@ named capture.
 | Signal | Value | Notes |
 |--------|-------|-------|
 | Company ID | `0x0D8C` (LE wire `8c 0d`) | SIG-assigned to *Ultimea Technology (Shenzhen) Limited* |
-| Serial string | 11 ASCII bytes at [8..19) | `<model code 5><region 2><unit 4>`, e.g. `U2601US10BC` |
+| Serial string | 11 ASCII bytes at [8..19) | `<model code 5><region 2><unit 4>`, e.g. `U2601USXXXX` |
 | Address-shaped field | 6 bytes at [2..8) | Constant per unit; per-model prefix `d3:b1:ee` (U2601) / `f8:1b:20` (U2502). Not an IEEE OUI — reported raw |
 | Service UUIDs | `0x260A` | Vanity 16-bit UUID co-advertised on every record; corroboration only |
 | Address type | random, rotates between days | Same unit seen under two CoreBluetooth identifiers on 08-20 and 08-22 |
@@ -51,8 +51,8 @@ named capture.
 
 ```
 offset  0  1 | 2  3  4  5  6  7  | 8  9  10 11 12 13 14 15 16 17 18 | 19
-        8c 0d | d3 b1 ee f5 61 6f | 55 32 36 30 31 55 53 31 30 42 43 | 01
-        CID     address-shaped id   "U2601US10BC"                      trailer
+        8c 0d | d3 b1 ee xx xx xx | 55 32 36 30 31 55 53 xx xx xx xx | 01
+        CID     address-shaped id   "U2601USXXXX"                      trailer
 ```
 
 | Bytes | Meaning | Evidence |
@@ -61,7 +61,7 @@ offset  0  1 | 2  3  4  5  6  7  | 8  9  10 11 12 13 14 15 16 17 18 | 19
 | 2–7 | 6-byte per-unit id, address-shaped | Constant per unit across days; `d3:b1:ee:*` on all three U2601 units, `f8:1b:20:*` on the U2502. `d3` has the locally-administered bit set and neither prefix is IEEE-registered, so it is **not** called a factory MAC. Most plausibly the Classic BD_ADDR of the A2DP radio — not claimed |
 | 8–12 | model code, `U` + 4 digits | `U2601` ×3 units, `U2502` ×1 |
 | 13–14 | region code, 2 uppercase letters | `US` on all four (US-market units) |
-| 15–18 | per-unit suffix, 4 alphanumerics | `1164`, `12A7`, `1152`, `10BC` — hex-looking; semantics not claimed |
+| 15–18 | per-unit suffix, 4 alphanumerics | four distinct values across the four units — hex-looking; semantics not claimed |
 | 19 | trailer | `0x01` on 9/9 records; reported raw, not gated |
 
 ### Parser gate

@@ -28,7 +28,7 @@ Sony audio devices (speakers, headphones, earbuds) broadcast BLE advertisements 
 | 3 | 1 | Unknown | `0x00` |
 | 4-5 | 2 | Device type | `0x0101` — speaker? |
 | 6-7 | 2 | Model ID | `0x1004` — SRS-XB33? |
-| 8-11 | 4 | Device address | `15afc3d6` |
+| 8-11 | 4 | Device address | `xxxxxxxx` (per unit) |
 | 12-13 | 2 | Status | `0206` |
 | 14-15 | 2 | State | `c200` |
 | 16-19 | 4 | Padding | `00000000` |
@@ -59,7 +59,7 @@ Variable length (6-13 bytes):
 
 ```
 LE_SRS-XB33 (manufacturer data):
-  2d0104000101100415afc3d60206c20000000000
+  2d01040001011004xxxxxxxx0206c20000000000
 
 LE_SRS-XB33 (service data on fe2c):
   0090d435499156ec2890ac110e

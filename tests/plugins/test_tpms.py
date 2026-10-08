@@ -220,7 +220,7 @@ class TestTPMSDeclinesGovee:
         assert TPMSParser().parse(raw) is None
 
     def test_govee_name_declined(self):
-        raw = make_raw(manufacturer_data=bytes.fromhex("0100010103d5fd5f"), local_name="GVH5177_B1E1")
+        raw = make_raw(manufacturer_data=bytes.fromhex("0100010103d5fd5f"), local_name="GVH5177_1234")
         assert TPMSParser().parse(raw) is None
 
     def test_plain_tpms_frame_still_parses(self):

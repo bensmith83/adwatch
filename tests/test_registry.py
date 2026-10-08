@@ -182,7 +182,7 @@ class TestMatchByLocalNamePattern:
         class NameParser(_BaseStub):
             pass
 
-        ad = _make_ad(local_name="TP357 (2B54)")
+        ad = _make_ad(local_name="TP357 (AB12)")
         matches = registry.match(ad)
 
         assert len(matches) == 1
@@ -294,7 +294,7 @@ class TestMultipleCriteriaOrLogic:
         # Both criteria match — should still return parser only once
         ad = _make_ad(
             manufacturer_data=b"\xC2\x00\x01\x02",
-            local_name="TP357 (2B54)",
+            local_name="TP357 (AB12)",
         )
         matches = registry.match(ad)
 

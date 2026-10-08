@@ -71,7 +71,7 @@ observations rather than spec:
 
 - **Identification is no longer name-gated.** The app's parser previously
   required the local name to start with `"Thingy"`. A unit in the corpus had
-  been renamed to `"Bedroom "` yet was still unambiguously a Thingy:52 via
+  been renamed to a room name (`"<room name>"`) yet was still unambiguously a Thingy:52 via
   the Configuration Service UUID `EF680100-9B35-4933-9B10-52FFA9740042` in
   its primary advertisement. The parser now accepts *either* signal — the
   `"Thingy"` local-name prefix **or** the Configuration Service UUID — so

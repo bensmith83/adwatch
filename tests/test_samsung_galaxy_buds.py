@@ -59,7 +59,7 @@ class TestSamsungGalaxyBudsParser:
     def test_matches_local_name_galaxy_buds(self):
         """Matches local name containing 'Galaxy Buds'."""
         registry = _make_registry()
-        ad = _make_ad(local_name="Galaxy Buds3 Pro (E757) LE")
+        ad = _make_ad(local_name="Galaxy Buds3 Pro (ABCD) LE")
         matches = registry.match(ad)
         assert len(matches) == 1
         result = matches[0].parse(ad)
@@ -104,7 +104,7 @@ class TestSamsungGalaxyBudsParser:
     def test_extracts_model_from_local_name(self):
         """Extracts model like 'Galaxy Buds3 Pro' from local name."""
         registry = _make_registry()
-        ad = _make_ad(local_name="Galaxy Buds3 Pro (E757) LE")
+        ad = _make_ad(local_name="Galaxy Buds3 Pro (ABCD) LE")
         result = registry.match(ad)[0].parse(ad)
         assert result is not None
         assert result.metadata["model"] == "Galaxy Buds3 Pro"
@@ -171,7 +171,7 @@ class TestSamsungGalaxyBudsParser:
     def test_raw_payload_hex_empty_when_no_service_data(self):
         """raw_payload_hex is empty string when no fd69 service data."""
         registry = _make_registry()
-        ad = _make_ad(local_name="Galaxy Buds3 Pro (E757) LE")
+        ad = _make_ad(local_name="Galaxy Buds3 Pro (ABCD) LE")
         result = registry.match(ad)[0].parse(ad)
         assert result.raw_payload_hex == ""
 

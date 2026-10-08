@@ -32,8 +32,8 @@ corroborate the company ID independently of each other.
 | Device class | `vehicle` | Agricultural / turf equipment is treated as a vehicle |
 
 `0xFE25` (John Deere's SIG member UUID) was seen in the same corpus as a
-separate 13-byte service-data frame (`06 20 8d 82 55 58 64 39 48 00 d0 08
-00`, one sighting at −100 dBm). It is **not** claimed by this parser —
+separate 13-byte service-data frame (`06 20 8d 82 xx xx xx xx xx 00 d0 08
+00` — bytes 4–8 are printable ASCII, possibly a unit token, so masked; one sighting at −100 dBm). It is **not** claimed by this parser —
 different device, unknown structure; recorded as a watch item.
 
 ## Ad Format

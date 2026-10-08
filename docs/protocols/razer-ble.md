@@ -66,17 +66,17 @@ The manufacturer data format is proprietary and not publicly documented. The `8e
 Razer Leviathan V3:
   Service UUID: fd65
   Local name: Razer Lev3
-  Manufacturer data: 8e06 a3b7c4e8f21d6a90
+  Manufacturer data: 8e06 xxxxxxxxxxxxxxxx
 
 Razer Barracuda:
   Service UUID: fd65
   Local name: Razer Barracuda
-  Manufacturer data: 8e06 f8d2a1b6c94e7320
+  Manufacturer data: 8e06 xxxxxxxxxxxxxxxx
 
 Razer Kishi:
   Service UUID: fd65
   Local name: Razer Kishi
-  Manufacturer data: 8e06 c7e5f3a2d8b14960
+  Manufacturer data: 8e06 xxxxxxxxxxxxxxxx
 ```
 
 ## Identity Hashing

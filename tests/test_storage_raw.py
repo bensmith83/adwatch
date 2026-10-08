@@ -401,11 +401,11 @@ class TestRawStorageSave:
 
     @pytest.mark.asyncio
     async def test_save_with_local_name(self, raw_storage, db):
-        ad = _make_ad(local_name="TP357 (2B54)")
+        ad = _make_ad(local_name="TP357 (AB12)")
         await raw_storage.save(ad)
 
         row = await db.fetchone("SELECT local_name FROM raw_advertisements")
-        assert row["local_name"] == "TP357 (2B54)"
+        assert row["local_name"] == "TP357 (AB12)"
 
     @pytest.mark.asyncio
     async def test_save_with_tx_power(self, raw_storage, db):
