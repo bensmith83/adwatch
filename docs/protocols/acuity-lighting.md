@@ -12,7 +12,7 @@ company-identifier registry).
 The observed frames are nameless, service-less 18-byte manufacturer-data
 broadcasts — a presence/config beacon from installed lighting-control
 hardware. This is a **HIGH-confidence vendor attribution** (SIG-registered
-CID + a consistent frame skeleton across two capture months) but
+CID + a consistent frame skeleton across all five family records) but
 **identification-only**: no named capture and no public byte-format doc
 exist, so the varying bytes are surfaced raw with no semantic claim.
 
@@ -111,7 +111,10 @@ vendor's tools.
 
 - **Attribution: HIGH** — CID `0x0346` is Acuity Brands Lighting's own
   SIG slot (not a vanity/foreign value), and the frame skeleton is
-  consistent across two capture days two months apart.
+  consistent across all five `06 2e 00` records (33 sightings). All five
+  are from one capture day, 2026-10-03; the only 2026-08-11 record is the
+  unclaimed 10-byte sibling, so the skeleton has not yet been seen on a
+  second day.
 - **Field semantics: LOW (surfaced raw)** — no named capture, no public
   format documentation; the `state_*` / `status_region` fields are
   reported as hex without interpretation.
@@ -120,4 +123,4 @@ vendor's tools.
 
 - [Bluetooth SIG company_identifiers.yaml](https://bitbucket.org/bluetooth-SIG/public/raw/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — CID `0x0346` = Acuity Brands Lighting, Inc.
 - [Acuity Brands](https://www.acuitybrands.com/) — nLight / SensorSwitch / Lithonia lighting controls
-- Captures: merged telemetry corpus 2026-08-11 + 2026-10-03 (6 records / 36 sightings) — see `research/sweep-2026-10-08-candidates.md` in the app repo.
+- Captures: merged telemetry corpus 2026-08-11 + 2026-10-03 (6 records / 36 sightings; the five claimed records are all 2026-10-03) — see `research/sweep-2026-10-08-candidates.md` in the app repo.
