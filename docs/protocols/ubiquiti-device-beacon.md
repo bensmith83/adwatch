@@ -21,12 +21,12 @@ three UUIDs is the corroboration a single prefix would lack, so the vendor
 is certain. Which product line each UUID belongs to is **not** known — the
 frames carry nothing that names one — and the parser does not guess.
 
-A fourth data point turned up while checking OUIs: the "FA-FLEM" sensor
-documented from the 2026-07-06 sweep (custom UUID
+A fourth data point turned up while checking OUIs: the owner-labelled sensor
+(`fa-flem-sensor.md`) documented from the 2026-07-06 sweep (custom UUID
 `35CD221C-02B4-4D1F-9B54-6089C861AD62`, 0x252A MAC on `58:D6:1F`) sits on a
 Ubiquiti block too — that block was never looked up. Its local name
-`FA-FLEM-BMWTEMP-BR01` is therefore most plausibly an installer-chosen
-device name on a Ubiquiti product, not a BMW part. Re-attributing that
+`<owner-chosen label>` is therefore most plausibly an installer-chosen
+device name on a Ubiquiti product, not a vehicle-maker part. Re-attributing that
 parser is filed as follow-up; this parser hands its UUID off untouched.
 
 ## Supported Models
@@ -82,7 +82,7 @@ advertisement when the value is 6 bytes **and** either
   address, no stable key, `mac_unset = true`).
 
 Frames carrying the UniFi-AP adoption UUID are handed off to
-`ubiquiti_unifi`; frames carrying the FA-FLEM vendor UUID are handed off to
+`ubiquiti_unifi`; frames carrying that sensor's vendor UUID are handed off to
 `fa_flem_sensor` pending its re-attribution. Any other OUI stays
 unclaimed. It reports `vendor` (`Ubiquiti Networks`), `product_family`
 (`unknown`), `service_uuid` (whichever 128-bit UUID is advertised),
@@ -108,7 +108,7 @@ capture that produced this doc.
 ## References
 
 - NearSight `research/sweep-2026-08-28-candidates.md` — the nine-unit
-  capture, OUI resolution and the FA-FLEM finding
+  capture, OUI resolution and the owner-labelled-sensor finding
 - NearSight `research/export17-candidates.md` — the July `B4BD9342-…` unit
 - `docs/protocols/ubiquiti-unifi.md` — the access-point frame this
   convention was first seen on

@@ -52,9 +52,8 @@ GR-AC_<MID>_<HW>_<MAC4>(_SC)?
 
 Observed concrete names:
 
-- `GR-AC_10001_09_79cb_SC`
-- `GR-AC_10001_09_929c_SC`
-- `GR-AC_10011_02_d2d3` (from Home Assistant issue #67536 — un-provisioned variant)
+- `GR-AC_10001_09_xxxx_SC`
+- `GR-AC_10011_02_xxxx` (from Home Assistant issue #67536 — un-provisioned variant)
 
 ### Manufacturer-Data Layout (17 bytes)
 
@@ -87,33 +86,41 @@ AND mfg[11..16] == 00 00 00 00 00 00
 The 4-byte magic at offset 4..7 plus the 6-zero pad at offset 11..16
 makes the false-positive rate near zero for the structural test.
 
-### Second frame shape: nameless CID 0x0D23 (v1.1, 2026-10-05 sweep)
+A third route, the CID 0x0D23 frame, has its own gate (next section).
 
-The same GR-AC units also emit a **nameless** 17-byte manufacturer frame
-under **Gree's own SIG company ID 0x0D23** (Gree Electric Appliances) —
-21 records / 48 sightings across nine capture days (2026-06-14 →
-2026-10-01). The link to this parser's units: three of the
-`c0 39 37`-subtype records were parsed on-device by `gree_ac`; the merged
-telemetry corpus strips local names, and the CID-0x005D structural test
-above cannot match a `23 0d …` frame, so those on-device ads carried
-`GR-AC_*` names.
+### Second frame shape: CID 0x0D23 (v1.1, 2026-10-05 sweep)
+
+The same GR-AC units also emit a 17-byte manufacturer frame under
+**Gree's own SIG company ID 0x0D23** (Gree Electric Appliances) —
+22 records / 49 sightings / 13 distinct ids at bytes [8..11),
+2026-06-14 → 2026-10-09; no id was seen on two capture days. The link
+to this parser's units: one upload carries the name with the frame
+(`GR-AC_10001_09_c52a_SC` + `230d000001c0393783c52a000000000000`), and
+two more `c0 39 37`-subtype records were parsed on-device by `gree_ac`
+v1.0, which could only have matched the name (its CID-0x005D structural
+test cannot match a `23 0d …` frame). The frame is not nameless: named
+units send it too.
 
 ```
 [0..2)   23 0d        CID 0x0D23 LE (Gree Electric Appliances)
-[2..4)   00 00        constant
+[2..4)   00 00        constant (no pair-flag word in this shape)
 [4]      01           constant
-[5..8)   subtype      00 00 00 (14 records) / c0 39 37 (7 records)
-[8..11)  unit id      3 bytes, per unit (recurs across capture days)
+[5..8)   subtype      00 00 00 / c0 39 37 (14 / 7 of the sweep's 21 records)
+[8]      XX           varies, as in the 0x005D shape
+[9..11)  mac4         equals the name's MAC4 token; same offset as 0x005D
 [11..17) 00 ×6        constant padding
 ```
 
 Real frames: `230d00000100000019e8c7000000000000` (subtype `00 00 00`),
-`230d000001c0393783c52a000000000000` (subtype `c0 39 37`, the
-on-device-named shape).
+`230d000001c0393783c52a000000000000` (subtype `c0 39 37`; bytes [9..11)
+`c5 2a` match the `c52a` token of the name it was sent with).
 
 Gate: CID + 17 bytes + `00 00 01` header + observed subtype + zero pad.
-Identity is namespaced away from `mac4` (the shapes never co-claim):
-`stable_key = gree_ac:0d23:<unit id>`. The subtype's meaning is unknown
+The frame is one more `mac4` source, not a separate identity: it keys
+`gree_ac:<mac4>` like every other Gree frame, the name's `mac4` winning
+and the name's fields filling in when a name is present. The parser
+also reports `frame_shape` (`cid_0d23`) and `subtype_hex`; `paired` is
+not read from this shape. The subtype's meaning is unknown
 (both shapes come from the same product family; possibly a
 paired/unpaired or firmware split).
 
@@ -125,8 +132,10 @@ paired/unpaired or firmware split).
 | Product | hard-coded | `Air Conditioner (EWPE module)` |
 | `model_id` | localName | when name present; `10001`, `10011`, … |
 | `hw_rev` | localName | when name present; `02`, `09`, … |
-| `mac4` | localName OR mfg[9..10] | stable per-module identifier |
-| `paired` | localName `_SC` OR mfg state | `true` / `false` |
+| `mac4` | localName OR mfg[9..10] (either CID) | stable per-module identifier |
+| `paired` | localName `_SC` OR 0x005D mfg state | `true` / `false`; not read from the 0x0D23 frame |
+| `frame_shape` | CID 0x0D23 frame | `cid_0d23` |
+| `subtype_hex` | CID 0x0D23 mfg[5..8) | `000000` or `c03937` |
 
 ### What We Cannot Parse from the Advertisement
 
@@ -144,8 +153,9 @@ and the openHAB `gree` binding).
 
 `mac4` is the stable per-unit identifier — it's the last 2 octets of
 the WiFi/BLE module's MAC and persists across BD_ADDR rotation. The
-parser collapses named + nameless sibling frames from the same unit
-on the same key:
+parser collapses named + nameless sibling frames from the same unit,
+under either CID, on the same key (the name's `mac4` wins when both
+are present):
 
 ```
 stable_key = gree_ac:<mac4>

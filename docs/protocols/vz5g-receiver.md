@@ -2,7 +2,7 @@
 
 ## Overview
 
-Eight distinct units (12 records, 50 sightings) captured 2026-08-26,
+Seven distinct units (12 records, 50 sightings) captured 2026-08-26,
 2026-09-27 and 2026-10-02 broadcast a service-data frame under `0x2A37`
 whose entire 20-byte payload is ASCII: the self-label `VZ5G_RECEIVER_`
 followed by a 6-digit per-unit serial. No local name, no manufacturer
@@ -16,7 +16,7 @@ never match a 20-byte ASCII label.
 
 The first unit was logged by the 2026-08-28 sweep (one record,
 `VZ5G_RECEIVER_369460`) and deferred at n=1; the 2026-10-05 nightly sweep
-found seven more units and shipped the parser (`VZ5GReceiverParser`,
+found six more units and shipped the parser (`VZ5GReceiverParser`,
 `vz5g_receiver`).
 
 | Unit serial | Capture days | Sightings | RSSI |
