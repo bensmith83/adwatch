@@ -22,18 +22,24 @@ specific product identity.
 
 ## Observed Behavior
 
-Captured across 5 adwatch exports, 7 distinct devices, 33 sightings:
+Initial capture (5 adwatch exports, 7 distinct devices, 33 sightings):
+`serviceData = {"FE50": "fbf3"}` — exactly 2 bytes, always `fbf3` — with
+no `serviceUUIDs`, no manufacturer data, no local name,
+`addressType = random`, RSSI consistently far (−100 to −97).
 
-- `serviceData = {"FE50": "fbf3"}` — exactly 2 bytes, **always `fbf3`**
-- no `serviceUUIDs`, no manufacturer data, no local name
-- `addressType = random`
-- RSSI consistently far (−100 to −97)
-
-The constant `fbf3` payload across all 7 devices is a frame-type /
-version magic, not a per-device identifier (analogous to Eddystone's
-leading frame-type byte). The parser gates strictly on `fbf3` so future
-Google FE50 frames with different payloads (which would indicate a
-different beacon subtype) won't be misattributed to this one.
+**v1.1 correction (2026-10-08 sweep, bead nearsight-s0hf):** the
+"constant `fbf3` = frame-type magic" reading of that small sample is
+refuted by the full-history corpus: **36 records / 335 sightings / 12
+capture days (2026-07-10 → 2026-10-02) with 22+ distinct 2-byte values
+and none of them `fbf3`** — most-seen `c8 0d` (118 sightings across 5
+same-day records), then `6c 38`, `7a d9`, `a4 36` (31), `03 19` (25),
+`b8 eb`, `5f 35` … The 2 bytes are a **per-device/per-epoch token**, not
+a frame magic. One value can recur across several receivers of a single
+emitter (the 5 same-day `c80d` records), so the token is not unit
+identity either. The parser gate is therefore **any exactly-2-byte
+payload**; length stays part of the gate because no 1-byte or ≥3-byte
+FE50 frame has ever been observed (a different length would indicate a
+different beacon subtype this parser must not misattribute).
 
 ## BLE Advertisement Format
 
@@ -42,7 +48,7 @@ different beacon subtype) won't be misattributed to this one.
 | Signal | Value | Notes |
 |---|---|---|
 | Service-data key | `0xFE50` | Google LLC — SIG-registered |
-| Service-data payload | exactly `fb f3` (2 bytes) | frame-type / version magic |
+| Service-data payload | any 2 bytes | per-device/per-epoch token (22+ distinct values observed) |
 | Service UUIDs | *(absent in observed captures)* | |
 | Manufacturer data | *(absent)* | |
 | Local name | *(absent)* | |
@@ -54,7 +60,7 @@ different beacon subtype) won't be misattributed to this one.
 |---|---|---|
 | Vendor | hard-coded | `Google LLC` |
 | `sig_service_uuid` | hard-coded | `0xfe50` |
-| `frame_magic_hex` | service-data | `fbf3` |
+| `token_hex` | service-data | the 2-byte token, echoed raw |
 | `candidates` | hard-coded | "Chromecast / Nest family / legacy Google accessory (unconfirmed)" |
 
 ### What We Cannot Surface from the Advertisement
@@ -63,7 +69,7 @@ different beacon subtype) won't be misattributed to this one.
 - Live device state (cast session active, audio playing, etc.).
 - Account / household pairing.
 - Anything beyond "a Google accessory is in range and emitting the
-  FE50 fbf3 beacon."
+  FE50 2-byte beacon."
 
 ## Stable Identity
 
@@ -87,18 +93,11 @@ identifier = SHA256(stable_key)[:16]
 
 ## Future Work
 
-- Capture FE50 frames with different payloads — if any exist, document
-  the byte semantics and either add subtypes here or split into
-  sibling parsers.
-  - **Update (2026-07-17 sweep):** three non-`fbf3` payloads have now
-    been observed — `5f35`, `3821`, `b8eb` — each on a confirmed-distinct
-    physical device (via `deviceIdentifier`), each seen exactly once. No
-    two devices share a value, so there isn't yet a repeated pattern to
-    decode: each could be a distinct subtype magic, a per-device rotating
-    token, or noise. `GoogleFE50AccessoryParser` correctly rejects all
-    three (this is the "different payload" case this doc already
-    predicted). Needs multiple independent sightings of the *same* value
-    before any of the three is decodable enough to ship.
+- ~~Capture FE50 frames with different payloads~~ — **done**: the
+  162k-record corpus shows the payload is a per-device/per-epoch token
+  (see "v1.1 correction" above); the gate widened to any 2-byte value in
+  parser v1.1 (2026-10-08 sweep, bead nearsight-s0hf). Token semantics
+  (lifetime, rotation epoch, emitter product) remain undecoded.
 - Connect to a captured device's GATT 0x180A (Device Information
   Service) to read Manufacturer Name (0x2A29) and Model Number
   (0x2A24) — that would resolve the Chromecast/Nest/other guess.
