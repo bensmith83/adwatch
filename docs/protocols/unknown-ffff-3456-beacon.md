@@ -35,7 +35,7 @@ so the family is catalogued as `vendor: Unknown` with the reasoning in
 | Service UUID | `0x3456` | unassigned; present on all 11 records |
 | Manufacturer payload | exactly 16 bytes, all `[0-9a-f]` ASCII | the unit id as text |
 | Local name / service data | none | |
-| Address | random | rotates; the ASCII id does not |
+| Address | random | rotates; the ASCII id stayed the same across the one rotation captured |
 
 ### Byte map (payload offsets, after the 2-byte CID)
 
@@ -43,14 +43,20 @@ so the family is catalogued as `vendor: Unknown` with the reasoning in
 |--------|-------|------|----------|
 | 0–15 | unit id | 16 | ASCII hex chars; `78fdf4cacdc37045`, `997afe8dd79d03eb`, `8fb38d68656ff657`, `dc4166e58a0b0f35` |
 
-### The unit id is rotation-stable identity
+### The unit id survives address rotation (within one capture window)
 
 Unit `997afe8dd79d03eb` was captured from **two different BLE addresses
 inside one 2026-07-29 capture window** (two upload-side device
-identifiers, 3 + 26 sightings minutes apart). The ASCII id — not the
-radio address — is the durable per-unit key, and the parser keys
-identity on it (`stableKey = "unknown_ffff_3456:<id>"`,
+identifiers about 2 s apart, 3 + 26 sightings). So the ASCII id — not
+the radio address — is the per-unit key across address rotation, and
+the parser keys identity on it (`stableKey = "unknown_ffff_3456:<id>"`,
 payload-derived, in `payloadStableParsers`).
+
+How long an id lasts is less clear. `8fb38d68656ff657` came back on
+2026-10-01, five days after its 2026-09-26 burst, under a new address
+from the same install; the other three ids were each seen on one day
+only. Nothing shows an id surviving a reboot, a re-flash or a battery
+swap.
 
 ## Parser Scope
 
