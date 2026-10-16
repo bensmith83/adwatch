@@ -56,7 +56,7 @@ is claimed on the UUID alone, with no stable identity.
 
 | Offset | Field | Size | Notes |
 |--------|-------|------|-------|
-| 0–2 | OUI | 3 | must resolve to Ubiquiti in NearSight's curated table (`00:27:22`, `24:5A:4C`, `24:A4:3C`, `70:A7:41`, `F4:E2:C6`) — or the frame is the all-FF placeholder |
+| 0–2 | OUI | 3 | must resolve to Ubiquiti in NearSight's curated table (`00:27:22`, `24:5A:4C`, `24:A4:3C`, `58:D6:1F`, `70:A7:41`, `F4:E2:C6`, `0C:EA:14`, `1C:6A:1B`, and the 2026-10-05 additions `74:FA:29`, `9C:05:D6`, `84:78:48`, `D0:21:F9`, `90:41:B2`, `28:70:4E`, `F4:92:BF`) — or the frame is the all-FF placeholder |
 | 3–5 | NIC | 3 | per unit |
 
 ### Examples (OUIs real, NIC bytes withheld)
@@ -113,5 +113,10 @@ capture that produced this doc.
 - `docs/protocols/ubiquiti-unifi.md` — the access-point frame this
   convention was first seen on
 - IEEE MA-L registry (standards-oui.ieee.org) — `24-5A-4C`, `24-A4-3C`,
-  `70-A7-41`, `F4-E2-C6`, `58-D6-1F` → Ubiquiti Inc (via
-  `src/adwatch/_oui_vendors.py`)
+  `70-A7-41`, `F4-E2-C6`, `58-D6-1F`, `0C-EA-14`, `1C-6A-1B`, `74-FA-29`,
+  `9C-05-D6`, `84-78-48`, `D0-21-F9`, `90-41-B2`, `28-70-4E`,
+  `F4-92-BF` → Ubiquiti Inc (via `src/adwatch/_oui_vendors.py`)
+- NearSight `research/sweep-2026-10-05-candidates.md` — the 2026-10-05
+  nightly sweep that walked the 0x252A family's full 53-record history
+  and curated the seven remaining blocks (`74:FA:29` pair: 43 sightings
+  on 2026-10-04, known product UUID `B4BD9342-…` alongside)
