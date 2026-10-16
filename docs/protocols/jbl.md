@@ -9,7 +9,9 @@ JBL (owned by Harman International, a Samsung subsidiary) makes Bluetooth speake
 - **Service UUID:** `FDDF` (16-bit, Bluetooth SIG assigned to Harman International)
 - **Company ID:** `0x0ECB` (Harman International)
 - **Local name pattern:** `JBL {model}` (e.g., `JBL PartyBox Stage 320`)
-- **Device class:** `speaker`
+- **Device class:** `speaker` by default; a named frame whose model is in
+  the FDDF product-id table takes that row's class (`headphones` /
+  `earbuds`, see below)
 
 ## BLE Advertisement Format
 
@@ -69,11 +71,55 @@ FE2C: 10 60 c5 31 a6 a6 86 1c 21 aa 8f
 | 0 | 1 | FMDN frame type (0x10) |
 | 1-10 | 10 | Ephemeral identifier for FMDN tracking |
 
+### FDDF Service Data — product-id frame (2026-10-06 sweep addition)
+
+Newer Alexa-built-in / LE-audio JBL units advertise FDDF service data
+with a **little-endian product id** in the first two payload bytes,
+followed by per-sighting state/counter bytes, and often a co-advertised
+empty `FE03` (Amazon Alexa) key. The ids sit in the same 0x20xx–0x21xx
+range as the manufacturer-data table and collide with none of its
+entries. FDDF ids are not headphone-only: named FDDF frames from
+speakers exist too (JBL Grip 0x2132, Go 5 0x2168, Boombox 4 0x214E,
+PartyBox 720 0x2156), with no table row yet.
+
+Observed id → model mapping (each row anchored by a corpus record that
+carried the self-identifying "JBL …" local name with that exact FDDF
+payload — never interpolated):
+
+| FDDF payload[0..2) | LE product id | Model | Device class |
+|---|---|---|---|
+| `83 20` | 0x2083 | Endurance Peak 3 | earbuds |
+| `b3 20` | 0x20b3 | Tune 520BT | headphones |
+| `b4 20` | 0x20b4 | Tune 720BT | headphones |
+| `b5 20` | 0x20b5 | Tune 670NC | headphones |
+| `b7 20` | 0x20b7 | Tune 770NC | headphones |
+| `ce 20` | 0x20ce | Live 770NC | headphones |
+| `f7 20` | 0x20f7 | Tune 520BT (hw rev) | headphones |
+| `0c 21` | 0x210c | Tune Buds 2 | earbuds |
+
+0x20b3 and 0x20f7 both anchor to Tune 520BT — hardware revisions.
+A nameless frame whose id is not in the table stays unclaimed (e.g. the
+`58 20` / 0x2058 family, 56 sightings, no named capture). NearSight's
+`jbl` parser claims nameless FDDF frames from this table since v1.5
+(`model_source = fddf_product_id_table`), with the row's device class.
+
+The class is stored per row, never defaulted from the table: a row added
+for a speaker must say `speaker`. A **named** JBL frame takes the class of
+the table model its name matches (case and spaces ignored, longest model
+first: `JBL Tune 520BT-LE` → headphones, `JBL Tune Buds 2-LE` → earbuds),
+whether or not that frame carries FDDF, and a frame whose FDDF id has a
+row takes that row's class. One unit sends several named shapes (a Tune
+520BT-LE advertises FDDF+FE03 and FE2C-only frames under the same name),
+so they must agree. A name that matches no row keeps the existing
+default, `speaker` (`earbuds` on the Endurance 2EFC path below); that
+includes named headphones and earbuds without a row yet (Vibe, Wave,
+Tune Flex, Live 660NC, …).
+
 ### What We Can Parse from Advertisements
 
 | Field | Source | Notes |
 |-------|--------|-------|
-| Device presence | service_uuid, service_data, or local_name | JBL speaker nearby |
+| Device presence | service_uuid, service_data, or local_name | JBL speaker, headphones or earbuds nearby |
 | Model name | local_name (after "JBL ") | Full product model |
 | FMDN support | FE2C service data presence | Google Find My Device enabled |
 | Company ID | manufacturer_data[0:2] | Harman International (0x0ECB) |
@@ -108,7 +154,7 @@ identifier = SHA256("jbl:{mac}")[:16]
 
 ## Detection Significance
 
-- Indicates a JBL Bluetooth speaker in the area
+- Indicates a JBL Bluetooth speaker, headphones or earbuds in the area
 - PartyBox models are large, high-power party speakers
 - FMDN support means the speaker can be located via Google's Find My Device network
 - Always-on BLE when speaker is powered
@@ -118,7 +164,8 @@ identifier = SHA256("jbl:{mac}")[:16]
 1. Match on service UUID `FDDF` OR local_name matching `^JBL ` OR `fddf` key in service_data
 2. Extract model name from local_name (everything after "JBL ")
 3. Check for FE2C service data to flag FMDN support
-4. Return device class `speaker`
+4. Return the class of the FDDF-table model the name matches (or of the
+   frame's FDDF id row), else device class `speaker`
 
 ## Legacy Wire Format (Harman CID 0x0057)
 
@@ -159,8 +206,8 @@ Everything after the id is still undecoded. On 2021+ models there is a
 4-byte field that *looks* per-unit (one Charge 6 held the same value across
 three records on three days) but `09 03 …` recurs in that position across
 models often enough that it is not safe to key identity on; the parser
-records it raw only. `20b3`, `20f7`, `20ce` have been seen in FDDF
-service-data bodies without a name — add them to the table only from a
+records it raw only. `20b3`, `20f7` and `20ce` also appear in FDDF
+service-data bodies; they are in the FDDF table above, each read off a
 named capture.
 
 Because the id is model-constant, a **nameless** 0x0057 frame (the name
