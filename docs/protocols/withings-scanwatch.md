@@ -31,9 +31,9 @@ Observed from a unit whose named sibling ads match `ScanWatch 2 87` (so at minim
 |---|---|---|
 | 0–2 | frame prefix `10 5E 11` | Constant in both observed variants. |
 | 3 | state byte | Observed toggling `01` ↔ `03` within one ~2.5-minute encounter; semantics unknown (flags/counter). |
-| 4–8 | unit token | Constant per unit in the single observed unit; per-unit constancy unproven (n=1), so the parser surfaces it but does not anchor identity on it. |
+| 4–8 | unit token | Constant per unit in the single observed unit; per-unit constancy unproven (n=1), so the parser surfaces it but does not anchor identity on it. It is still tagged `uniqueStable`, as is `payload_hex` (which embeds it), so upload redaction drops those two decoded metadata keys; the raw FD77 service data itself still rides names-included uploads, like every service-data frame. |
 
-The parser branch (Withings parser v1.1, `match_mode = fd77_service_data`) gates on the exact observed shape (9 bytes, `10 5E 11` prefix) so other `0xFD77` shapes stay unclaimed for future decode. Emits `deviceClass = medical` — the nameless frame alone does not prove the smartwatch model.
+The parser branch (Withings parser v1.2, `match_mode = fd77_service_data`) gates on the exact observed shape (9 bytes, `10 5E 11` prefix) so other `0xFD77` shapes stay unclaimed for future decode. An FD77-only frame (no signature UUID, `WITH` marker or name match) emits `deviceClass = smartwatch` (2026-10-16): the only unit seen is a ScanWatch 2 whose named ads are already `smartwatch`, and its named and nameless frames share one identity and interleave second by second, so a `medical` FD77 frame would flip the device's class. When FD77 rides along with another Withings match, that match decides the class. The nameless frame alone still does not pin the model.
 
 ### Local Name Format
 
@@ -52,7 +52,7 @@ The variant token is optional (a bare `ScanWatch` is the original 2020 model). T
 
 ## Detection Significance
 
-- **Smartwatch class.** When this branch fires (and the scale/BPM signature UUIDs and `WITH`-marker UUID are absent), the parser emits `deviceClass = "smartwatch"` and `metadata["device_class_hint"] = "smartwatch"`. This is the only Withings device class produced from a name-only match — every other Withings parse path lands in `medical`.
+- **Smartwatch class.** When this branch fires (and the scale/BPM signature UUIDs and `WITH`-marker UUID are absent), the parser emits `deviceClass = "smartwatch"` and `metadata["device_class_hint"] = "smartwatch"`. This name branch and the FD77-only frame above are the only Withings paths that produce `smartwatch` — every other Withings parse path lands in `medical`.
 - **No stable identity.** `stableKey` is `nil`. The hex suffix is short enough (1-4 nibbles, so up to ~65K combinations) that collisions across nearby watches are plausible, and the BD_ADDR rotates underneath us. A watch seen "again" cannot be confirmed as the same physical unit from advertisement alone.
 - **`match_mode = "scanwatch_name"`** is set in metadata so downstream consumers can distinguish name-only ScanWatch hits from scale/BPM hits routed through the same parser.
 
