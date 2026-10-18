@@ -1,0 +1,106 @@
+{
+ "schema": 1,
+ "source": "Synthetic test table in the real format: a few rows for the devices the tests build. The real table is supplied with the parser.",
+ "fields": [
+  {
+   "source": "meta",
+   "parser": "sonos",
+   "key": "device_id",
+   "id_type": "Vendor device ID",
+   "confidence": "high",
+   "vendor": "Sonos",
+   "product": "Speaker",
+   "category": "Test",
+   "mobility": "fixed"
+  },
+  {
+   "source": "stableKey",
+   "parser": "sonos",
+   "key": "stableKey",
+   "id_type": "Vendor device ID",
+   "confidence": "high",
+   "vendor": "Sonos",
+   "product": "Speaker",
+   "category": "Test",
+   "mobility": "fixed"
+  },
+  {
+   "source": "meta",
+   "parser": "tesla",
+   "key": "vin_hash_fragment",
+   "id_type": "Name-embedded VIN hash",
+   "confidence": "high",
+   "vendor": "Tesla",
+   "product": "Vehicle",
+   "category": "Test",
+   "mobility": "vehicle"
+  },
+  {
+   "source": "meta",
+   "parser": "whoop",
+   "key": "serial",
+   "id_type": "Serial number",
+   "confidence": "high",
+   "vendor": "WHOOP",
+   "product": "Fitness band",
+   "category": "Test",
+   "mobility": "personal"
+  },
+  {
+   "source": "stableKey",
+   "parser": "whoop",
+   "key": "stableKey",
+   "id_type": "Serial number",
+   "confidence": "high",
+   "vendor": "WHOOP",
+   "product": "Fitness band",
+   "category": "Test",
+   "mobility": "personal"
+  },
+  {
+   "source": "meta",
+   "parser": "shokz",
+   "key": "device_token",
+   "id_type": "Device token",
+   "confidence": "medium",
+   "vendor": "Shokz",
+   "product": "Headphones",
+   "category": "Test",
+   "mobility": "personal"
+  },
+  {
+   "source": "meta",
+   "parser": "acme_appliance",
+   "key": "device_id",
+   "id_type": "Device ID",
+   "confidence": "high",
+   "vendor": "Acme",
+   "product": "Appliance",
+   "category": "Test",
+   "mobility": "fixed"
+  }
+ ],
+ "name_families": [
+  {
+   "parser": "sonos",
+   "prefix": "S39 ",
+   "id_type": "Name suffix",
+   "confidence": "medium",
+   "vendor": "Sonos",
+   "product": "Speaker",
+   "mobility": "fixed",
+   "min_token_bits": 16
+  }
+ ],
+ "unreliable_parsers": [
+  "acme_appliance"
+ ],
+ "rules": {
+  "weak_bits": 24,
+  "shared_if_concurrent_addresses": 3,
+  "name_token_regex": "[0-9A-Fa-f]{4,}|\\d{3,}",
+  "skip_stable_key_prefixes": [
+   "eddystone_eid:"
+  ]
+ }
+}

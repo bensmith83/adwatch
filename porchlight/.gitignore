@@ -1,0 +1,20 @@
+# Runtime state: never commit a database, a capture or the HMAC secret
+*.db
+*.db-wal
+*.db-shm
+*.jsonl.gz
+captures/
+capture*.jsonl
+secret
+
+# The parser binary and the real fields table are supplied separately: never commit them
+bin/
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+build/

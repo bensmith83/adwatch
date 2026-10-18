@@ -112,3 +112,11 @@ If you use the Protocol Explorer to reverse-engineer a new BLE protocol and buil
 - Python 3.11+
 - Bluetooth adapter (for scanning)
 - Linux with BlueZ (for BLE access)
+
+## Porchlight
+
+[`porchlight/`](porchlight/) is a separate app in this repo: a BLE home alarm for a Raspberry Pi. It
+recognises devices by identifiers that survive address rotation, learns what normally appears around a
+house, and alerts on lingering strangers, repeat visitors, new devices while armed, and known devices at odd
+hours. It shares no code with adwatch and builds, tests and installs on its own. See
+[porchlight/README.md](porchlight/README.md) for how to build just that app.

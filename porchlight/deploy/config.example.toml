@@ -1,0 +1,65 @@
+# Porchlight configuration: /etc/porchlight/config.toml
+# Every key is optional; the values below are the defaults.
+
+adapter = "hci0"                                   # a USB dongle with an antenna is usually hci1
+db = "/var/lib/porchlight/porchlight.db"           # the HMAC secret lives beside it (…/secret)
+fields = "/opt/porchlight/data/persistent_fields.json"
+parser_bin = "/opt/porchlight/bin/ble-parse"         # supplied with the fields table
+
+[identity]
+include_low_confidence = false    # also trust the table's low-confidence rows
+
+[presence]
+rssi_floor = -80                  # a visit is "near" when its strongest sighting reaches this (dBm)
+visit_gap_minutes = 5             # a longer silence ends a visit
+
+[rules]
+linger_minutes = 10               # R1: an unknown device near this long
+repeat_days = 3                   # R2: near on this many distinct days...
+repeat_window_days = 14           #     ...within this many days
+armed_min_dwell_seconds = 60      # R3: a new device near this long while armed (0 = at once)
+cooldown_minutes = 30             # at most one alert per device per cooldown, across all rules
+quiet_hours = ""                  # R4: e.g. "00:00-05:00"; known devices arriving then warn
+
+[learning]
+learning_days = 7                 # nothing is pushed while learning
+
+[arming]
+mode = "manual"                   # always | manual | schedule | presence
+away_after_minutes = 15           # presence: armed once no household device has been near this long
+schedule = [ { days = "mon-fri", from = "08:30", to = "17:30" } ]   # schedule: windows may cross midnight
+
+[web]
+listen = "127.0.0.1"              # "0.0.0.0" opens the page to the LAN and then requires a token
+port = 8080
+token = ""                        # open the page once as http://<pi>:8080/?token=<token>
+
+# Notifiers. The page is always on. Add one [[notify]] table per destination.
+[[notify]]
+type = "log"                      # stdout, i.e. journald
+min_severity = "warn"             # info | warn | alert (info is never pushed)
+
+# [[notify]]
+# type = "ntfy"
+# min_severity = "alert"
+# url = "https://ntfy.sh/your-private-topic"
+# token = ""
+#
+# [[notify]]
+# type = "webhook"
+# min_severity = "warn"
+# url = "http://homeassistant.local:8123/api/webhook/porchlight"
+#
+# [[notify]]
+# type = "mqtt"
+# min_severity = "warn"
+# host = "homeassistant.local"
+# port = 1883
+# username = ""
+# password = ""
+# topic_prefix = "porchlight"
+# discovery = true                # Home Assistant MQTT discovery
+
+[debug]
+capture_jsonl = ""                # e.g. "/var/lib/porchlight/capture.jsonl": raw ads for replay. Holds real identifiers!
+capture_max_mb = 50               # per day

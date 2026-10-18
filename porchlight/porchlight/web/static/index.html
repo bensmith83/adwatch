@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Porchlight</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e3e1db;
+    --accent: #b45309; --armed: #b91c1c; --disarmed: #15803d; --warn: #a16207; --chip: #f0eee8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1f1f1d; --ink: #ecebe6; --muted: #a3a29c; --line: #34332f;
+      --accent: #f59e0b; --armed: #f87171; --disarmed: #4ade80; --warn: #facc15; --chip: #2a2a27;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px;
+           border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 1; }
+  header h1 { font-size: 18px; margin: 0 auto 0 0; letter-spacing: .02em; }
+  main { max-width: 1000px; margin: 0 auto; padding: 16px; display: grid; gap: 16px;
+         grid-template-columns: minmax(0, 1fr); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  section > h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+                 margin: 0 0 10px; display: flex; gap: 8px; align-items: baseline; }
+  .badge { font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #fff; font-size: 13px; }
+  .armed { background: var(--armed); } .disarmed { background: var(--disarmed); }
+  .muted { color: var(--muted); } .small { font-size: 13px; }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: var(--chip); border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px;
+           cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+  input[type=search], input[type=text], select { background: var(--bg); border: 1px solid var(--line);
+           border-radius: 7px; padding: 5px 8px; min-width: 0; }
+  a { color: var(--accent); }
+  a.open-unit { color: inherit; text-decoration: none; }
+  a.open-unit:hover { text-decoration: underline; }
+  .alert { border-left: 4px solid var(--armed); padding: 8px 10px; margin: 8px 0; background: var(--bg);
+           border-radius: 6px; overflow-wrap: anywhere; }
+  .alert.warn { border-color: var(--warn); } .alert.info { border-color: var(--line); }
+  .alert .title { font-weight: 650; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  tr.far td { color: var(--muted); }
+  .chip { display: inline-block; background: var(--chip); border-radius: 5px; padding: 0 6px; font-size: 12px; }
+  .scroll { overflow-x: auto; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; }
+  dt { color: var(--muted); }
+  details summary { cursor: pointer; color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; }
+  .big { font-size: 56px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  svg.spark { width: 100%; height: 60px; display: block; }
+  svg.spark polyline { fill: none; stroke: var(--accent); stroke-width: 2; }
+  svg.spark line { stroke: var(--muted); stroke-dasharray: 4 3; }
+  .note { border-left: 3px solid var(--accent); padding: 6px 10px; background: var(--bg); border-radius: 6px; }
+  @media (max-width: 640px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Porchlight</h1>
+  <span id="armed-badge" class="badge disarmed">…</span>
+  <span id="mode" class="muted small"></span>
+  <button id="arm-toggle" class="primary">…</button>
+  <button id="clear-override" hidden>Back to automatic</button>
+</header>
+<main>
+  <section id="alerts-section">
+    <h2>Open alerts <span id="alert-count" class="muted"></span></h2>
+    <div id="alerts"></div>
+    <details id="info-wrap" hidden><summary>New fixed devices nearby (<span id="info-count"></span>)</summary>
+      <div id="info"></div></details>
+  </section>
+
+  <section>
+    <h2>Near now <span id="near-count" class="muted"></span></h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Device</th><th class="hide-sm">ID type</th><th>Moves</th><th>Here for</th><th>RSSI</th><th>Label</th></tr></thead>
+      <tbody id="near"></tbody>
+    </table></div>
+    <p class="small muted" id="anon"></p>
+  </section>
+
+  <section id="calibrate-section" hidden>
+    <h2>RSSI calibration</h2>
+    <p class="small">Walk to the curb wearing your watch (or stand where a visitor would) and read the number.
+      Set <code>presence.rssi_floor</code> a little above what you see there, so passers-by on the street stay
+      "far". The dashed line is the current floor.</p>
+    <div id="calibrate"></div>
+    <div class="row"><button id="calibrate-close">Close</button></div>
+  </section>
+
+  <section id="presence-section" hidden>
+    <h2>Presence keys</h2>
+    <p class="small">The house arms when none of these has been near for a while, and disarms as soon as one is.
+      Phones can't be keys: they rotate their addresses and broadcast no persistent ID. Label a watch, a car,
+      earbuds or a fitness band as <b>household</b> instead.</p>
+    <div id="presence"></div>
+  </section>
+
+  <section>
+    <h2>Devices</h2>
+    <div class="row"><input type="search" id="search" placeholder="Search vendor, product, label, …hint">
+      <span class="small muted" id="device-count"></span></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Device</th><th class="hide-sm">ID type</th><th>Moves</th><th>Last seen</th><th>Label</th></tr></thead>
+      <tbody id="devices"></tbody>
+    </table></div>
+    <div id="device-detail"></div>
+  </section>
+
+  <section>
+    <h2>Learning</h2>
+    <div id="learning"></div>
+    <div class="scroll"><table id="rule-counts"></table></div>
+    <details id="would-wrap"><summary>Would have alerted (<span id="would-count">0</span>)</summary>
+      <div id="would"></div></details>
+    <div class="row"><button id="relearn">Re-learn</button>
+      <span class="small muted">Clears the automatic baseline and learns again. Labels are kept.</span></div>
+  </section>
+
+  <section>
+    <h2>About</h2>
+    <dl id="about"></dl>
+    <p class="note small">Porchlight sees cars, wearables and household gadgets that broadcast a persistent ID.
+      It <b>can't see phones</b>: iOS and Android rotate their Bluetooth addresses and broadcast no persistent ID,
+      so a person carrying only a phone is invisible. AirTag-style trackers rotate too, and Porchlight
+      doesn't look for unwanted trackers.</p>
+    <p class="small muted">Identifiers are never shown: only vendor, product, ID type and a 4-character hint.</p>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

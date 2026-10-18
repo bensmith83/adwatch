@@ -1,0 +1,63 @@
+{
+  "about": "ble-parse contract: synthetic ads in, expected parser names and identity fields out. `porchlight selftest` runs it against the installed parser. Every identifier here is fake.",
+  "cases": [
+    {
+      "name": "sonos: device_id from the manufacturer frame, stable key, S39 name",
+      "ad": {"t": 1760000000000, "addr": "C0:FF:EE:00:00:01", "atype": "random", "rssi": -60,
+             "mfr": "a705060012202a00ca00000800000000000000c0ffee000001123456",
+             "svc": {}, "uuids": [], "name": "S39 ABCD LE", "tx": null},
+      "expect": [{"parser": "sonos", "stableKey": true,
+                  "metadata": {"device_id": "c0ffee000001", "device_suffix": "ABCD", "model_code": "S39"}}]
+    },
+    {
+      "name": "tesla: SIG 1122 as bleak's 128-bit form, hashed-VIN name",
+      "ad": {"t": 1760000000100, "addr": "C0:FF:EE:00:00:02", "atype": "random", "rssi": -70,
+             "mfr": null, "svc": {}, "uuids": ["00001122-0000-1000-8000-00805f9b34fb"],
+             "name": "S0123456789abcdefC", "tx": null},
+      "expect": [{"parser": "tesla", "metadata": {"device_name": "S0123456789abcdefC"}}]
+    },
+    {
+      "name": "whoop: serial from the name; 180D must reach the parser in short form",
+      "ad": {"t": 1760000000200, "addr": "C0:FF:EE:00:00:03", "atype": "random", "rssi": -65,
+             "mfr": null, "svc": {}, "uuids": ["0000180d-0000-1000-8000-00805f9b34fb"],
+             "name": "WHOOP 4TEST0001", "tx": null},
+      "expect": [{"parser": "whoop", "stableKey": "4TEST0001",
+                  "metadata": {"serial": "4TEST0001", "heart_rate_service": "yes"}}]
+    },
+    {
+      "name": "ibeacon: Apple manufacturer frame",
+      "ad": {"t": 1760000000300, "addr": "C0:FF:EE:00:00:04", "atype": "random", "rssi": -75,
+             "mfr": "4c0002152686f39cbada4658854aa62e7e5e8b8d00010000c9",
+             "svc": {}, "uuids": [], "name": null, "tx": null},
+      "expect": [{"parser": "ibeacon"}]
+    },
+    {
+      "name": "mibeacon: service data keyed by bleak's 128-bit lowercase UUID",
+      "ad": {"t": 1760000000400, "addr": "C0:FF:EE:00:00:05", "atype": "public", "rssi": -80,
+             "mfr": null, "svc": {"0000fe95-0000-1000-8000-00805f9b34fb": "4020980001041002eb00"},
+             "uuids": [], "name": null, "tx": null},
+      "expect": [{"parser": "mibeacon"}]
+    },
+    {
+      "name": "nordic uart: vendor 128-bit UUID in lowercase",
+      "ad": {"t": 1760000000500, "addr": "C0:FF:EE:00:00:06", "atype": "random", "rssi": -55,
+             "mfr": null, "svc": {}, "uuids": ["6e400001-b5a3-f393-e0a9-e50e24dcca9e"],
+             "name": "Claude-8E32", "tx": 0},
+      "expect": [{"parser": "nordic_uart_service"}]
+    },
+    {
+      "name": "soundcore: 32-bit SIG UUID",
+      "ad": {"t": 1760000000600, "addr": "C0:FF:EE:00:00:07", "atype": "random", "rssi": -66,
+             "mfr": "f49d8a8d223f0000736f756e6463", "svc": {},
+             "uuids": ["daf59201-0000-1000-8000-00805f9b34fb"], "name": null, "tx": null},
+      "expect": [{"parser": "soundcore"}]
+    },
+    {
+      "name": "empty ad: nothing parses",
+      "ad": {"t": 1760000000700, "addr": "40:FF:EE:00:00:08", "atype": "random", "rssi": -90,
+             "mfr": null, "svc": {}, "uuids": [], "name": null, "tx": null},
+      "expect": [],
+      "no_results": true
+    }
+  ]
+}
