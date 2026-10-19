@@ -71,6 +71,17 @@ centurion_nitro_sidekick_v3, `17` commercial_metered_softener,
 `18` commercial_backwashing_filter, `23` nitro_filter, `24` sidekick,
 `25` commercial_aeration.
 
+### Valve type codes (Clack heads)
+
+Clack-branded heads number their types differently. The reference
+integration switches tables on the local name: a name that, trimmed and
+case-folded, starts with `cl_` (`_is_clack_valve`) reads
+`_CLACK_VALVE_TYPE_MAP`: `1`/`4`/`6`/`8` metered_softener,
+`2`/`5`/`7`/`9` backwashing_filter, `3` clack_aeration. Type code `2` is
+where the tables disagree most visibly (standard: time-clock softener;
+Clack: backwashing filter). A nameless capture reads the standard table,
+as it does in the integration.
+
 ## Parser Scope (Passive Only)
 
 `ChandlerValveParser` (`chandler_valve`, deviceClass `appliance`):
@@ -81,7 +92,8 @@ centurion_nitro_sidekick_v3, `17` commercial_metered_softener,
   left unclaimed.
 - Emits model (`Evb034`/`Evb019`), firmware version, valve status bits
   (salt / water / bypass), error code, clock hours/minutes, valve type
-  and series.
+  and series, plus `valve_type_table` (`standard` or `clack`) naming the
+  table the type was read from.
 - Identity is **address-anchored** (no stableKey): the frame carries no
   serial or per-unit identifier, only clock + status.
 
