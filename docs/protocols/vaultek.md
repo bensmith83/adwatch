@@ -72,6 +72,46 @@ identifier for "the same safe over time" though, so this is a
 location-privacy concern if the safe travels with the owner (the
 RS line is portable).
 
+## Per apk-ble-hunting `vaultek-vaultekbt_passive.md`
+
+Static analysis of the **Vaultek 2.0** companion app (`com.vaultek.vaultekbt`,
+VT2020 safes, 2026-10-22). This app's discovery logic differs from the
+signals documented above — **flagged, not merged**:
+
+| Signal | Report says | Doc previously said |
+|--------|-------------|---------------------|
+| Local name | Starts with **`VS_`** (case-sensitive `startsWith`); full name kept as the safe name, tail opaque (model/serial, not parsed) | Contains `VAULTEK` (e.g. `VAULTEK-VT20i`) |
+| Service UUID | **None used for discovery.** GATT service is `00000000-f08f-5765-9ebc-c429ce264e7b`; not confirmed to appear in the advert | `0e2d8b6d-8b5e-91d5-b370-6f0a1bc57ab3` advertised |
+| Manufacturer data | None read by the app; any Vaultek CID unverified | None (no SIG CID) — consistent |
+
+Likely explanation (unverified): the older `VAULTEK-*` / `0e2d8b6d` signals
+come from the BlueSteal-era VT20i firmware, while the VT2020 line pairs with
+the newer app using `VS_` names. Both sets should be treated as Vaultek until
+a live capture says otherwise.
+
+Report details:
+
+- The app runs `BluetoothLeScanner.startScan(scanCallback)` with **no
+  ScanFilter and no ScanSettings**, then keeps only names starting `VS_`
+  (`com/vaultek/vaultekbt/bluetooth/BluetoothScanner.java:71,161,166`; name
+  stored as safe name/nickname at `:74-83`). No `getScanRecord` /
+  `getManufacturerSpecificData` / `getServiceData` anywhere (grep-empty).
+- Connectable advert on wake; **no telemetry** (battery, temperature, lock
+  state). Lock state, battery, temp/humidity, fingerprint roster and logs are
+  read post-connect over a single GATT characteristic via a TLV opcode
+  protocol (STATUS/UPDATE_STATUS, READ_LOGS, GET_FINGERPRINTS) — see
+  `reports/vaultek-vaultekbt.md`.
+- Privacy: the stable `VS_…` name fingerprints "this household owns a gun
+  safe"; if the tail is a serial it is a per-unit tracking ID.
+
+**Plugin status:** despite this doc, adwatch has **no Vaultek plugin** in
+`src/adwatch/plugins/` (grep for "vaultek" in `src/` and `tests/` is empty).
+A future plugin should match `VS_` (case-sensitive prefix) **and** the
+legacy `VAULTEK` name / `0e2d8b6d-…` UUID, capturing the name tail. Note
+`VS_` is short and could collide with unrelated devices — consider requiring
+the service UUID `00000000-f08f-5765-9ebc-c429ce264e7b` if live captures show
+it is advertised.
+
 ## References
 
 - Two Six Labs, "BlueSteal: Popping GATT Safes" (2017-12)
@@ -79,3 +119,4 @@ RS line is portable).
 - CVE-2017-17435 — Vaultek VT20i unauthenticated unlock
 - CVE-2017-17436 — Vaultek VT20i plaintext PIN transmission
 - Vaultek product line: https://vaulteksafe.com/
+- apk-ble-hunting `reports/vaultek-vaultekbt_passive.md` — Vaultek 2.0 app static analysis (2026-10-22)

@@ -150,3 +150,37 @@ adwatch's part.
 - buttplug.io Lovense spec: https://buttplug.io/stpihkal/protocols/lovense/
 - Original `stpihkal` reverse-engineering notes: https://metafetish.gitbooks.io/stpihkal/hardware/lovense.html
 - buttplug.io project: https://buttplug.io/
+
+## Per apk-ble-hunting `lovense-wear_passive.md`
+
+Static analysis of the Lovense companion app (`com.component.dxtoy`,
+`ab/a.java:52`, `ToyLvsInfoBean`) adds the following. Where it disagrees with
+the sections above, both are recorded.
+
+- **Name alone is the app's discovery key.** The app filters
+  `BluetoothDevice.getName()` by prefix `LVS-`; no hardware `ScanFilter` on a
+  service UUID was found, and the toy need not advertise any 128-bit service UUID
+  for the app to find it. *Contrast:* the Identification section above requires
+  name **and** a generation UUID. The secondary UUID-less advert in the capture
+  table is consistent with the report — a name-only rule would catch it.
+- **Control service `a6ed0401`.** The report names the control service as
+  `a6ed0401` with notify on `a6ed0403` (LVS info blob, battery). This family is
+  not in the Protocol Generations table above. It is also the **Goodix GR SDK**
+  service used by the Halliday control ring ([halliday-glasses.md](halliday-glasses.md)),
+  so it is a chip-SDK UUID, not a Lovense discriminator. The report says it "may
+  or may not appear in the advertisement depending on model/firmware".
+- **Suffix stability — contradiction.** The report says the suffix after `LVS-`
+  is "model code + unit identifier (stable per unit)", making the name a
+  persistent per-device identifier. The Identity Hashing section above says two
+  devices of the same model and firmware hint hash to the same identity (the
+  suffix is a firmware hint, not a unit ID). Unresolved; a capture of two
+  same-model units would settle it.
+- **Wi-Fi provisioning suffix.** Wi-Fi-capable toys in Espressif Wi-Fi
+  provisioning mode advertise a `-PROV` suffix (e.g. `LVS-B12A-PROV`).
+- **No manufacturer data** is decoded by the app; no Lovense company ID.
+- Battery and running state are not broadcast; live state is post-connect only.
+
+**adwatch status:** no Lovense plugin exists under `src/adwatch/plugins/`
+(despite the "parser" wording above). A future plugin would match name prefix
+`LVS-` / `LOVE-` (UUID as corroboration, not a requirement) and flag
+`provisioning_mode` on `-PROV`.

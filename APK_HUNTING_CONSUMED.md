@@ -18,6 +18,9 @@ Tracks which `*_passive.md` byte-level advertisement guides from the sibling
 - **covered** — adwatch already has a matching plugin that predates the
   report; still needs a pass to cross-check/enrich from the report
 - **pending** — report exists, not yet reviewed
+- **documented / doc-enriched** — (rows 256+) report written up in
+  `docs/protocols/` only; plugin work not yet done — the Notes column says
+  what a future plugin would match/decode
 - **skip** — intentionally not pursued (connection-only, encrypted, no useful
   passive shape); reason noted inline
 
@@ -291,10 +294,81 @@ Tracks which `*_passive.md` byte-level advertisement guides from the sibling
 | 253 | shelly-smartcontrol | smart_home | enriched | `plugins/shelly_blu.py` (enriched) | Replaced fictional CID 0x0BA9 device_type/counter/battery decode with report TLV (flags block + 6 bits, 0x0B model, 0x0A reversed MAC, 0x09 JTI); BTHome encryption bit surfaced; identity = advertised device MAC. Also bthome.py: dimmer byte order fixed (event, steps), +11 objects, 0xFE hold_release. shelly_blu does not claim FCD2 (bthome owns it). |
 | 254 | uprightpose-upright-go2 | SKIP-OPAQUE | skip | — | Mfr data embeds device MAC but CID + offset are Hermes bytecode operands; needs live capture (SIG table lists 0x0735 UpRight Technologies — unverified, not registered) |
 | 255 | willow-go | medical (breast pump) | consumed | `plugins/willow_pump.py` (new) | name regex `^Willow(Go)?-` → generation Go vs 3.0/360 + name_suffix; mfr-data CID/layout unknown → raw hex + LE CID recorded only; `7CDADx37-…` GATT UUIDs not registered (not advertised per report); sensitive=True (maternal_health); identity = MAC + suffix |
+| 256 | aicare-net-cn-itpms | TPMS | documented | docs/protocols/aftermarket-ble-tpms.md (Family B) | no plugin; future: svc UUID 0xFBB0/0xFBC0 + mfr value >=11 B, header byte 0xAC/0xAD/0x55 selects decode (battery/pressure/temp/status/fw); "CID" is a frame header (0x00AC/0x01AD misattribution) |
+| 257 | airthings-app-android | air quality | doc-enriched | docs/protocols/airthings.md | plugin airthings.py matches CID 0x0334 only; gap: no match on 10-digit serial-as-name or b42e… service UUIDs (adds b42e1f6e Classic, b42e90a2 Atom) |
+| 258 | almacode-radiacode | radiation | documented | docs/protocols/radiacode.md | no plugin; presence only: svc e63215e5-7003-49d8-96b0-b024798fb901, fallback name RadiaCode |
+| 259 | andatech-andalink | breathalyzer | documented | docs/protocols/breathalyzers.md | no plugin; name prefixes WAT/WELL/SCRAM/OUT/DEIMOS/HLX (AlcoSense), ALCO (AlcoFind), AL8800BT-UP (DFU); presence only |
+| 260 | app-cq-ring | smart ring (Oudmon/QRing/COLMI SDK) | documented | docs/protocols/oudmon-qring-ring.md | No plugin; future: name-prefix list (T80…wxb_w4, O_, Q_, R3L, QC, Wa) + 0xFEE7 corroboration (FEE7 is shared Tencent UUID); nothing to decode beyond model code |
+| 261 | atmotube-app | air quality | documented | docs/protocols/atmotube.md | no plugin; strong candidate: name ATMOTUBE / svc db450001-8e9a-4818-add7-6ed94a328ab3(PLUS)/…ab4(PRO); VOC/temp/RH/pressure/status/battery + PRO PM1/2.5/10 + fw; offsets are absolute getBytes() — must re-anchor to AD structures on a live capture |
+| 262 | bactrack-bactrack_mobile | breathalyzer | documented | docs/protocols/breathalyzers.md | no plugin; CID 0x09A8 (KHN Solutions, verified) or 5 vendor 128-bit UUIDs; mfr bytes past CID undocumented; presence only |
+| 263 | bee-android | AI pendant | documented | docs/protocols/bee-pendant.md | No plugin; future: service UUID 0xD5C4, presence only |
+| 264 | bmc-paplink | CPAP | documented | docs/protocols/bmc-medical-cpap.md | no plugin; future: names BMC_M1A/M1A/BMC_M1/BMC_E5/E5/BMC_P5/P5/BMC_S1/BMC_SK/BMC_P1/BMC_PK/Hi-A-12E0K, ASCII `BMC_`(15)/`M1A`(11) substring search in raw advert, 0xFF AD starting `AA 02` = new-protocol flag (not a CID) |
+| 265 | breas-nitelog | CPAP | documented | docs/protocols/breas-z1-cpap.md | no plugin; future: service UUID f4f2b816-a092-466e-bc76-320462d6341a (primary) or name ^Z[12] (weak), presence-only |
+| 266 | breathalysers-isober | breathalyzer | documented | docs/protocols/breathalyzers.md | no plugin; name prefixes SENTECH/SEN0000/SENE148/SENE6JZ/AL8800/AL8500/IBLOW10/SBP0001; ALP-1 is Classic BT |
+| 267 | brilliant-noaflutter | smart glasses (misc) | documented | docs/protocols/brilliant-labs-frame.md | no plugin; future: svc 7a230001-5475-a6a4-654c-8431f6ad49c4 (normal), 0xFE59 + name `Frame` (DFU) |
+| 268 | chaoyue-acartpms | TPMS | documented | docs/protocols/aftermarket-ble-tpms.md (Family A) | plugins/tpms.py name pattern ^(TPMS\ BR) WILL catch these and mis-decode; its CID 0x0001 does not match (wire `00 01` = CID 0x0100). Future: CID 0x0100 + 16 B payload -> 3 B sensor ID, LE32 kPa/1000, LE32 degC/100, battery, status |
+| 269 | chaoyue-tyed | TPMS | documented | docs/protocols/aftermarket-ble-tpms.md (Family A) | same parser as acartpms; skip names containing TPMSR_ (repeater) |
+| 270 | circul-zg29 | smart ring (misc) | documented | docs/protocols/circul-megable-ring.md | no plugin; name ^(CR39\ MR\+\ MRing\+)$ + CID field 0x0202 (= Rigado in SIG table, trap) -> reversed MAC + 6 B serial; latent MegaAdvOnly SpO2/PR layout unverified |
+| 271 | circular-circular | smart ring (Circular Ring 2) | documented | docs/protocols/circular-ring.md | No plugin; blocked on company ID (live capture); then CID + len 17/19 → embedded MAC (0-5), serial/SNU, battery/charging |
+| 272 | ditai-aventon | e-bike | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin recommended: generic FFE0/FFE5/FFF0/FFB0 UUIDs, server-overridable, no name |
+| 273 | egeetouch-egeetouch_manager | smart lock | documented | docs/protocols/egeetouch.md | no plugin; future: name contains `eGeeTouch` (or `EGT`), serial = name tail |
+| 274 | essilorluxottica-nuanceaudio | hearing-assist glasses | documented | docs/protocols/nuance-audio-glasses.md | smart_glasses.py already matches CID 0x0D53 but labels it Luxottica/Meta Ray-Ban and doesn't decode; future: decode productId/frameStatus/rssiThreshold/14-B ASCII serial/pairingState and label Nuance Audio (serial-on-air PENDING RUNTIME) |
+| 275 | feeltechnology-feelconnect3 | adult toy (misc) | documented | docs/protocols/kiiroo.md | no plugin; future: svc 88f80580-/88f82580-0000-01e6-aace-0002a5d5c51b + model-name enrichment; SIG CID 0x05A5=Kiiroo BV but MSD unknown |
+| 276 | friend-ios | AI pendant (Omi) | documented + doc-enriched | docs/protocols/omi-pendant.md; docs/protocols/plaud.md (appended section) | No Omi plugin; future: svc UUID 19b10000-e8f2-537e-4f6c-d104768a1214 (inferred, MEDIUM). NotePin CID 0x005D prefix 04 56 CF 00: plugin plaud.py already matches; note adwatch's NotePin capture has 04 56 d5 00 so the Omi prefix is version-specific |
+| 277 | halliday-glasses | smart glasses + control ring | documented | docs/protocols/halliday-glasses.md | Not in smart_glasses.py; future: name contains "Halliday" / starts "GYGES_Ring_master" |
+| 278 | igloo-home | smart lock | documented | docs/protocols/igloohome.md | no plugin; future: CID 0x05BA (+svc 5c3a1523-897e-45e1-b016-007107c96df6), 9-byte payload, status byte pairedStatus/active/hasActivityLogs/isModule; legacy TTLock `LOCK_`+0x1910 |
+| 279 | llp-aircasting | air quality | documented | docs/protocols/aircasting-airbeam.md | no plugin; presence only: names AirBeam3 / AirBeam-mini (AirBeam2 is BT Classic) |
+| 280 | lmt-sleeppatientapp | CPAP/ventilator | documented | docs/protocols/lowenstein-prisma.md | plugin telit_terminal_io.py already matches 0xFEFB (labels as generic Telit TIO); gap: no medical labelling for 0xFEFB + `prisma`/`WM 0xx` names |
+| 281 | lovense-wear | adult toy (Lovense) | doc-enriched | docs/protocols/lovense.md | No lovense plugin exists despite doc wording; future: name prefix LVS-/LOVE- (UUID optional), -PROV provisioning flag. Contradiction on suffix per-unit stability flagged |
+| 282 | lucyd-android | audio glasses | skip | — | No BLE at all (BT-Classic A2DP/HFP only, zero BLE symbols); no passive surface |
+| 283 | masterlock-home-mlhome | smart lock | documented | docs/protocols/master-lock.md | no plugin; future: CID (SIG table 0x014B, app doesn't hardcode — confirm live), SKU u32 / 6-byte device ID / fw u32 / key index (LE); service UUIDs DexGuard-hidden |
+| 284 | minderresearch-tiremindertpms | TPMS | documented | docs/protocols/aftermarket-ble-tpms.md (Family D) | presence-only: name ^TM-Blue22$ (+ NUS UUID); tire data is 433 MHz/GATT |
+| 285 | minimotors-escooter | e-scooter | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin; name contains DUALTRON (the `mini` / BLE+Device rules are too loose for passive use); no advert telemetry |
+| 286 | moyoung-ring | smart ring (CRRepa/MoYoung Da Rings SDK) | documented | docs/protocols/crrepa-moyoung-ring.md | No plugin; future: service data 0xFDDA (firmwareType/MCU/chip/capability LE) + 0xFDD0 (colour/size/type/visible) |
+| 287 | navee-ucaret | e-scooter/e-bike | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin; name contains NAVEE, Ld UUID C8747810-4B8E-11F1-AB07-0002A5D5C51B; PID byte offset untraced (needs capture) |
+| 288 | noisefit-luna | smart ring (ZH-SDK Berry-Ring) | documented | docs/protocols/zh-berry-ring.md | No plugin; future: svc-data 0xFE78 + byte11&0x01 + byte12&0x20 gate → embedded MAC, deviceType, fw, flags, DFU. CONFLICT: hp_printer.py (fe78) and google_nearby_share.py (Bose fe78) will mis-attribute; report's "FE78=Huami" contradicts SIG table (HP) |
+| 289 | noxmedical-mobile | sleep diagnostics | documented | docs/protocols/nox-medical.md | no plugin; future: name ^(A1\ A1S\ C1)_ + hashed tail; SIG CID 0x03FB=Nox Medical exists but app never parses MSD (unverified on air); T3s/Nonin are BT Classic |
+| 290 | resvent-newapp1 | CPAP | documented | docs/protocols/resvent-ibreeze.md | no plugin; future: name contains `iBreeze` (8-char [A-Z0-9]{2}[0-9]{6} tail) OR 16-bit svc 0xA002 (app string 0x02A0, endian hypothesis unconfirmed) → variant lx |
+| 291 | samsung-android-ringplugin | smart ring (Galaxy Ring) | documented | docs/protocols/samsung-galaxy-ring.md | No plugin; future (low confidence): CID 0x0075 + payload prefix 01 00 02 00 01 04 = Samsung auto-switch wearable; first-contact advert deferred to host APK watchmanager |
+| 292 | satisfyer-connect | adult toy (Satisfyer) | documented | docs/protocols/satisfyer.md | No plugin; future: svc UUIDs 51361500/600/700-c5e7-47c7-8a6e-47ebc99d80e8, 0000d0ff-3c17-d293-8e48-14fe2e4da212 (FFD0/FFF0 weak); mfr-data CID unresolved |
+| 293 | sefam-sefamaccess | CPAP | documented | docs/protocols/sefam-sbox.md | no plugin; `<serial>-BLE` name is inferred from help text only (audit-downgraded); CID 0x0412 SEFAM never used by app — needs live capture; marshall-audio.md already notes stray 0x0412 hits, so don't label 0x0412 alone as CPAP |
+| 294 | solos-airgo | smart glasses (camera/iLens/audio) | documented | docs/protocols/solos-airgo.md | Not in smart_glasses.py; future: name prefix "Solos Vision" (+0x180A weak) or name contains "iLens"; audio glasses BT-Classic |
+| 295 | standardinnovation-weconnect | adult toy (We-Vibe) | documented | docs/protocols/we-vibe.md | No plugin; future: svc UUID 4c421900-0000-1000-8000-00805f9b34fb or 0xBB03, model name as metadata |
+| 296 | sva-sva | adult toy (Svakom) | documented | docs/protocols/svakom.md | No plugin; future: local name == "SVAKOM" (+FFE0/AE00 corroboration) |
+| 297 | sysgration-tpms-app | TPMS | documented | docs/protocols/aftermarket-ble-tpms.md (Family C) | no plugin (generic iBeacon parser would claim them); future: iBeacon prox UUID b54adc00-67f9-11d9-9669-0800200c9a6{6,7,a} -> major=sensor ID, minor -> temp/pressure/alarm/batt-low per family; dongle name TPMS_ also hits tpms.py |
+| 298 | transcend | CPAP (misc) | skip | — | no confirmed name pattern or UUID (namePrefix literal locked in Hermes bytecode, Stage 6d pending; "Transcend" is a UI-string guess only); no manufacturer data |
+| 299 | uhooair | air quality | documented | docs/protocols/uhoo.md | no plugin; honest negative (WiFi device, BLE setup-only); optional presence: name `uHoo_` (Nordic WiFi-prov UUID 14387800-… is generic) |
+| 300 | unagiscooters-one | e-scooter | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin recommended: only generic 0xFFF0 (HM-10) + unpatterned name |
+| 301 | vaultek-vaultekbt | safe | doc-enriched | docs/protocols/vaultek.md | NO vaultek plugin exists despite the doc; future: name startsWith `VS_` (new app) plus legacy `VAULTEK` / 0e2d8b6d-… UUID |
+| 302 | vt-magicmotion | adult toy (Magic Motion/Vtrump) | documented | docs/protocols/magic-motion.md | No plugin; future: VT svc UUIDs 78667579-…, 993c5ffa-…, ca15a4b3-…, legacy f433bd80-…; TI OAD f000ffc0 = OAD mode |
+| 303 | vuzix-connect | HUD smart glasses (Z100) | documented | docs/protocols/vuzix-z100.md | Not in smart_glasses.py; future: svc UUID 39191400-bfc2-4bee-a81a-28c23b6ac84a; FE59 = DFU flag only with MAC corroboration |
+| 304 | yele-app-bleoverseascontrol | e-scooter (OKAI) | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin; vendor-unique svc UUID 669A0C20-0008-A7BA-E311-0685C0F7978A (presence); FE59 = DFU mode |
+| 305 | yuwell-respirator2 | CPAP | documented | docs/protocols/yuwell-cpap.md | no plugin; future: name startsWith `BC_PAP` / `Yuwell CM100`, presence-only |
+| 306 | zydtech-hiboys2 | e-scooter | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin; name ^(hw_z\ zyd) ci (zyd overlaps Pure's ZYD) |
+| 307 | zydtech-pure | e-scooter | documented | docs/protocols/micromobility-escooter-ebike.md | no plugin; name ^ZYD_? ci, optional model substring |
 
 > **Backlog found + processed 2026-10-01** — rows 236–255: 20 `_passive.md` reports (apk-ble-hunting batch 24 + a few earlier, e.g. willow-go 2026-09-02) that had never been queued. Consumed **10** new (sensate, coaguchek, cowboy, embr_wave, greenteg_core, kegg, moonbird, moto_tag, nowatch, willow_pump), enriched **8** (sensorpush, inkbird, ruuvi, aranet4, flipper, plaud, shelly_blu [+bthome], smart_glasses/Even G1), skip **2** (eargo BT-Classic only; upright-go2 layout only in bytecode). Several enrichments **fixed invented/wrong decoders** (sensorpush, shelly_blu, aranet4 color map, inkbird sps offsets, bthome dimmer). All 255 reports processed ✅.
 
 > **Batch 25 (2026-10-01)** — rows 230–235 processed ✅: consumed **2** (new `fobo_tpms`, `hyperice`), enriched **4** (`parsers/apple_proximity` ← Beats B2P/BCD/BTP, `mibeacon` ← cleartext header of encrypted frames + bond/pairing flags, `marshall_audio` ← Zound CIDs 0x065A/0x5A06 + model/color/pairing decode, `smart_glasses` ← Meta V2 header + 9-byte device id). Collateral: generic `tpms` stands down on FOBO UUIDs / Salutica OUI 00:15:88. Total reports now **235**. The batch's 3 framework-specials (bang_olufsen / casio / ninebot) still have **no `_passive.md`** (deferred to apk-ble-hunting Stage 6d).
+
+## Summary (as of 2026-10-22) — batches 26–28 documented (rows 256–307)
+
+- 52 new reports (apk-ble-hunting batches 26–28: TPMS, micromobility,
+  breathalyzers, CPAP/respiratory, air-quality/radiation, locks, smart rings,
+  AI pendants, smart glasses, adult toys) → **docs only, no plugin changes**
+- documented: 47 slugs → 35 new docs (several shared: `aftermarket-ble-tpms.md`
+  covers 5 slugs, `micromobility-escooter-ebike.md` 7, `breathalyzers.md` 3)
+- doc-enriched: 3 slugs (airthings, vaultek, lovense); plaud.md (via friend-ios)
+  and resmed.md (CPAP cross-links) also got appended sections
+- skip: 2 (transcend — name prefix locked in Hermes bytecode; lucyd-android — BR/EDR only)
+- **Plugin bugs found** (not fixed): `tpms.py` name-matches Chaoyue sensors
+  whose `00 01` marker is LE CID 0x0100, not 0x0001, and mis-decodes them;
+  `smart_glasses.py` labels Luxottica 0x0D53 as Meta Ray-Ban though Nuance
+  Audio uses it too; `hp_printer.py`/`google_nearby_share.py` claim `fe78`
+  which ZH Berry rings advertise
+- **Best plugin candidates**: Atmotube (live telemetry in advert),
+  igloohome, Master Lock, Chaoyue/AiCare/Sysgration TPMS, Nuance Audio,
+  the three ring fleets (Oudmon FEE7, CRRepa FDDA/FDD0, ZH FE78)
 
 ## Summary (as of 2026-08-16) — all 229 reports processed ✅
 

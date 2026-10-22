@@ -254,3 +254,14 @@ serial itself is treated as PII-equivalent in downstream UI.
 
 - **ResMed myAir app**: https://www.resmed.com/en-us/sleep-apnea/cpap-products/cpap-apps/myair/
 - **AirSense 11 product page**: https://www.resmed.com/en-us/sleep-apnea/cpap-products/cpap-machines/airsense-11/
+
+## Other CPAP / respiratory vendors documented in adwatch
+
+Added 2026-10-22 from apk-ble-hunting passive reports (none share ResMed's
+`0xFD56` / `0x038D` signals): [BMC Medical](bmc-medical-cpap.md) (`BMC_*`
+names, `AA 02` MSD magic), [Breas Z1/Z2](breas-z1-cpap.md)
+(`f4f2b816-…` UUID), [Löwenstein prisma](lowenstein-prisma.md) (Telit TIO
+`0xFEFB` + `prisma`/`WM 0xx` name), [Resvent iBreeze](resvent-ibreeze.md)
+(`iBreeze` name, `0xA002`), [SEFAM S.Box](sefam-sbox.md) (`<serial>-BLE`
+name, inferred), [Yuwell](yuwell-cpap.md) (`BC_PAP` / `Yuwell CM100`), and
+the [Nox Medical](nox-medical.md) sleep-study recorders.
