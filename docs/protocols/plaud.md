@@ -143,3 +143,24 @@ identifier = SHA256("plaud:{mac}")[:16]
 
 - [PLAUD](https://www.plaud.ai/) — manufacturer website (Plaud Note Pro flagship product page)
 - [Bluetooth SIG Assigned Numbers — Company Identifiers (YAML)](https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/company_identifiers/company_identifiers.yaml) — authoritative CID lookup (0x0059 → Nordic Semiconductor ASA, 0x005D → Realtek Semiconductor Corp)
+
+## Per apk-ble-hunting `friend-ios_passive.md` (Omi app's NotePin recognizer)
+
+The Omi / Friend AI-pendant app (`com.friend.ios`, see [omi-pendant.md](omi-pendant.md))
+contains a display-name fallback that recognises a nameless NotePin from its
+manufacturer data: CID **`0x005D`** (93) with a payload (after the CID) of ≥ 4
+bytes beginning **`04 56 CF 00`** → labelled `"NotePin"` (`B6/A.java:10-42`,
+`com/friend/ios/ble/d.java:869`). Only CID 93 is checked; `0x0059` is not.
+
+Read against the `plaud.py` decode, `04 56 CF 00` is the start of the version
+record: `len=04`, `'V'`, version LE beginning `CF 00` (no model-id record, which
+matches the NotePin shape). The report instead calls `0xCF` a "MessagePack
+UINT64 opcode"; the PLAUD-record reading fits adwatch's captures better.
+
+**Discrepancy to note:** the NotePin capture above starts `04 56 d5 00 00`, i.e.
+version bytes `d5 00 00`, which does **not** match Omi's `04 56 CF 00` prefix.
+So the Omi heuristic appears to pin one specific firmware version (or a
+different NotePin build) rather than a family-wide constant. Do not use
+`04 56 CF 00` as a general NotePin gate; at most it is a corroborating
+version-specific signature. `plaud.py` already matches both CIDs and decodes the
+version record, so no plugin change is implied.
